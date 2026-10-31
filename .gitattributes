@@ -1,0 +1,2 @@
+# Fixtures and corpora are hashed byte-for-byte; never let git rewrite line endings.
+data/** -text
