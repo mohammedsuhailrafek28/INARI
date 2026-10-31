@@ -1,0 +1,93 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Explicit font-family utility bindings */
+.font-archivo {
+  font-family: 'Archivo', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
+
+.font-mono {
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+}
+
+.font-sans {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+}
+
+.font-serif {
+  font-family: 'Cinzel', 'Playfair Display', Georgia, serif !important;
+}
+
+/* Color utility fallbacks */
+.bg-canvas-dark { background-color: #050505 !important; }
+.bg-canvas-card { background-color: #11100f !important; }
+.bg-canvas-light { background-color: #f1eee6 !important; }
+.bg-canvas-lightCard { background-color: #e6e3da !important; }
+
+.text-ink-dark { color: #050505 !important; }
+.text-ink-light { color: #f1eee6 !important; }
+.text-ink-mutedDark { color: #66625b !important; }
+.text-ink-mutedLight { color: #aaa79f !important; }
+.text-thread { color: #ff3b12 !important; }
+.bg-thread { background-color: #ff3b12 !important; }
+.border-thread { border-color: #ff3b12 !important; }
+.text-gold-light { color: #e5c05b !important; }
+.text-emerald { color: #10b981 !important; }
+.bg-emerald { background-color: #10b981 !important; }
+
+.border-border-dark { border-color: rgba(241, 238, 230, 0.12) !important; }
+.border-border-light { border-color: rgba(5, 5, 5, 0.12) !important; }
+
+@layer base {
+  html {
+    color-scheme: dark;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: #050505;
+    color: #f1eee6;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  }
+
+  ::selection {
+    background-color: #ff3b12;
+    color: #ffffff;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #050505;
+}
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #ff3b12;
+}
+
+/* Range input styling for the what-if slider */
+input[type=range] {
+  -webkit-appearance: none;
+  background: rgba(241, 238, 230, 0.15);
+  height: 4px;
+  border-radius: 2px;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 18px;
+  width: 18px;
+  border-radius: 50%;
+  background: #ff3b12;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(255, 59, 18, 0.6);
+  transition: transform 0.15s ease-in-out;
+}
+input[type=range]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
