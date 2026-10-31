@@ -22,7 +22,7 @@ beforeAll(async () => {
   ]);
   ledger.setLedgerRepositoryForTests(new ledger.FileLedgerRepository());
   const app = express();
-  app.use(express.json({ limit: "50mb" }));
+  app.use(express.json({ limit: "8mb" }));
   app.use("/api/trpc", createExpressMiddleware({ router: appRouter, createContext }));
   await new Promise<void>(resolve => {
     server = app.listen(0, "127.0.0.1", () => resolve());

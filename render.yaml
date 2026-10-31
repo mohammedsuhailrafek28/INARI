@@ -1,6 +1,8 @@
+# INARI - synthetic-data demo deployment (single service: the API and the built frontend share one origin,
+# which the signed demo cookie requires). Demo identity is NOT production authentication.
 services:
   - type: web
-    name: wealthverse
+    name: inari
     runtime: node
     plan: free
     buildCommand: corepack pnpm install --frozen-lockfile && corepack pnpm run build
@@ -15,5 +17,11 @@ services:
         value: "true"
       - key: WEALTHVERSE_PERSISTENCE
         value: memory
+      - key: INARI_LEDGER_STORE
+        value: memory
+      # Render generates a long random value once; never commit real secrets.
       - key: JWT_SECRET
-        sync: false
+        generateValue: true
+      - key: INARI_IDENTITY_SECRET
+        generateValue: true
+      # Deliberately NOT set: BUILT_IN_FORGE_API_KEY (keeps every external LLM off), DATABASE_URL, OAuth variables.
