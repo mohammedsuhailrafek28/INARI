@@ -28,6 +28,19 @@ export type TransactionFilter = {
 };
 
 /** User-supplied facts that cannot be inferred from transactions. null = unknown. */
+export type StoredGoal = {
+  id: string;
+  goalType: "emergency_fund" | "house" | "car" | "education" | "retirement" | "travel" | "wedding" | "gadget" | "debt_free" | "custom";
+  name: string;
+  targetAmount: number;
+  currentAmount: number;
+  timelineMonths: number | null;
+  priority: "low" | "medium" | "high";
+  monthlyContribution: number | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type StoredProfile = {
   emergencyFund: number | null;
   investments: number | null;
@@ -38,6 +51,8 @@ export type StoredProfile = {
   useDemo: boolean;
   /** user's confirm/dismiss choices for detected recurring payments, keyed by subscription id */
   subscriptionDecisions?: Record<string, "confirmed" | "dismissed">;
+  /** user-entered goals (never inferred from the ledger) */
+  goals?: StoredGoal[];
 };
 
 export type LedgerStorageInfo = { kind: "memory" | "json"; durable: boolean; note: string };

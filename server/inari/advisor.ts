@@ -16,6 +16,7 @@ import { analyzeIntentText } from "./nlp/intent";
 import { monthlyReportFor } from "./report";
 import { detectSubscriptions, isActiveSubscription } from "./recurring";
 import { runSimulation } from "./simulate";
+import { listGoalsFor } from "./goals";
 import { breakdownForMonth } from "./service";
 import { isExcluded, isExpenseCategory } from "./snapshot";
 
@@ -109,7 +110,7 @@ function noData(ctx: AdvisorContext, hasModel: boolean): Draft {
   d.limitations = ["Nothing is estimated or assumed when there is no imported data."];
   d.nextActions = ["Import a bank statement or paste SMS alerts."];
   d.followUps = [];
-  d.proposed = [{ type: "import_data", title: "Import your transactions", description: "Upload a CSV statement or paste SMS alerts.", procedure: "inari.importPreview", input: {}, requiresConfirmation: true }];
+  d.proposed = [{ type: "import_data", title: "Import your transactions", description: "Upload a CSV statement or paste SMS alerts.", procedure: "inari.importPreview", input: {}, requiresConfirmation: true, inputComplete: false, missingFields: ["kind", "content or text"] }];
   return d;
 }
 
@@ -409,7 +410,7 @@ function balances(w: World, fb: FactBook, ctx: AdvisorContext): Draft {
   d.confidence = "high";
   d.limitations = known.filter(([, v]) => v === null).map(([n]) => `Your ${n} is not provided, so I will not guess it.`);
   if (known.some(([, v]) => v === null)) {
-    d.proposed = [{ type: "set_balances", title: "Add your balances", description: "Enter the balances you know. Leave the rest empty.", procedure: "inari.setBalances", input: { emergencyFund: b.emergencyFund, investments: b.investments, creditCardDebt: b.creditCardDebt }, requiresConfirmation: true }];
+    d.proposed = [{ type: "set_balances", title: "Add your balances", description: "Enter the balances you know. Leave the rest empty.", procedure: "inari.setBalances", input: { emergencyFund: b.emergencyFund, investments: b.investments, creditCardDebt: b.creditCardDebt }, requiresConfirmation: true, inputComplete: false, missingFields: known.filter(([, v]) => v === null).map(([n]) => n) }];
   }
   return d;
 }
@@ -459,12 +460,35 @@ async function monthlyReview(w: World, intent: IntentAnalysis, fb: FactBook, ctx
   return d;
 }
 
-function goals(ctx: AdvisorContext): Draft {
+async function goalsDraft(ownerKey: string, fb: FactBook, ctx: AdvisorContext, now: Date, surplus: number | null): Promise<Draft> {
   const d = base({ ...ctx, intent: "goal_progress" });
-  d.answer = "Goal tracking is not available yet, so I have no goal progress to report and will not make one up.";
-  d.summary = "Goals not available";
-  d.limitations = ["Goals are not implemented yet."];
+  const items = await listGoalsFor(ownerKey, now);
   d.confidence = "high";
+  d.limitations = ["Goal balances and contributions are what you entered. They are never worked out from your transactions."];
+  d.assumptions = ["Completion dates divide what is left by your monthly contribution, with no returns or interest."];
+  if (items.length === 0) {
+    d.answer = "You have not added any savings goals yet, so there is no progress to report. Add a goal with its target, what you have saved so far and what you set aside each month.";
+    d.summary = "No goals yet";
+    d.nextActions = ["Add a savings goal."];
+    return d;
+  }
+  const lines = items.map(g => {
+    const head = `${g.name}: ${fb.r(g.currentAmount)} of ${fb.r(g.targetAmount)} (${fb.p(g.progressPercent)})`;
+    if (g.status === "completed") return `${head}, target reached.`;
+    if (g.monthlyContribution && g.projectedCompletion) {
+      const need = g.requiredMonthly ? `; the deadline needs about ${fb.r(g.requiredMonthly)} a month` : "";
+      return `${head}; at ${fb.r(g.monthlyContribution)} a month it completes around ${g.projectedCompletion}${need}.`;
+    }
+    return `${head}; no monthly contribution is set, so I cannot project a date.`;
+  });
+  d.answer = lines.join(" ");
+  d.summary = `${items.length} goal${items.length === 1 ? "" : "s"} tracked`;
+  d.insights = items.filter(g => g.status === "behind").map(g => `${g.name} is behind: the monthly contribution is below what the deadline needs.`);
+  const total = items.filter(g => g.status !== "completed").reduce((sum, g) => sum + (g.monthlyContribution ?? 0), 0);
+  d.metrics = [{ label: "Monthly goal contributions", value: fb.r(total) }];
+  if (surplus !== null && total > Math.max(0, surplus)) d.insights.push(`Your goal contributions of ${fb.r(total)} a month are more than your monthly surplus of ${fb.r(Math.max(0, surplus))}.`);
+  if (surplus === null) d.limitations.push("I cannot check affordability until a complete month of transactions is imported.");
+  d.nextActions = ["To test a different monthly amount, run a goal contribution what-if with the simulator."];
   return d;
 }
 
@@ -505,6 +529,9 @@ export async function askAdvisorFor(
   let draft: Draft;
   if (intent.intent === "unsafe_request" || isProhibitedAdviceRequest(question)) {
     draft = refusal(ctx0);
+  } else if (intent.intent === "goal_progress" || (intent.intent === "unknown" && /\b(my goals?|savings? goals?|savings? targets?)\b/i.test(question))) {
+    const m = model?.metrics ?? null;
+    draft = await goalsDraft(ownerKey, fb, ctx0, now, m ? m.monthlyIncome - m.monthlyExpenses : null);
   } else if (!model) {
     draft = noData(ctx0, false);
   } else {
@@ -513,7 +540,7 @@ export async function askAdvisorFor(
     const w: World = { model, all, live: all.filter(t => !isExcluded(t)), batches, now, nowYm: now.toISOString().slice(0, 7), ownerKey };
     const q = question.toLowerCase();
     const isFollowUp = !!previous && (intent.intent === "unknown" || intent.intent === "clarification_followup");
-    if (model.metrics === null && intent.intent !== "goal_progress") draft = noData(ctx0, true);
+    if (model.metrics === null) draft = noData(ctx0, true);
     else if (intent.needsClarification && intent.intent === "what_if") draft = clarify(ctx0, intent.clarificationQuestion ?? "What change should I test?");
     else if (/\b(duplicate|double[- ]?count|flagged|reconcil|card repayment|needs review)/.test(q)) draft = reconciliation(w, fb, ctx0);
     else if (/\b(emergency fund|my investments?|credit card (debt|balance)|balances?)\b/.test(q) && intent.intent !== "what_if") draft = balances(w, fb, ctx0);
@@ -522,7 +549,6 @@ export async function askAdvisorFor(
     else if (intent.intent === "category_explanation") draft = await explainCategory(w, intent, fb, ctx0, previous, now);
     else if (intent.intent === "category_correction") draft = correction(w, intent, ctx0);
     else if (intent.intent === "monthly_review" || (/\b(report|review|recap)\b/.test(q) && intent.intent === "unknown")) draft = await monthlyReview(w, intent, fb, ctx0, previous);
-    else if (intent.intent === "goal_progress") draft = goals(ctx0);
     else if (intent.intent === "spending_question" || (isFollowUp && previous?.intent === "spending_question")) draft = spending(w, intent, previous, fb, ctx0, question);
     else if (/\b(savings rate|income|salary|surplus|how am i doing|overview|financial health|snapshot|how much do i (earn|save))\b/.test(q)) draft = overview(w, fb, ctx0);
     else draft = unknownTopic(ctx0);
@@ -562,7 +588,7 @@ export async function askAdvisorFor(
     evidence: draft.evidence,
     assumptions: draft.assumptions,
     limitations: draft.limitations,
-    proposedActions: draft.proposed,
+    proposedActions: draft.proposed.map(a => ({ inputComplete: true, ...a })),
     context: draft.context,
     engine: { kind: "deterministic", llmUsed: false, model: null },
   };

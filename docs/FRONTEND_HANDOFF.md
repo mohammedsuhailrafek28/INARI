@@ -26,7 +26,7 @@ Every `inari.*` response has `implementation: "stub" | "implemented"`. **`stub` 
 | `correctCategory`, `listLearnedRules` (`getLearnedRules`), `deleteLearnedRule`, `getBreakdown` | q / m | **implemented** |
 | `simulate`, `analyzeIntent`, `listSubscriptions` (`getSubscriptions`), `confirmSubscription`, `monthlyReport` (`getMonthlyReport`), `listReportMonths`, `reconcile` | q / m | **implemented** (see their sections below) |
 | `ask` / `askAdvisor` | m | **implemented**, deterministic (no LLM) |
-| `getGoals`, `upsertGoal`, `deleteGoal` | | stub |
+| `getGoals`, `upsertGoal`, `deleteGoal` | q / m | **implemented** (see Goals below) |
 
 ### Import flow
 1. `importPreview({kind:"csv", filename, content})` – nothing is stored. Returns `previewId`, `counts` (`accepted/duplicate/possibleDuplicate/rejected/ignored`), `detectedFormat`, `period`, `warnings`, up to 200 `rows` (problems first; `rejected` rows carry a `reason`). Previews expire after 30 minutes and are private to the caller.
@@ -175,10 +175,11 @@ The advisor **never changes data**. Anything consequential comes back in `propos
 | Duplicates, flagged items, card repayments | reconciliation flags | proposes `reconcile` actions with real transaction ids |
 | Emergency fund, investments, balances | snapshot | `null` stays "not provided"; proposes `set_balances` |
 | Recategorise a transaction | none | proposal only (`correct_category`) |
+| Goal progress | goals you entered | no goals -> says so; never inferred from transactions |
 | Import needed | none | no data: says so and proposes `import_data` |
 
 ### Not supported (the advisor says so rather than guessing)
-Goals (backend stub), `change_goal_contribution` scenarios, market or general-knowledge questions, tax advice, specific investment picks, return projections or guarantees (refused, `guardrail.status:"refused"`), amount-only follow-ups, PDF-sourced data.
+Goal what-if questions in plain language (use `simulate` with `change_goal_contribution`), market or general-knowledge questions, tax advice, specific investment picks, return projections or guarantees (refused, `guardrail.status:"refused"`), amount-only follow-ups, PDF-sourced data.
 
 ### UI states you must handle
 1. **No data**: `confidenceLevel:"low"`, `proposedActions` contains `import_data`. Link to the import screen.
@@ -196,6 +197,42 @@ Every text field passes the same check as the monthly report: no guaranteed/risk
 Rows excluded via `inari.reconcile` are treated identically by the snapshot, `getBreakdown`, `simulate`, `monthlyReport`, `ask`, `listSubscriptions` and `dashboard.*`. They stay in `listTransactions` (with `reconciliation`). `undo` restores them everywhere; re-importing an excluded SMS is a plain duplicate and keeps the decision; undoing the import batch and re-importing re-flags it.
 
 ## Remaining stubs and gaps
-- Stub (fixture data, show "sample"): `getGoals`, `upsertGoal`, `deleteGoal`.
-- Not implemented: PDF import (`NOT_IMPLEMENTED`), LLM inference, goal-based scenarios.
+- Stubs: none left. Every procedure in `PROCEDURE_STATUS` is `implemented`.
+- Not implemented: PDF import (`NOT_IMPLEMENTED`), LLM inference, plain-language goal what-ifs in the advisor.
 - Storage is non-durable and identity is demo-grade (`meta.storage`, `meta.identity`).
+
+## Goals (savings goals, user-entered)
+
+Goals are stored per user (same owner scoping as everything else). **Every amount is what the user typed.** The backend never works out a goal's saved amount from transactions or balances. Projections are plain arithmetic: `ceil(remaining / monthlyContribution)` months, no returns, no interest.
+
+### `inari.getGoals()` (query)
+`{ implementation, items: Goal[], dataSource, summary?, warnings? }`
+- `Goal`: `id, goalType, name, targetAmount, currentAmount, timelineMonths|null, priority, progressPercent (0-100), projectedCompletion (last day of the projected month, or null)`, plus new optional `remainingAmount, monthlyContribution|null, requiredMonthly|null, status, notes[]`.
+- `status`: `completed | on_track | behind | no_contribution | no_deadline`. `no_contribution` means no `monthlyContribution` was entered, so `projectedCompletion` is null. Show "set a monthly amount to see a date", not a made-up date.
+- `requiredMonthly` = remaining / `timelineMonths` (only when a deadline was entered).
+- `summary = { totalMonthlyContributions, monthlySurplus|null, withinSurplus|null }`. `monthlySurplus` comes from the verified snapshot and is `null` until a complete month is imported; then `withinSurplus` is `null` too. `warnings[]` says when contributions exceed the surplus or cannot be checked.
+- A new user gets `items: []`. The old fixture "Laptop" goal is gone; do not render sample goals any more.
+
+### `inari.upsertGoal(GoalInput)` (mutation) -> `{ implementation, id }`
+- No `id` = create. With `id` = **replace** that goal (send every field you want to keep; omitted `monthlyContribution` clears it, omitted `currentAmount` becomes 0). An unknown or someone else's `id` -> `NOT_FOUND`.
+- New optional input field: `monthlyContribution` (rupees, >= 0).
+- Validation (`INVALID_INPUT`): target > 0, amounts finite and <= 1,00,00,00,000, `timelineMonths` 1-600. Blank `name` -> the goal type's label. Control characters are stripped from names. At most 20 goals (`CONFLICT`).
+
+### `inari.deleteGoal({id})` (mutation) -> `{ implementation, success: true }`; unknown/foreign id -> `NOT_FOUND`.
+
+### Simulation: `change_goal_contribution`
+`simulate({scenarios:[{type:"change_goal_contribution", goalId, newMonthly}]})`:
+- `goals[]` in the result now lists **every** goal with `baselineCompletion`, `scenarioCompletion`, `monthsSaved` (negative = slower; `null` when either side has no date). Without a goal scenario the two dates are equal.
+- Metric `Free cash after SIP, debt and goal contributions` = baseline surplus minus the **change** in contributions (existing contributions are already part of the baseline surplus). It composes with other scenarios and an identical repeated scenario is applied once.
+- The simulation never writes to goals. Unknown goal id -> `INVALID_SCENARIO`. With no imported data the result is `insufficient_data` and `goals: []`.
+- Warning when contributions exceed the scenario's surplus.
+
+### Other places goals appear
+- `monthlyReport.goals?[]` = `{id, name, progressPercent, status, monthlyContribution, projectedCompletion}`; `unknowns` contains `"goals"` only when the user has none.
+- Advisor: "how are my goals going" answers from the goals above (works even before any import; says affordability cannot be checked then).
+- `setBalances` keeps goals; `clearMyData` removes them.
+
+### Advisor proposed actions (audit result)
+Each `proposedActions[]` entry now has `inputComplete` and, when false, `missingFields[]`.
+- `inputComplete: true` (`correct_category`, `reconcile`, `confirm_subscription`): `input` can be sent unchanged to `procedure` after the user confirms. Tested: it works for the owner and fails for any other user.
+- `inputComplete: false` (`import_data`, `set_balances`): the client must first collect the missing values from the user (a file/SMS text, or balances). Do not post `input` as is.

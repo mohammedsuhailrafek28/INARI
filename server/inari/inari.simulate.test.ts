@@ -240,10 +240,10 @@ describe("simulate: arithmetic against hand-computed values", () => {
     expect(partial.warnings.join(" ")).toMatch(/full calendar month/);
   });
 
-  it("refuses scenarios whose backends are not implemented, with a stable error code", async () => {
+  it("refuses scenarios that point at nothing real, with a stable error code", async () => {
     await seed();
     await expect(caller().inari.simulate({ scenarios: [{ type: "cancel_subscriptions", subscriptionIds: ["x"] }] })).rejects.toMatchObject({ message: expect.stringMatching(/not found/) });
-    await expect(caller().inari.simulate({ scenarios: [{ type: "change_goal_contribution", goalId: "g", newMonthly: 1 }] })).rejects.toThrow(/not implemented|not available/i);
+    await expect(caller().inari.simulate({ scenarios: [{ type: "change_goal_contribution", goalId: "g", newMonthly: 1 }] })).rejects.toThrow(/goal was not found/i);
     await expect(caller().inari.simulate({ scenarios: [] as any })).rejects.toThrow();
     await expect(caller().inari.simulate({ scenarios: [{ type: "start_sip", amountPerMonth: 1e12 }] })).rejects.toThrow(/too large/);
   });

@@ -55,7 +55,7 @@ export const PROCEDURE_STATUS: Record<ProcedureName, ImplementationStatus> = {
   simulate: "implemented",
   ask: "implemented", askAdvisor: "implemented", analyzeIntent: "implemented",
   monthlyReport: "implemented", getMonthlyReport: "implemented", listReportMonths: "implemented",
-  getGoals: "stub", upsertGoal: "stub", deleteGoal: "stub",
+  getGoals: "implemented", upsertGoal: "implemented", deleteGoal: "implemented",
 };
 
 /* ---------- primitives ---------- */
@@ -313,6 +313,8 @@ export const GoalInput = z.object({
   targetAmount: z.number().positive(), currentAmount: z.number().min(0).default(0),
   timelineMonths: z.number().int().min(1).max(600).optional(),
   priority: z.enum(["low", "medium", "high"]).default("medium"),
+  /** Additive. What the user sets aside per month for this goal; projections need it. Upsert replaces the whole goal. */
+  monthlyContribution: z.number().min(0).optional(),
 });
 export type GoalInput = z.infer<typeof GoalInput>;
 export const Goal = z.object({
@@ -320,9 +322,23 @@ export const Goal = z.object({
   targetAmount: z.number(), currentAmount: z.number(), timelineMonths: z.number().int().nullable(),
   priority: z.enum(["low", "medium", "high"]), progressPercent: z.number(),
   projectedCompletion: IsoDate.nullable(),
+  /* Additive, all optional. */
+  remainingAmount: z.number().optional(),
+  monthlyContribution: z.number().nullable().optional(),
+  requiredMonthly: z.number().nullable().optional(),
+  status: z.enum(["completed", "on_track", "behind", "no_contribution", "no_deadline"]).optional(),
+  notes: z.array(z.string()).optional(),
 });
 export type Goal = z.infer<typeof Goal>;
-export const GoalsOutput = z.object({ ...impl, items: z.array(Goal), dataSource: DataSource });
+export const GoalsOutput = z.object({
+  ...impl, items: z.array(Goal), dataSource: DataSource,
+  /** Additive. monthlySurplus is null until a complete month is imported; withinSurplus is null then too. */
+  summary: z.object({
+    totalMonthlyContributions: z.number(), monthlySurplus: z.number().nullable(), withinSurplus: z.boolean().nullable(),
+  }).optional(),
+  warnings: z.array(z.string()).optional(),
+});
+export type GoalsOutput = z.infer<typeof GoalsOutput>;
 export const GoalIdOutput = z.object({ ...impl, id: z.string() });
 export const SuccessOutput = z.object({ ...impl, success: z.literal(true) });
 
@@ -354,6 +370,11 @@ export const MonthlyReport = z.object({
       direction: z.enum(["up", "down"]), provisional: z.boolean(), evidenceTransactionIds: z.array(z.string()),
     })),
   }).optional(),
+  /** Additive. User-entered goals as of the report; absent or empty when the user has none. */
+  goals: z.array(z.object({
+    id: z.string(), name: z.string(), progressPercent: z.number(), status: z.string(),
+    monthlyContribution: z.number().nullable(), projectedCompletion: IsoDate.nullable(),
+  })).optional(),
   obligations: z.array(z.object({
     label: z.string(), kind: z.enum(["subscription", "rent", "emi"]), monthlyAmount: z.number(), evidenceTransactionIds: z.array(z.string()),
   })).optional(),
@@ -423,6 +444,9 @@ export const AdvisorProposedAction = z.object({
   /** The procedure the client should call after the user confirms, with ready-made input. The advisor never performs it. */
   procedure: z.string(), input: z.record(z.string(), z.unknown()),
   requiresConfirmation: z.literal(true),
+  /** Additive. true = `input` can be sent to `procedure` exactly as given once the user confirms. false = the client must first collect the fields in `missingFields` from the user. */
+  inputComplete: z.boolean().optional(),
+  missingFields: z.array(z.string()).optional(),
 });
 export const InariAdvisorResponse = z.object({
   ...impl,

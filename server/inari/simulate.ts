@@ -6,6 +6,7 @@
 import type { Scenario, SimulationResult } from "../../shared/inari/contracts";
 import { EDUCATIONAL_DISCLAIMER } from "../wealth/types";
 import { InariError } from "./errors";
+import { completionDate, monthsToGoal } from "./goals";
 import type { ImportedModel } from "./importedModel";
 import { detectSubscriptions, isActiveSubscription } from "./recurring";
 
@@ -35,7 +36,7 @@ const EVIDENCE_CODES = new Set([
   "partial_months", "gap_months", "unclassified", "assumption_averaging",
 ]);
 
-export function runSimulation(requested: Scenario[], model: ImportedModel | undefined): SimulationResult {
+export function runSimulation(requested: Scenario[], model: ImportedModel | undefined, now: Date = new Date()): SimulationResult {
   for (const s of requested) validateScenario(s);
   // An identical scenario repeated in one request is applied once, never twice.
   const seen = new Set<string>();
@@ -80,6 +81,9 @@ export function runSimulation(requested: Scenario[], model: ImportedModel | unde
   let expenses = expenses0;
   let sip = 0;
   let debtPayment = 0;
+  let goalDelta = 0; // change in monthly goal contributions, in paise (can be negative)
+  const goalOverrides = new Map<string, number>(); // goalId -> new monthly contribution (rupees); never written back
+  const storedGoals = model.profile?.goals ?? [];
   const oneOffs: Array<{ paise: number; inMonths: number }> = [];
 
   for (const s of scenarios) {
@@ -134,6 +138,16 @@ export function runSimulation(requested: Scenario[], model: ImportedModel | unde
         debtPayment += toPaise(s.amountPerMonth);
         if (!m.known?.creditCardDebt) warnings.push("Your credit-card balance is not provided, so the payoff time cannot be estimated. Add it to see months to clear.");
         break;
+      case "change_goal_contribution": {
+        const goal = storedGoals.find(g => g.id === s.goalId);
+        if (!goal) throw new InariError("INVALID_SCENARIO", "That goal was not found. List your goals and pick an id from there.");
+        const was = goalOverrides.get(goal.id) ?? goal.monthlyContribution ?? 0;
+        if (goalOverrides.has(goal.id)) warnings.push(`The contribution to "${goal.name}" was changed more than once; the last value is used.`);
+        goalOverrides.set(goal.id, s.newMonthly);
+        goalDelta += toPaise(s.newMonthly) - toPaise(was);
+        if (toPaise(goal.currentAmount) >= toPaise(goal.targetAmount)) warnings.push(`"${goal.name}" has already reached its target, so the contribution does not change its date.`);
+        break;
+      }
       default:
         break;
     }
@@ -143,7 +157,7 @@ export function runSimulation(requested: Scenario[], model: ImportedModel | unde
   const surplus = income - expenses;
   const outflows = sip + debtPayment;
   const free0 = surplus0;
-  const free = surplus - outflows;
+  const free = surplus - outflows - goalDelta;
   const oneOffWithin12 = oneOffs.filter(o => o.inMonths < 12).reduce((sum, o) => sum + o.paise, 0);
 
   const metrics: Metric[] = [
@@ -152,7 +166,8 @@ export function runSimulation(requested: Scenario[], model: ImportedModel | unde
     metric("Monthly surplus", rupees(surplus0), rupees(surplus), "inr"),
     metric("Savings rate", rate(income0, expenses0), rate(income, expenses), "percent"),
   ];
-  if (outflows > 0) metrics.push(metric("Free cash after SIP and debt payments", rupees(free0), rupees(free), "inr"));
+  if (goalDelta !== 0) metrics.push(metric("Free cash after SIP, debt and goal contributions", rupees(free0), rupees(free), "inr"));
+  else if (outflows > 0) metrics.push(metric("Free cash after SIP and debt payments", rupees(free0), rupees(free), "inr"));
   metrics.push(metric("Next 12 months: cash left over", rupees(free0 * 12), rupees(free * 12 - oneOffWithin12), "inr"));
 
   if (m.known?.emergencyFund) {
@@ -179,16 +194,28 @@ export function runSimulation(requested: Scenario[], model: ImportedModel | unde
   if (flagged.length > 0) warnings.push(`The baseline includes ${flagged.length} unresolved data-quality flag(s) (${flagged.map(n => n.code).join(", ")}); the results inherit them. See evidence.`);
 
   if (surplus < 0) warnings.push("In this scenario your expenses exceed your income.");
-  else if (free < 0) warnings.push("The planned SIP and debt payments are larger than your monthly surplus.");
+  else if (free < 0) warnings.push(goalDelta !== 0 ? "The planned SIP, debt and goal contributions are larger than your monthly surplus." : "The planned SIP and debt payments are larger than your monthly surplus.");
   if (oneOffs.length > 0) assumptions.push("One-off expenses only affect the 12-month cash figure; they do not change monthly averages.");
   if (sip > 0) assumptions.push("A SIP is treated as saving (not an expense), so it lowers free cash but not the savings rate.");
+
+  const goalResults = storedGoals.map(g => {
+    const baseMonths = monthsToGoal(g.targetAmount, g.currentAmount, g.monthlyContribution);
+    const next = goalOverrides.has(g.id) ? goalOverrides.get(g.id)! : g.monthlyContribution;
+    const scenMonths = monthsToGoal(g.targetAmount, g.currentAmount, next);
+    return {
+      goalId: g.id, goalName: g.name,
+      baselineCompletion: completionDate(baseMonths, now), scenarioCompletion: completionDate(scenMonths, now),
+      monthsSaved: baseMonths === null || scenMonths === null ? null : baseMonths - scenMonths,
+    };
+  });
+  if (goalOverrides.size > 0) assumptions.push("Goal balances are the amounts you entered; they are not inferred from transactions and are not changed by this simulation.");
 
   return {
     implementation: "implemented",
     scenarios,
     status: "ok",
     metrics,
-    goals: [], // goals backend is not implemented yet
+    goals: goalResults,
     assumptions,
     warnings,
     evidence: [
@@ -209,7 +236,8 @@ function validateScenario(s: Scenario) {
     case "cancel_subscriptions":
       return;
     case "change_goal_contribution":
-      throw new InariError("INVALID_SCENARIO", "Goal scenarios are not available yet because goals are not implemented.");
+      if (!Number.isFinite(s.newMonthly) || s.newMonthly > MAX_RUPEES) throw new InariError("INVALID_SCENARIO", "That contribution is not valid.");
+      return;
     case "reduce_category":
       if (s.percent === undefined && s.amountPerMonth === undefined) throw new InariError("INVALID_SCENARIO", "Give a percent or an amount to reduce by.");
       if ((s.amountPerMonth ?? 0) > MAX_RUPEES) throw new InariError("INVALID_SCENARIO", "That amount is too large.");

@@ -147,7 +147,10 @@ describe("inari router: stub honesty", () => {
     listReportMonths: c => c.inari.listReportMonths(),
     getGoals: c => c.inari.getGoals(),
     upsertGoal: c => c.inari.upsertGoal({ goalType: "gadget", targetAmount: 1000, currentAmount: 0, priority: "medium" }),
-    deleteGoal: c => c.inari.deleteGoal({ id: "g" }),
+    deleteGoal: async c => {
+      const { id } = await c.inari.upsertGoal({ goalType: "gadget", targetAmount: 1000, currentAmount: 0, priority: "medium" });
+      return c.inari.deleteGoal({ id });
+    },
   };
 
   it("has a call for every procedure", () => {

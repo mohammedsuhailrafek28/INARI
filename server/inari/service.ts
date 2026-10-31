@@ -248,6 +248,7 @@ export async function setBalances(userKey: string, input: BalancesInput): Promis
     investments: input.investments,
     creditCardDebt: input.creditCardDebt,
     ...(current?.subscriptionDecisions ? { subscriptionDecisions: current.subscriptionDecisions } : {}),
+    ...(current?.goals ? { goals: current.goals } : {}),
     ...(input.age !== undefined ? { age: input.age } : current?.age !== undefined ? { age: current.age } : {}),
     ...(input.riskPreference ? { riskPreference: input.riskPreference } : current?.riskPreference ? { riskPreference: current.riskPreference } : {}),
   });

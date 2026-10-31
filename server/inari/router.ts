@@ -22,6 +22,7 @@ import {
 } from "./service";
 import { loadImportedModel } from "./importedModel";
 import { runSimulation } from "./simulate";
+import { deleteGoalFor, goalsOverview, upsertGoalFor } from "./goals";
 import { askAdvisorFor } from "./advisor";
 import { monthlyReportFor, reportMonthsFor } from "./report";
 import { analyzeIntentText } from "./nlp/intent";
@@ -199,10 +200,17 @@ export const inariRouter = router({
   getMonthlyReport: monthlyReportProcedure, // alias
   listReportMonths: ownerProcedure.output(ReportMonthsOutput).query(async ({ ctx }) => ({ implementation: "implemented" as const, months: await reportMonthsFor(ctx.ownerKey) })),
 
-  getGoals: ownerProcedure.output(GoalsOutput).query(() => ({ implementation: "stub" as const, items: fx.sampleGoals, dataSource: "imported" as const })),
-  upsertGoal: ownerProcedure.input(GoalInput).output(GoalIdOutput).mutation(() => ({ implementation: "stub" as const, id: "fx-goal-1" })),
+  getGoals: ownerProcedure.output(GoalsOutput).query(({ ctx }) => guarded(() => goalsOverview(ctx.ownerKey))),
+  upsertGoal: ownerProcedure.input(GoalInput).output(GoalIdOutput).mutation(({ ctx, input }) =>
+    guarded(async () => ({ implementation: "implemented" as const, id: await upsertGoalFor(ctx.ownerKey, input) }))
+  ),
   deleteGoal: ownerProcedure
     .input(z.object({ id: z.string() }))
     .output(SuccessOutput)
-    .mutation(() => ({ implementation: "stub" as const, success: true as const })),
+    .mutation(({ ctx, input }) =>
+      guarded(async () => {
+        await deleteGoalFor(ctx.ownerKey, input.id);
+        return { implementation: "implemented" as const, success: true as const };
+      })
+    ),
 });

@@ -212,6 +212,54 @@ describe("HTTP e2e: upload -> preview -> commit -> snapshot -> dashboard, with t
     }
   });
 
+  it("goals over HTTP: persistence per browser, deterministic simulation that never edits the goal, isolation", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-31T10:00:00Z"));
+    try {
+      const gina = new Browser();
+      const rows = [7, 8, 9].flatMap(m => [
+        `01/0${m}/2026,NEFT ACME SALARY,,100000.00`, `10/0${m}/2026,UPI/3/SWIGGY/sw@bank,${m === 9 ? "9000.00" : "6000.00"},`, `28/0${m}/2026,AMAZON PAY RETAIL,1000.00,`,
+      ]);
+      const p = await gina.call("inari.importPreview", { kind: "csv", filename: "g.csv", content: ["Date,Description,Debit,Credit", ...rows].join("\n") });
+      await gina.call("inari.importCommit", { previewId: p.data.previewId });
+
+      const made = await gina.call("inari.upsertGoal", { goalType: "gadget", name: "Laptop", targetAmount: 90000, currentAmount: 30000, timelineMonths: 12, priority: "medium", monthlyContribution: 5000 });
+      expect(made.status).toBe(200);
+      expect(made.data).toMatchObject({ implementation: "implemented" });
+      const id = made.data.id as string;
+
+      const list = await gina.call("inari.getGoals", undefined, "query");
+      expect(list.data.items).toHaveLength(1);
+      expect(list.data.items[0]).toMatchObject({ id, remainingAmount: 60000, progressPercent: 33.3, projectedCompletion: "2027-10-31", status: "on_track" });
+      expect(list.data.summary).toEqual({ totalMonthlyContributions: 5000, monthlySurplus: 92000, withinSurplus: true });
+
+      const sim = await gina.call("inari.simulate", { scenarios: [{ type: "change_goal_contribution", goalId: id, newMonthly: 10000 }] });
+      expect(sim.data.goals).toEqual([{ goalId: id, goalName: "Laptop", baselineCompletion: "2027-10-31", scenarioCompletion: "2027-04-30", monthsSaved: 6 }]);
+      expect(sim.data.metrics.find((m: any) => m.label.startsWith("Free cash"))).toMatchObject({ baseline: 92000, scenario: 87000, delta: -5000 });
+      const after = await gina.call("inari.getGoals", undefined, "query");
+      expect(after.data.items).toEqual(list.data.items);
+
+      const ask = await gina.call("inari.ask", { question: "how are my goals going", locale: "en" });
+      expect(ask.data.answer).toContain("Laptop: ₹30,000 of ₹90,000 (33.3%)");
+      expect(ask.data.guardrail.status).toBe("passed");
+
+      // a different browser sees nothing and cannot touch Gina's goal or simulate against it
+      expect((await bob.call("inari.getGoals", undefined, "query")).data.items).toEqual([]);
+      expect((await bob.call("inari.deleteGoal", { id })).error.data.inari.code).toBe("NOT_FOUND");
+      expect((await bob.call("inari.upsertGoal", { goalType: "gadget", id, targetAmount: 1, currentAmount: 0, priority: "low" })).error.data.inari.code).toBe("NOT_FOUND");
+      const bobSim = await bob.call("inari.simulate", { scenarios: [{ type: "change_goal_contribution", goalId: id, newMonthly: 1 }] });
+      expect(bobSim.data).toMatchObject({ status: "insufficient_data", goals: [] });
+      expect(JSON.stringify(bobSim.body)).not.toContain("Laptop");
+      expect((await gina.call("inari.getGoals", undefined, "query")).data.items).toEqual(list.data.items);
+
+      expect((await gina.call("inari.meta", undefined, "query")).data.procedures).toMatchObject({ getGoals: "implemented", upsertGoal: "implemented", deleteGoal: "implemented" });
+      expect((await gina.call("inari.deleteGoal", { id })).data.success).toBe(true);
+      expect((await gina.call("inari.getGoals", undefined, "query")).data.items).toEqual([]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("correction over HTTP recalculates the breakdown; clearMyData then wipes alice only", async () => {
     const tx = (await alice.call("inari.listTransactions", { month: "2026-09", limit: 50 }, "query")).data.items.find((t: any) => t.narration.includes("UBER"));
     const fix = await alice.call("inari.correctCategory", { transactionId: tx.id, category: "travel", applyToMerchant: true });

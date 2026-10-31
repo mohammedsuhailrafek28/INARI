@@ -159,7 +159,7 @@ describe("advisor: grounded, deterministic, honest about how it answers", () => 
     await caller().inari.setBalances({ emergencyFund: 50000, investments: null, creditCardDebt: null });
     expect((await ask("how much emergency fund do I have")).answer).toMatch(/emergency fund: ₹50,000 \(as you told me\)/);
     const g = await ask("how are my goals");
-    expect(g.answer).toMatch(/not available yet/);
+    expect(g.answer).toMatch(/not added any savings goals/);
     expect(g.relatedMetrics).toEqual([]);
   });
 

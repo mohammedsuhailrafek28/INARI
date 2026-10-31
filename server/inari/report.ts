@@ -6,6 +6,7 @@
  */
 import type { Category, LedgerTransaction, MonthlyReport } from "../../shared/inari/contracts";
 import { EDUCATIONAL_DISCLAIMER } from "../wealth/types";
+import { describeGoal } from "./goals";
 import { guardText, type GuardrailStatus } from "./guardrails";
 import { getLedgerRepository } from "./ledger";
 import type { StoredBatch, StoredProfile } from "./ledger/types";
@@ -194,7 +195,8 @@ export function buildMonthlyReport(input: ReportInput): MonthlyReport {
   }
 
   // ---- unknowns: never fabricated ----
-  const unknowns = ["goals"];
+  const goalList = (profile?.goals ?? []).map(g => describeGoal(g, now));
+  const unknowns: string[] = goalList.length === 0 ? ["goals"] : [];
   if (snapshot.balances.emergencyFund === null) unknowns.push("emergencyFund");
   if (snapshot.balances.investments === null) unknowns.push("investments");
   if (snapshot.balances.creditCardDebt === null) unknowns.push("creditCardDebt");
@@ -322,6 +324,7 @@ export function buildMonthlyReport(input: ReportInput): MonthlyReport {
     drift,
     obligations,
     unknowns,
+    goals: goalList.map(g => ({ id: g.id, name: g.name, progressPercent: g.progressPercent, status: g.status ?? "no_contribution", monthlyContribution: g.monthlyContribution ?? null, projectedCompletion: g.projectedCompletion })),
     guardrails: { status, reasons: Array.from(new Set(reasons)) },
   };
 }
