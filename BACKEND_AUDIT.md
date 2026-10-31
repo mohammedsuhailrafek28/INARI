@@ -14,7 +14,7 @@ Every statement is tagged:
 
 | Item | Finding |
 |---|---|
-| Session working directory | `Desktop\atlas-claude-agent-platform-v0.1` contains only `atlas-agents` (a Python agent platform) and `releases`. It is **not** WealthVerse and has no INARI code. [V] I did not audit it. |
+| Session working directory | an unrelated local folder contains only `atlas-agents` (a Python agent platform) and `releases`. It is **not** WealthVerse and has no INARI code. [V] I did not audit it. |
 | The repo audited | `<local checkout of the WealthVerse repository>` (name in `package.json`: `wealthverse`; README title: WealthVerse). [V] You called it "WealthWise"; this is the only matching repo on the machine. Other hits: `wealthverse-project` (only Crashpad files) and `wealthverse-frontend` (a frontend-only fragment, not audited). |
 | Target folder for INARI | `<local INARI folder>` was empty. [V] The four reports are written there, deliberately outside the repo. |
 | PS04 problem statement | **Not present anywhere I could read.** Requirements below come from your task list, not the official PS04 text. [A] Please paste the PS04 statement so scoring criteria can be checked against the gap analysis. |

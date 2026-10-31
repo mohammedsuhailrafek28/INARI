@@ -6,7 +6,7 @@ Status: **plan only. Nothing has been pushed or deployed, and no remote is confi
 | Branch | Contents |
 |---|---|
 | `main` | Original baseline reference |
-| `frontend` | Baseline 28477df. Owned by the frontend teammate. **Do not edit.** |
+| `frontend` | Baseline 330e40b. Owned by the frontend teammate. **Do not edit.** |
 | `backend` | All backend/AI/data work (tests, contract, docs) on top of the baseline |
 
 `backend` also contains two small client edits made only to keep `tsc` green when the snapshot started returning `null` (`client/src/pages/Dashboard.tsx`, `client/src/pages/AvatarAdvisor.tsx`, 11 lines each way). These are the **only** shared-file overlap with the frontend branch.
@@ -24,7 +24,7 @@ Status: **plan only. Nothing has been pushed or deployed, and no remote is confi
 2. `git remote add origin <url>` (approval).
 3. Push `main` and `frontend` unchanged, then `backend`. Never `--force`; never rewrite history.
 4. Protect `main`: require PR review and passing checks. Add a CI job that runs the three checks above and a secret scanner.
-5. Open the PR `backend` -> `main` (not into `frontend`). PR body ends with the generated-by line.
+5. Open the PR `backend` -> `main` (not into `frontend`).
 
 ## 4. Frontend iteration without touching the teammate's files
 - The teammate keeps working on `frontend`. Backend never commits to it.

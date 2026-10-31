@@ -5,14 +5,14 @@ Audit date: 2026-10-31. Scope: backend branch `backend` after the goals mileston
 ## 1. Repository facts (verified locally)
 | Item | Result |
 |---|---|
-| Branches | `main` = `frontend` = 28477df (baseline from WealthVerse cd75ef1); `backend` = baseline + 19 commits (linear, no merges; 20 commits in total) |
+| Branches | `main` = `frontend` = 330e40b (a child of WealthVerse cd75ef1: its tree is cd75ef1 plus the INARI audit documents and `NOTICE.md`); `backend` = the same history plus 22 further INARI commits. Linear, no merges: 47 commits = the 24 original WealthVerse commits, then 23 INARI commits (the first is the baseline). |
 | Remote | none configured |
 | Tracked files | 341. Only `.env.example` matches an env/secret filename (placeholders only). `.project-config.json` is git-ignored and untracked. |
 | Secret scan | Across the 20 most recent commits and the working tree: no key, token, connection-string or private-key patterns. No `.env`/config/key file was ever added in any branch's history. |
 | Largest tracked file | 863 KB image. Total tracked size about 9 MB. |
 | Data | Only the seeded synthetic generator output and fixtures under `data/`, plus an attributed, licensed public SMS test corpus in `data/parser-tests/sms/`. No real statements. |
-| Commit identity | Every commit, including the baseline, is authored `INARI Backend <personal e-mail address removed>`. Pushing publishes that email address. See decision D2 below. |
-| `frontend` branch | Identical to `main`: it holds no teammate commits in this repository. The teammate's real work lives in their own clone or remote and must never be overwritten by this one. |
+| Commit identity | The 24 inherited WealthVerse commits keep their original author, `WealthVerse P0 Bot <wealthverse-p0@example.local>` (unchanged hashes). All 23 INARI commits are authored and committed by `Mohammed Suhail Rafek <255111071+mohammedsuhailrafek28@users.noreply.github.com>`. There are no AI co-author trailers. Pushing publishes these names and the GitHub noreply address, not a personal email. |
+| `frontend` branch | Identical to `main` (the INARI baseline): it holds no teammate commits in this repository. The teammate's real work lives in their own clone or remote and must never be overwritten by this one. |
 
 ## 2. What must reach the frontend teammate
 Integration is by contract, not by shared files. The teammate needs:
@@ -22,15 +22,15 @@ Integration is by contract, not by shared files. The teammate needs:
 
 | Commit | What it gives the UI |
 |---|---|
-| 4defced, fdc1ca5, 75cc2d4, e7f1b0a | Contracts, signed per-browser identity, ledger, router, first handoff |
-| 3a56266, b1611c3, b932a83 | CSV import, snapshot, categorisation/corrections, imported-mode dashboard/spending, HTTP e2e |
-| f462534, d004e7c, a6fc45b, 6a8160c | Synthetic data and fixtures, reconciliation notes in the snapshot, Phase 2 handoff |
-| 46178be | `simulate`, `analyzeIntent` |
-| 29f9ec4 | SMS import (UPI/card/bank alerts) |
-| f264f28 | Recurring payments and `cancel_subscriptions` |
-| f017a28 | `monthlyReport`, drift, guardrails, `reconcile` |
-| a718815 | `ask` / `askAdvisor` (deterministic) |
-| 50ac959 | Goals, `change_goal_contribution`, proposal audit, publishing plan |
+| d8fa1a2, b9073ee, 7f517c3, ff8bfa5 | Contracts, signed per-browser identity, ledger, router, first handoff |
+| 05390ab, 93d41cf, f5b8976 | CSV import, snapshot, categorisation/corrections, imported-mode dashboard/spending, HTTP e2e |
+| 15b2cdd, 384b29a, 427e014, 8578019 | Synthetic data and fixtures, reconciliation notes in the snapshot, Phase 2 handoff |
+| 925cb45 | `simulate`, `analyzeIntent` |
+| be8c18c | SMS import (UPI/card/bank alerts) |
+| 8ae0d56 | Recurring payments and `cancel_subscriptions` |
+| e48b126 | `monthlyReport`, drift, guardrails, `reconcile` |
+| cd41e79 | `ask` / `askAdvisor` (deterministic) |
+| 19b22a7 | Goals, `change_goal_contribution`, proposal audit, publishing plan |
 | (this milestone) | Test-timeout fix, no-external-LLM guard for imported data, this audit |
 
 4. Shared-file overlap: `backend` edits `client/src/pages/Dashboard.tsx` and `AvatarAdvisor.tsx` (null tolerance only). On merge the teammate keeps **their** version and re-adds null handling only if `tsc` complains.
@@ -136,18 +136,20 @@ Do not merge until a reviewer other than the author has approved. Protect `main`
 
 **A4 (approval) - teammate integration, on their machine, in a throwaway branch**
 
-Important: `main` here is a new root commit (28477df). Its tree is exactly WealthVerse cd75ef1 plus five added docs (`NOTICE.md`, `BACKEND_AUDIT.md`, `APA_CONTRACT_PROPOSAL.md`, `IMPLEMENTATION_PLAN.md`, `PS04_GAP_ANALYSIS.md`); no file differs. So the teammate's branch (built on cd75ef1 in the `wealth-verse` repository) has **unrelated history** with ours, and a plain merge is refused. Carry their UI work over as a patch instead; nothing of theirs is rewritten:
+INARI's history now starts with the 24 original WealthVerse commits (ending at cd75ef1) and the INARI baseline `330e40b` is their direct child, so any teammate branch that started from cd75ef1 shares ancestry with INARI and can be merged normally. **Confirm the teammate's starting commit first** (`git merge-base <their-branch> cd75ef1` should print cd75ef1).
 ```bash
-# in the teammate's existing clone, on their UI branch (here called ui-work); cd75ef1 is the shared starting point
-git diff cd75ef1 ui-work -- client > ../ui.patch
+# in the teammate's existing clone; their UI branch is called ui-work here and is never modified
 git remote add inari https://github.com/mohammedsuhailrafek28/INARI.git
 git fetch inari
-git switch -c integration/ui-on-backend inari/backend
-git apply --3way ../ui.patch      # conflicts only in Dashboard.tsx / AvatarAdvisor.tsx; keep the teammate's version
+git switch -c integration/ui-on-backend ui-work
+git merge inari/backend
+# conflicts are expected only where both sides changed a file:
+#   client/src/pages/Dashboard.tsx, client/src/pages/AvatarAdvisor.tsx  -> keep the teammate's version
+#   shared/inari/*, server/inari/*                                       -> keep the backend's version
 pnpm install && pnpm check && pnpm test && pnpm build
 git push -u inari integration/ui-on-backend
 ```
-Then open a pull request `integration/ui-on-backend` -> `main` for review. The patch is limited to `client`, so `shared/inari/*` keeps the backend's copy; if the UI needs a contract change, ask the backend owner rather than editing it. Their original branch stays untouched.
+Then open a pull request `integration/ui-on-backend` -> `main` for review. If their branch did not start from cd75ef1, use this fallback instead of the merge: `git diff <their-base> ui-work -- client > ../ui.patch`, create `integration/ui-on-backend` from `inari/backend`, and `git apply --3way ../ui.patch`. Their original branch stays untouched either way.
 
 **A5 (separate approval) - deployment.** Not prepared beyond section 5. Requires B3, B6, B7 and your go-ahead.
 
@@ -157,9 +159,9 @@ The four approved novelty features remain planned and were not implemented in th
 ## 8. Final verification record (2026-10-31, before the first push)
 | Check | Result |
 |---|---|
-| Local path / branch / HEAD | `<local INARI folder>`, `backend`, f30cc3e, working tree clean |
-| Branch pointers | `main` = `frontend` = 28477df; `backend` = f30cc3e, 19 commits ahead of `main` |
-| Graph | 20 commits in total, 1 root (28477df), 0 merges, 0 tags, linear |
+| Local path / branch / HEAD | `<local INARI folder>`; values below are for the rewritten history, prepared locally before the first push |
+| Branch pointers | `main` = `frontend` = 330e40b; `backend` = the final commit of this branch, 22 commits ahead of `main` |
+| Graph | 47 commits in total, 1 root (22d2db6, the first WealthVerse commit), 0 merges, 0 tags, linear |
 | Remote configured | none. `.git/config` has no WealthVerse reference |
 | Destination | `mohammedsuhailrafek28/INARI`: exists, **public**, not archived, size 0, no branches, no commits, no pull requests |
 | Write access | push and admin permissions for the signed-in account `mohammedsuhailrafek28` |
@@ -180,7 +182,7 @@ The four approved novelty features remain planned and were not implemented in th
 | Licence file (F2) | **PENDING OWNER INPUT.** `package.json` says `MIT` but there is no `LICENSE` file. The text is ready (`make_license.py`, outside the repository) and needs two inputs from the owner: the copyright holder name and the year. `NOTICE.md` now states the intended scope (code and docs; not the CC BY 4.0 corpus, dependencies, or media/template files of unverified provenance) and that the licence file is pending. Nothing was invented. |
 | Third-party data | SMS corpus is CC BY 4.0 with `LICENSE`, `CITATION.cff`, `ATTRIBUTION.md` and a recorded SHA-256, unmodified: suitable for public redistribution with attribution. Other candidate datasets are explicitly not included (`NOTICE.md`). |
 | Reused code | `NOTICE.md` records the WealthVerse origin (cd75ef1) |
-| Commit authorship | All 20 commits are authored `INARI Backend <personal e-mail address removed>`. Pushing to a public repository makes this name and e-mail publicly visible. |
+| Commit authorship | 24 inherited commits by `WealthVerse P0 Bot <wealthverse-p0@example.local>`; 23 INARI commits by `Mohammed Suhail Rafek` using the GitHub noreply address. Pushing to a public repository makes these names visible. |
 | Configuration | `render.yaml` is public; it contains no secrets but sets `WEALTHVERSE_ALLOW_DEMO_IN_PRODUCTION=true`. Do not deploy from it until B6 and B7 are done. |
 
 ## 10. UI module inventory (from the client files in THIS repository)
@@ -203,7 +205,7 @@ This is the baseline WealthVerse client plus two null-tolerance edits. **The tea
 Router in `App.tsx` is a plain path switch, so a new screen needs a route line plus a page file.
 
 ## 11. Teammate integration risks
-1. Unrelated Git history, handled by patch-based transfer (A4).
+1. Shared ancestry with WealthVerse cd75ef1 makes a normal merge possible (A4), but only if the teammate's branch started there; a patch fallback is documented.
 2. Most backend capability has no UI yet, so the integration is mostly new screens, not conflicts.
 3. Legacy routes and `inari.*` can disagree in wording; prefer `inari.*` for new work.
 4. A teammate who edits `shared/inari/*` locally will drift from the contract; changes should be requested from the backend owner.
