@@ -151,6 +151,32 @@ describe("inari router: stub honesty", () => {
       const { id } = await c.inari.upsertGoal({ goalType: "gadget", targetAmount: 1000, currentAmount: 0, priority: "medium" });
       return c.inari.deleteGoal({ id });
     },
+    createClaim: c => mkClaim(c).then(x => x.created),
+    listClaims: c => c.inari.listClaims(),
+    claimMatches: async c => c.inari.claimMatches({ claimId: (await mkClaim(c)).id }),
+    confirmClaimMatch: async c => {
+      const { id } = await mkClaim(c);
+      return c.inari.confirmClaimMatch({ claimId: id, creditTransactionId: "txn_missing" }).catch(() => c.inari.listClaims());
+    },
+    undoClaimMatch: async c => {
+      const { id } = await mkClaim(c);
+      return c.inari.undoClaimMatch({ claimId: id, creditTransactionId: "txn_missing" }).catch(() => c.inari.listClaims());
+    },
+    cancelClaim: async c => c.inari.cancelClaim({ claimId: (await mkClaim(c)).id }),
+    manualEntryPreview: c => c.inari.manualEntryPreview({ text: "I spent 350 cash on tea yesterday" }),
+    manualEntryCommit: async c => {
+      const p = await c.inari.manualEntryPreview({ text: "I spent 350 cash on tea yesterday" });
+      return c.inari.manualEntryCommit({ previewId: p.previewId!, idempotencyKey: "foundation-key-1" });
+    },
+    dataCoverage: c => c.inari.dataCoverage(),
+    emiCheck: c => c.inari.emiCheck({ cashPrice: 40000, emiMonthly: 6700, months: 6 }),
+  };
+  const mkClaim = async (c: ReturnType<typeof caller>) => {
+    const p = await c.inari.importPreview({ kind: "csv", filename: "a.csv", content: TINY_CSV });
+    await c.inari.importCommit({ previewId: p.previewId });
+    const debit = (await c.inari.listTransactions({ limit: 100 })).items.find(t => t.direction === "debit")!;
+    const created = await c.inari.createClaim({ kind: "refund", transactionId: debit.id, expectedAmount: 0.01 });
+    return { id: created.id, created };
   };
 
   it("has a call for every procedure", () => {

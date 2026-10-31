@@ -27,6 +27,8 @@ export const PROCEDURE_NAMES = [
   "ask", "askAdvisor", "analyzeIntent",
   "monthlyReport", "getMonthlyReport", "listReportMonths",
   "getGoals", "upsertGoal", "deleteGoal",
+  "createClaim", "listClaims", "claimMatches", "confirmClaimMatch", "undoClaimMatch", "cancelClaim",
+  "manualEntryPreview", "manualEntryCommit", "dataCoverage", "emiCheck",
 ] as const;
 export type ProcedureName = (typeof PROCEDURE_NAMES)[number];
 
@@ -56,6 +58,9 @@ export const PROCEDURE_STATUS: Record<ProcedureName, ImplementationStatus> = {
   ask: "implemented", askAdvisor: "implemented", analyzeIntent: "implemented",
   monthlyReport: "implemented", getMonthlyReport: "implemented", listReportMonths: "implemented",
   getGoals: "implemented", upsertGoal: "implemented", deleteGoal: "implemented",
+  createClaim: "implemented", listClaims: "implemented", claimMatches: "implemented", confirmClaimMatch: "implemented",
+  undoClaimMatch: "implemented", cancelClaim: "implemented",
+  manualEntryPreview: "implemented", manualEntryCommit: "implemented", dataCoverage: "implemented", emiCheck: "implemented",
 };
 
 /* ---------- primitives ---------- */
@@ -499,3 +504,138 @@ export const INARI_ERROR_CODES = [
 /** Shape of `error.data.inari` on every failed tRPC call. Never contains user content or raw validation payloads. */
 export type InariErrorData = { code: InariErrorCode; fields?: Array<{ path: string; issue: string }> };
 export type InariErrorCode = (typeof INARI_ERROR_CODES)[number];
+
+
+/* ---------- refund watch and reimbursements (additive) ---------- */
+export const ClaimKind = z.enum(["refund", "reimbursement"]);
+export const ClaimStatus = z.enum(["pending", "overdue", "partially_received", "received", "cancelled"]);
+export const Claim = z.object({
+  id: z.string(),
+  kind: ClaimKind,
+  transactionId: z.string(),
+  /** the original debit this claim is about; null only if that transaction was later removed */
+  original: z.object({ postedOn: IsoDate, amountPaise: z.number().int(), narration: z.string(), merchant: z.string().nullable() }).nullable(),
+  counterparty: z.string().nullable(),
+  expectedAmountPaise: z.number().int().positive(),
+  receivedAmountPaise: z.number().int().nonnegative(),
+  outstandingAmountPaise: z.number().int().nonnegative(),
+  /** reimbursement only: what the user really spent after others pay their share */
+  personalSharePaise: z.number().int().nullable(),
+  expectedDate: IsoDate.nullable(),
+  status: ClaimStatus,
+  settlements: z.array(z.object({ creditTransactionId: z.string(), amountPaise: z.number().int().positive(), confirmedAt: z.string() })),
+  note: z.string().nullable(),
+  createdAt: z.string(),
+});
+export type Claim = z.infer<typeof Claim>;
+export const CreateClaimInput = z.object({
+  kind: ClaimKind,
+  transactionId: z.string().max(100),
+  /** rupees: the refund promised, or the part of the payment others owe you */
+  expectedAmount: z.number().positive().max(1_000_000_000),
+  expectedDate: IsoDate.optional(),
+  counterparty: z.string().max(60).optional(),
+  note: z.string().max(200).optional(),
+});
+export const ClaimsOutput = z.object({
+  ...impl,
+  items: z.array(Claim),
+  summary: z.object({
+    pendingRefundPaise: z.number().int(), overdueRefundCount: z.number().int(),
+    outstandingReimbursementPaise: z.number().int(), grossReimbursableSpendPaise: z.number().int(), personalShareOfReimbursablePaise: z.number().int(),
+  }),
+  notes: z.array(z.string()),
+});
+export type ClaimsOutput = z.infer<typeof ClaimsOutput>;
+export const ClaimMatchesOutput = z.object({
+  ...impl,
+  claimId: z.string(),
+  suggestions: z.array(z.object({
+    creditTransactionId: z.string(), postedOn: IsoDate, amountPaise: z.number().int(), availablePaise: z.number().int(),
+    narration: z.string(), score: z.number(), reasons: z.array(z.string()),
+    requiresConfirmation: z.literal(true), ambiguous: z.boolean(),
+  })),
+  notes: z.array(z.string()),
+});
+export const ConfirmClaimMatchInput = z.object({
+  claimId: z.string().max(100), creditTransactionId: z.string().max(100),
+  /** rupees; defaults to min(claim outstanding, credit still available) */
+  amount: z.number().positive().max(1_000_000_000).optional(),
+});
+export const UndoClaimMatchInput = z.object({ claimId: z.string().max(100), creditTransactionId: z.string().max(100) });
+
+/* ---------- manual (user-confirmed) entries and data coverage (additive) ---------- */
+export const PaymentType = z.enum(["cash", "upi", "card", "other"]);
+export const ManualEntryInput = z.object({
+  /** free text such as "I spent 1,200 cash on groceries yesterday"; explicit fields below override what it says */
+  text: z.string().max(300).optional(),
+  amount: z.number().positive().max(1_000_000_000).optional(),
+  direction: z.enum(["debit", "credit"]).optional(),
+  category: Category.optional(),
+  date: IsoDate.optional(),
+  paymentType: PaymentType.optional(),
+  description: z.string().max(120).optional(),
+});
+export const ManualEntryPreviewOutput = z.object({
+  ...impl,
+  previewId: z.string().nullable(),
+  entry: z.object({
+    amountPaise: z.number().int().nullable(), direction: z.enum(["debit", "credit"]).nullable(), category: Category.nullable(),
+    postedOn: IsoDate, paymentType: PaymentType, narration: z.string(),
+  }),
+  assumptions: z.array(z.string()),
+  needsUserInput: z.array(z.enum(["amount", "direction"])),
+  possibleDuplicateOf: z.string().nullable(),
+  requiresConfirmation: z.literal(true),
+});
+export const ManualEntryCommitInput = z.object({ previewId: z.string().max(100), idempotencyKey: z.string().min(8).max(64) });
+export const ManualEntryCommitOutput = z.object({
+  ...impl, batchId: z.string(), transactionId: z.string(), duplicateSubmission: z.boolean(), source: z.literal("manual"),
+});
+export const DataCoverageOutput = z.object({
+  ...impl,
+  observed: z.object({
+    transactionCount: z.number().int(), from: IsoDate.nullable(), to: IsoDate.nullable(),
+    bySource: z.record(z.string(), z.number().int()),
+  }),
+  months: z.array(z.object({ month: z.string(), count: z.number().int(), manualCount: z.number().int() })),
+  gaps: z.array(z.object({ kind: z.enum(["month_without_transactions", "quiet_period", "no_manual_entries"]), from: IsoDate.nullable(), to: IsoDate.nullable(), detail: z.string() })),
+  note: z.string(),
+});
+
+/* ---------- EMI reality check (additive; hypothetical only) ---------- */
+export const EmiCheckInput = z.object({
+  /** rupees */
+  cashPrice: z.number().positive().max(1_000_000_000),
+  emiMonthly: z.number().positive().max(1_000_000_000),
+  months: z.number().int().min(1).max(120),
+  downPayment: z.number().nonnegative().max(1_000_000_000).optional(),
+  processingFee: z.number().nonnegative().max(1_000_000_000).optional(),
+  /** taxes charged on the EMI plan (for example GST on interest or fee), as a rupee amount */
+  taxes: z.number().nonnegative().max(1_000_000_000).optional(),
+  /** discount or cashback you only get when paying upfront (or lose by taking the EMI) */
+  upfrontDiscount: z.number().nonnegative().max(1_000_000_000).optional(),
+  /** discount that applies to both options */
+  discountBoth: z.number().nonnegative().max(1_000_000_000).optional(),
+});
+export const EmiCheckOutput = z.object({
+  ...impl,
+  totalPayableEmiPaise: z.number().int(),
+  totalPayableUpfrontPaise: z.number().int(),
+  extraCostOfEmiPaise: z.number().int(),
+  extraCostPercentOfCash: z.number(),
+  isReallyNoCost: z.boolean(),
+  monthlyCommitmentPaise: z.number().int(),
+  cashLeftAfterUpfrontPurchasePaise: z.number().int().nullable(),
+  monthlySurplusPaise: z.number().int().nullable(),
+  surplusAfterEmiPaise: z.number().int().nullable(),
+  breakdown: z.array(z.object({ label: z.string(), paise: z.number().int() })),
+  verdict: z.string(),
+  missingTerms: z.array(z.string()),
+  assumptions: z.array(z.string()),
+  warnings: z.array(z.string()),
+  createsNoDebt: z.literal(true),
+});
+export type EmiCheckOutput = z.infer<typeof EmiCheckOutput>;
+export type CreateClaimInput = z.infer<typeof CreateClaimInput>;
+export type ManualEntryInput = z.infer<typeof ManualEntryInput>;

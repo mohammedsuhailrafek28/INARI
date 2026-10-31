@@ -41,6 +41,20 @@ export type StoredGoal = {
   updatedAt: string;
 };
 
+/** A refund or reimbursement the user expects. Never a ledger transaction; settled only by an explicit link to a real credit. */
+export type StoredClaim = {
+  id: string;
+  kind: "refund" | "reimbursement";
+  transactionId: string;
+  counterparty: string | null;
+  expectedAmountPaise: number;
+  expectedDate: string | null;
+  note: string | null;
+  createdAt: string;
+  cancelled?: boolean;
+  settlements: Array<{ creditTransactionId: string; amountPaise: number; confirmedAt: string }>;
+};
+
 export type StoredProfile = {
   emergencyFund: number | null;
   investments: number | null;
@@ -53,6 +67,8 @@ export type StoredProfile = {
   subscriptionDecisions?: Record<string, "confirmed" | "dismissed">;
   /** user-entered goals (never inferred from the ledger) */
   goals?: StoredGoal[];
+  /** refund and reimbursement claims */
+  claims?: StoredClaim[];
 };
 
 export type LedgerStorageInfo = { kind: "memory" | "json"; durable: boolean; note: string };

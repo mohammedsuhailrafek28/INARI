@@ -12,6 +12,8 @@ import {
   IntentAnalysis, LearnedRulesOutput, ListTransactionsInput, ListTransactionsOutput, MetaOutput, MonthlyReport,
   PROCEDURE_STATUS, ReconcileInput, ReconcileOutput, ReportMonthsOutput, SimulateInput, SimulationResult, Snapshot, SubscriptionsOutput,
   SuccessOutput, YearMonth, DataSource, type Category,
+  ClaimKind, ClaimMatchesOutput, ClaimsOutput, ConfirmClaimMatchInput, CreateClaimInput, DataCoverageOutput, EmiCheckInput,
+  EmiCheckOutput, ManualEntryCommitInput, ManualEntryCommitOutput, ManualEntryInput, ManualEntryPreviewOutput, UndoClaimMatchInput,
 } from "../../shared/inari/contracts";
 import * as fx from "../../shared/inari/fixtures";
 import { guarded } from "./errors";
@@ -24,6 +26,9 @@ import { loadImportedModel } from "./importedModel";
 import { runSimulation } from "./simulate";
 import { deleteGoalFor, goalsOverview, upsertGoalFor } from "./goals";
 import { askAdvisorFor } from "./advisor";
+import { cancelClaimFor, claimMatchesFor, confirmClaimMatchFor, createClaimFor, listClaimsFor, undoClaimMatchFor } from "./claims";
+import { dataCoverageFor, manualEntryCommitFor, manualEntryPreviewFor } from "./manual";
+import { emiCheckFor } from "./emi";
 import { monthlyReportFor, reportMonthsFor } from "./report";
 import { analyzeIntentText } from "./nlp/intent";
 
@@ -213,4 +218,45 @@ export const inariRouter = router({
         return { implementation: "implemented" as const, success: true as const };
       })
     ),
+
+  // refund watch + reimbursements: claims never create cash; settlement needs an explicit confirmation
+  createClaim: ownerProcedure.input(CreateClaimInput).output(GoalIdOutput).mutation(({ ctx, input }) =>
+    guarded(async () => ({ implementation: "implemented" as const, id: await createClaimFor(ctx.ownerKey, input) }))
+  ),
+  listClaims: ownerProcedure.input(z.object({ kind: ClaimKind.optional() }).optional()).output(ClaimsOutput).query(({ ctx, input }) =>
+    guarded(() => listClaimsFor(ctx.ownerKey, input?.kind))
+  ),
+  claimMatches: ownerProcedure.input(z.object({ claimId: z.string().max(100) })).output(ClaimMatchesOutput).query(({ ctx, input }) =>
+    guarded(() => claimMatchesFor(ctx.ownerKey, input.claimId))
+  ),
+  confirmClaimMatch: ownerProcedure.input(ConfirmClaimMatchInput).output(ClaimsOutput).mutation(({ ctx, input }) =>
+    guarded(async () => {
+      await confirmClaimMatchFor(ctx.ownerKey, input);
+      return listClaimsFor(ctx.ownerKey);
+    })
+  ),
+  undoClaimMatch: ownerProcedure.input(UndoClaimMatchInput).output(ClaimsOutput).mutation(({ ctx, input }) =>
+    guarded(async () => {
+      await undoClaimMatchFor(ctx.ownerKey, input);
+      return listClaimsFor(ctx.ownerKey);
+    })
+  ),
+  cancelClaim: ownerProcedure.input(z.object({ claimId: z.string().max(100) })).output(ClaimsOutput).mutation(({ ctx, input }) =>
+    guarded(async () => {
+      await cancelClaimFor(ctx.ownerKey, input.claimId);
+      return listClaimsFor(ctx.ownerKey);
+    })
+  ),
+
+  // untracked money: preview then explicit commit (idempotent); undo = importUndo(batchId)
+  manualEntryPreview: ownerProcedure.input(ManualEntryInput).output(ManualEntryPreviewOutput).mutation(({ ctx, input }) =>
+    guarded(() => manualEntryPreviewFor(ctx.ownerKey, input))
+  ),
+  manualEntryCommit: ownerProcedure.input(ManualEntryCommitInput).output(ManualEntryCommitOutput).mutation(({ ctx, input }) =>
+    guarded(() => manualEntryCommitFor(ctx.ownerKey, input))
+  ),
+  dataCoverage: ownerProcedure.output(DataCoverageOutput).query(({ ctx }) => guarded(() => dataCoverageFor(ctx.ownerKey))),
+
+  // hypothetical only: never writes to the ledger
+  emiCheck: ownerProcedure.input(EmiCheckInput).output(EmiCheckOutput).mutation(({ ctx, input }) => guarded(() => emiCheckFor(ctx.ownerKey, input))),
 });
