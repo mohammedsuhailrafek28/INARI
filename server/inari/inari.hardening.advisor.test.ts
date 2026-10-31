@@ -147,6 +147,17 @@ describe("other advisor edge cases", () => {
     expect(r.answer).toContain("₹6,000");
   });
 
+  it("a self-contained subscription question is answered even right after another topic", async () => {
+    await load(FOUR);
+    const refund = await ask("Where is my refund?");
+    const subs = await ask("Which subscriptions do I have?", refund.context);
+    expect(subs.intent.intent).toBe("subscription_query");
+    expect(subs.answer).toMatch(/Netflix/i);
+    const spend = await ask("How much did I spend on dining last month?");
+    const again = await ask("Which subscriptions do I have?", spend.context);
+    expect(again.answer).toMatch(/Netflix/i);
+  });
+
   it("missing required data: a what-if with no amount asks for it", async () => {
     await load(FOUR);
     const r = await ask("What if my income drops?");

@@ -208,7 +208,9 @@ export function analyzeIntentText(rawText: string, previous?: Previous): IntentA
 
   if (UNSAFE.test(t)) return done("unsafe_request", 0.9, { category: null });
 
-  const isFollowUp = !!previous && (FOLLOWUP.test(t) || (t.split(" ").length <= 5 && (percent !== null || amount !== null || category !== null)));
+  // A short, self-contained question ("which subscriptions do I have?") is not a follow-up just because it names a category.
+  const standalone = /^(?:which|what|how|where|who|when|why|do|does|is|are|can|will|show|list)\b/.test(t) && (SUBS.test(t) || REVIEW.test(t) || SPEND_Q.test(t) || GOAL.test(t));
+  const isFollowUp = !!previous && (FOLLOWUP.test(t) || (!standalone && t.split(" ").length <= 5 && (percent !== null || amount !== null || category !== null)));
   if (isFollowUp && previous) {
     category = category ?? previous.category;
     if (previous.intent === "what_if") {
