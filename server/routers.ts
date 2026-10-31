@@ -2,6 +2,7 @@ import { z } from "zod";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
+import { inariRouter } from "./inari/router";
 import { publicProcedure, router, protectedProcedure } from "./_core/trpc";
 import {
   getAllDemoProfiles,
@@ -99,6 +100,7 @@ async function getOrCreateActiveDemoProfileId(userId: number) {
 
 export const appRouter = router({
   system: systemRouter,
+  inari: inariRouter,
   auth: router({
     me: publicProcedure.query((opts) => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
