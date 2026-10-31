@@ -291,7 +291,7 @@ export default function Dashboard() {
           riskProfile={wealth.riskProfile.profile ?? profile.riskProfile}
           summary={`Your monthly surplus is ${formatCurrencyINR(wealth.monthlySurplus)} with a ${formatPercentage(data.savingsRate)} savings rate.`}
           insight={topInsight?.title ?? nextBestAction}
-          healthScore={data.financialHealth?.overallScore ?? 0}
+          healthScore={data.financialHealth?.overallScore ?? undefined}
           biggestRisk={topAlert?.title ?? wealth.riskProfile.constraints?.[0] ?? "No high-priority risk"}
           aiRecommendation={nextBestAction}
           onAskAdvisor={() => setLocation("/avatar")}

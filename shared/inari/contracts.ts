@@ -50,8 +50,8 @@ export const PROCEDURE_STATUS: Record<ProcedureName, ImplementationStatus> = {
   getCategories: "implemented", correctCategory: "implemented", listLearnedRules: "implemented", getLearnedRules: "implemented",
   deleteLearnedRule: "implemented", getBreakdown: "implemented",
   listSubscriptions: "stub", getSubscriptions: "stub", confirmSubscription: "stub",
-  simulate: "stub",
-  ask: "stub", askAdvisor: "stub", analyzeIntent: "stub",
+  simulate: "implemented",
+  ask: "stub", askAdvisor: "stub", analyzeIntent: "implemented",
   monthlyReport: "stub", getMonthlyReport: "stub", listReportMonths: "stub",
   getGoals: "stub", upsertGoal: "stub", deleteGoal: "stub",
 };
@@ -291,6 +291,8 @@ export const SimulationResult = z.object({
   })),
   assumptions: z.array(z.string()),
   warnings: z.array(z.string()),
+  /** Additive (optional): data-quality notes and baseline facts the numbers rest on. */
+  evidence: z.array(DataQualityNote).optional(),
   ledgerUnchanged: z.literal(true),
   disclaimer: z.string(),
 });

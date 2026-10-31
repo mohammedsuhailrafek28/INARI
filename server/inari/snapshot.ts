@@ -158,8 +158,15 @@ export function deriveFinancialSnapshot(args: {
   if (interiorGaps.length > 0) {
     dataQuality.push({ code: "gap_months", severity: "warning", message: `No transactions in: ${interiorGaps.join(", ")}.` });
   }
-  const dupCount = transactions.filter(t => t.possibleDuplicateOf).length;
-  if (dupCount > 0) dataQuality.push({ code: "possible_duplicates", severity: "warning", message: `${dupCount} transaction(s) may duplicate existing ones; review them.` });
+  const dups = transactions.filter(t => t.possibleDuplicateOf);
+  if (dups.length > 0) {
+    dataQuality.push({
+      code: "possible_duplicates",
+      severity: "warning",
+      message: `${dups.length} transaction(s) have the same date, amount and direction as another one and may be double-counted. They ARE included in the totals until you delete the extra import or confirm they are separate payments.`,
+      transactionIds: dups.slice(0, 50).map(t => t.id),
+    });
+  }
   const unclassified = transactions.filter(t => t.categorySource === "unclassified");
   if (unclassified.length > 0) {
     dataQuality.push({

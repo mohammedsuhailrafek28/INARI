@@ -24,7 +24,7 @@ Every `inari.*` response has `implementation: "stub" | "implemented"`. **`stub` 
 | `importPreview` → `importCommit` → `importUndo` | m | **implemented** (CSV only; SMS/PDF return `NOT_IMPLEMENTED`) |
 | `getSnapshot`, `setBalances`, `useDemoData` | q / m | **implemented** |
 | `correctCategory`, `listLearnedRules` (`getLearnedRules`), `deleteLearnedRule`, `getBreakdown` | q / m | **implemented** |
-| `listSubscriptions`, `confirmSubscription`, `simulate`, `ask`/`askAdvisor`, `analyzeIntent`, `monthlyReport`/`getMonthlyReport`, `listReportMonths`, `getGoals`, `upsertGoal`, `deleteGoal` | | stub |
+| `listSubscriptions`, `confirmSubscription`, `ask`/`askAdvisor`, `monthlyReport`/`getMonthlyReport`, `listReportMonths`, `getGoals`, `upsertGoal`, `deleteGoal` | | stub |
 
 ### Import flow
 1. `importPreview({kind:"csv", filename, content})` – nothing is stored. Returns `previewId`, `counts` (`accepted/duplicate/possibleDuplicate/rejected/ignored`), `detectedFormat`, `period`, `warnings`, up to 200 `rows` (problems first; `rejected` rows carry a `reason`). Previews expire after 30 minutes and are private to the caller.
@@ -76,3 +76,19 @@ pnpm test && pnpm run check && pnpm build
 - Storage is in-memory/JSON (demo-grade). No real authentication.
 - Voice: the backend receives dictated text only; no Wispr Flow integration assumed.
 - Persona-only legacy features (savings streak, badges, stored alerts) are empty in imported mode.
+
+## Simulation and dictated-text intent (implemented, backend branch)
+
+`inari.analyzeIntent({text, previous?})` turns dictated text into a structured intent. It is rule-based and deterministic (no LLM). Fillers are removed, number words and `k`/`lakh`/`crore` are understood, and the **latest** amount wins when the speaker corrects themselves ("4000, actually make that 5000"). When something is missing it returns a clarification question instead of guessing; pass the earlier result back as `previous` to answer it.
+
+`inari.simulate({scenarios})` is pure backend arithmetic in integer paise. It never changes the ledger (`ledgerUnchanged` is always `true`).
+
+- Supported: `reduce_category`, `change_income`, `one_off_expense`, `start_sip`, `pay_down_debt`.
+- `cancel_subscriptions` and `change_goal_contribution` return error code `INVALID_SCENARIO` ("not available yet") because subscriptions and goals are still stubs.
+- Several scenarios can be combined. An identical repeated scenario is applied once (warning shown). Reductions to the same category add up and are capped at that category's spend.
+- With no import, or no complete month, `status` is `"insufficient_data"` with empty `metrics`. Show the `warnings`.
+- Each metric has `baseline`, `scenario` and `delta`. Show `assumptions` and `warnings` with every result.
+- **New, optional field `evidence`** (same shape as `dataQuality` notes). It lists the baseline months and any unresolved flags the numbers inherit (card repayments counted as expenses, possible duplicates, possible transfer pairs). Older clients can ignore it.
+- Unknown balances are never invented: emergency-fund cover is omitted and a warning explains why.
+
+Snapshot change: the `possible_duplicates` note now carries `transactionIds` and says those rows are included in totals. Dashboard change: `ProfileHero` now receives `undefined` (shows "Review") instead of `0` when the health score is unknown.

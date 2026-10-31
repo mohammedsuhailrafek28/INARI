@@ -20,6 +20,9 @@ import {
   commitImport, correctCategory, deleteLearnedRule, getBreakdown, getSnapshotFor, previewImport, setBalances,
   setUseDemo, undoImport, isImportedMode,
 } from "./service";
+import { loadImportedModel } from "./importedModel";
+import { runSimulation } from "./simulate";
+import { analyzeIntentText } from "./nlp/intent";
 
 const LIMITS = { maxCsvBytes: 5_000_000, maxSmsChars: 500_000, maxPdfBytes: 6_000_000 } as const;
 
@@ -105,7 +108,7 @@ export const inariRouter = router({
       limits: LIMITS,
       features: {
         ledger: true, csv: true, sms: false, pdf: false, categorization: true, subscriptions: false,
-        simulations: false, reports: false, guardrails: false, voiceIntent: false, llm: false,
+        simulations: true, reports: false, guardrails: false, voiceIntent: true, llm: false,
       },
       procedures: PROCEDURE_STATUS,
     };
@@ -180,11 +183,13 @@ export const inariRouter = router({
     .output(SuccessOutput)
     .mutation(() => ({ implementation: "stub" as const, success: true as const })),
 
-  simulate: ownerProcedure.input(SimulateInput).output(SimulationResult).mutation(() => fx.sampleSimulation),
+  simulate: ownerProcedure.input(SimulateInput).output(SimulationResult).mutation(({ ctx, input }) =>
+    guarded(async () => runSimulation(input.scenarios, await loadImportedModel(ctx.ownerKey)))
+  ),
 
   ask: askProcedure,
   askAdvisor: askProcedure, // alias
-  analyzeIntent: ownerProcedure.input(AnalyzeIntentInput).output(IntentAnalysis).mutation(() => fx.sampleIntent),
+  analyzeIntent: ownerProcedure.input(AnalyzeIntentInput).output(IntentAnalysis).mutation(({ input }) => analyzeIntentText(input.text, input.previous)),
 
   monthlyReport: monthlyReportProcedure,
   getMonthlyReport: monthlyReportProcedure, // alias

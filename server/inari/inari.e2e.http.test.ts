@@ -120,6 +120,22 @@ describe("HTTP e2e: upload -> preview -> commit -> snapshot -> dashboard, with t
     expect(notCsv.error.data.inari.code).toBe("PARSE_FAILED");
   });
 
+  it("dictated text -> intent -> simulation over HTTP, without touching the ledger", async () => {
+    const preview = await alice.call("inari.importPreview", { kind: "csv", filename: "q3.csv", content: CSV });
+    await alice.call("inari.importCommit", { previewId: preview.data.previewId });
+    const before = (await alice.call("inari.getSnapshot")).data;
+    const intent = await alice.call("inari.analyzeIntent", { text: "um I spend 6000 on swiggy, actually make that 7000, what if I cut it in half" });
+    expect(intent.data).toMatchObject({ intent: "what_if", category: "dining", percent: 50, amount: 7000, scenario: { type: "reduce_category", category: "dining", percent: 50 } });
+    const sim = await alice.call("inari.simulate", { scenarios: [intent.data.scenario] });
+    const expenses = sim.data.metrics.find((m: any) => m.label === "Monthly expenses");
+    expect(expenses).toMatchObject({ baseline: 60000, scenario: 57000 }); // dining 6000 halved
+    expect(sim.data.ledgerUnchanged).toBe(true);
+    expect((await alice.call("inari.getSnapshot")).data).toEqual(before);
+    expect((await bob.call("inari.simulate", { scenarios: [intent.data.scenario] })).data.status).toBe("insufficient_data");
+    const bad = await alice.call("inari.simulate", { scenarios: [{ type: "cancel_subscriptions", subscriptionIds: ["x"] }] });
+    expect(bad.error.data.inari.code).toBe("INVALID_SCENARIO");
+  });
+
   it("correction over HTTP recalculates the breakdown; clearMyData then wipes alice only", async () => {
     const tx = (await alice.call("inari.listTransactions", { month: "2026-09", limit: 50 }, "query")).data.items.find((t: any) => t.narration.includes("UBER"));
     const fix = await alice.call("inari.correctCategory", { transactionId: tx.id, category: "travel", applyToMerchant: true });
