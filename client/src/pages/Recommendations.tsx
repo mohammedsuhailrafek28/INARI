@@ -1,3 +1,4 @@
+import { PageSections } from "@/components/inari/LedgerOverview";
 import inariLogo from "@/assets/inari/inari-logo.svg";
 import { DashboardNavbar, type DashboardNavLink } from "@/components/layout/DashboardNavbar";
 import { PriorityRecommendation } from "@/components/recommendations/PriorityRecommendation";
@@ -236,6 +237,7 @@ export default function Recommendations() {
       <div className="space-y-6">
         <ModeBanner />
         <DemoNotice />
+        {mode.imported && <PageSections items={[{"href": "#report", "label": "Monthly report"}, {"href": "#whatif", "label": "What-if scenarios"}, {"href": "#emi", "label": "EMI reality check"}, {"href": "#recurring", "label": "Recurring payments"}]} />}
         <section className="rounded-[var(--wv-radius-card)] border border-wv-border bg-wv-surface p-5 shadow-wv-card sm:p-6">
           <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
             <div>
@@ -271,7 +273,7 @@ export default function Recommendations() {
             title="Recommendation summary"
             description="Summary values are calculated from active-profile recommendation records."
           />
-          <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+          <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
             <FinancialMetricCard
               title="Active recommendations"
               value={String(recommendations.length)}
@@ -439,7 +441,7 @@ function RecommendationFrame({
         onMobileMenuClick={() => setMobileMenuOpen((open) => !open)}
         onLogout={onLogout}
       />
-      <main className="mx-auto max-w-[var(--wv-content-width)] px-4 py-6 sm:px-6 lg:px-8">
+      <main id="workspace-content" tabIndex={-1} className="mx-auto max-w-[var(--wv-content-width)] px-4 py-6 sm:px-6 lg:px-8">
         {children}
       </main>
     </div>

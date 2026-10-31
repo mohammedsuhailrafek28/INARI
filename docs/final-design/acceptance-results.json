@@ -1,0 +1,240 @@
+{
+  "base": "http://127.0.0.1:4320",
+  "runAt": "2026-10-31T16:34:19.393Z",
+  "browser": "Playwright / Chrome, production build",
+  "results": [
+    {
+      "name": "Landing explains product and enters the actual Import Center",
+      "status": "PASS",
+      "details": null,
+      "ms": 2149
+    },
+    {
+      "name": "Canonical CSV preview and explicit confirmation writes exactly 494 rows",
+      "status": "PASS",
+      "details": null,
+      "ms": 989
+    },
+    {
+      "name": "Dashboard verifies all four canonical financial invariants and unknown balances",
+      "status": "PASS",
+      "details": {
+        "monthsCovered": 5.9,
+        "completeMonths": 6,
+        "firstDate": "2026-04-01",
+        "lastDate": "2026-09-28",
+        "transactionCount": 494
+      },
+      "ms": 1303
+    },
+    {
+      "name": "Dashboard chart labels and category values agree with backend data",
+      "status": "PASS",
+      "details": {
+        "topCategories": [
+          [
+            "rent",
+            18000
+          ],
+          [
+            "shopping",
+            8325.07
+          ],
+          [
+            "groceries",
+            5759.74
+          ],
+          [
+            "other",
+            4500
+          ],
+          [
+            "utilities",
+            4206.67
+          ],
+          [
+            "dining",
+            4156.58
+          ]
+        ],
+        "trendMonths": 6
+      },
+      "ms": 70
+    },
+    {
+      "name": "Duplicate CSV re-import prevents any second posting",
+      "status": "PASS",
+      "details": null,
+      "ms": 1785
+    },
+    {
+      "name": "Correction updates six merchant rows and downstream dashboard, chart and report",
+      "status": "PASS",
+      "details": {
+        "expenses": 52976.04,
+        "surplus": 32125.96,
+        "savingsRate": 37.75
+      },
+      "ms": 3311
+    },
+    {
+      "name": "Correction can be restored through the same UI without losing rows",
+      "status": "PASS",
+      "details": null,
+      "ms": 1405
+    },
+    {
+      "name": "Create and update a confirmed goal with a backend projection",
+      "status": "PASS",
+      "details": {
+        "progress": 25,
+        "projection": "2027-06-30"
+      },
+      "ms": 1815
+    },
+    {
+      "name": "Monthly report displays ledger-based September totals",
+      "status": "PASS",
+      "details": null,
+      "ms": 1466
+    },
+    {
+      "name": "Income-drop what-if shows expected ₹17,625.96 surplus and leaves ledger unchanged",
+      "status": "PASS",
+      "details": null,
+      "ms": 546
+    },
+    {
+      "name": "Goal what-if displays backend completion dates and changes its dependent result",
+      "status": "PASS",
+      "details": "Goal arrival comparison\nJapan trip\n\nNow: 2027-06-30 → Scenario: 2027-02-28\n\n4 month(s) saved.",
+      "ms": 575
+    },
+    {
+      "name": "Subscription cancellation what-if uses actual recurring payments without cancelling them",
+      "status": "PASS",
+      "details": null,
+      "ms": 201
+    },
+    {
+      "name": "EMI reality check renders server-computed ₹40,700 total and ₹700 extra cost",
+      "status": "PASS",
+      "details": null,
+      "ms": 438
+    },
+    {
+      "name": "Advisor answers a ledger-grounded dining question and contextual follow-up",
+      "status": "PASS",
+      "details": {
+        "engine": {
+          "kind": "deterministic",
+          "llmUsed": false,
+          "model": null
+        },
+        "followUpSurplus": 29704.25
+      },
+      "ms": 1933
+    },
+    {
+      "name": "Reload preserves the demo identity and imported ledger",
+      "status": "PASS",
+      "details": null,
+      "ms": 960
+    },
+    {
+      "name": "Digital PDF fixture uploads, previews, shows page evidence and commits",
+      "status": "PASS",
+      "details": {
+        "written": 24
+      },
+      "ms": 2110
+    },
+    {
+      "name": "SMS .txt upload previews and commits using an isolated identity",
+      "status": "PASS",
+      "details": {
+        "written": 4
+      },
+      "ms": 1894
+    },
+    {
+      "name": "SMS paste preview uses the actual parser and requires confirmation",
+      "status": "PASS",
+      "details": null,
+      "ms": 1589
+    },
+    {
+      "name": "Selective possible-duplicate review includes only the explicitly selected row",
+      "status": "PASS",
+      "details": null,
+      "ms": 1977
+    },
+    {
+      "name": "Manual cash preview, confirm, repeated confirmation prevention and undo",
+      "status": "PASS",
+      "details": null,
+      "ms": 3842
+    },
+    {
+      "name": "Browser reimbursement creation, two settlements, complete-month netting and undo",
+      "status": "PASS",
+      "details": {
+        "baseline": [
+          106500,
+          9100
+        ],
+        "settled": [
+          104500,
+          7100
+        ],
+        "restored": [
+          106500,
+          9100
+        ]
+      },
+      "ms": 4180
+    },
+    {
+      "name": "Refund claim creation and explicit matching-credit confirmation",
+      "status": "PASS",
+      "details": null,
+      "ms": 3929
+    },
+    {
+      "name": "Import undo removes only the confirmed batch after explicit confirmation",
+      "status": "PASS",
+      "details": null,
+      "ms": 1732
+    },
+    {
+      "name": "A separate browser identity cannot see the canonical ledger",
+      "status": "PASS",
+      "details": null,
+      "ms": 1559
+    },
+    {
+      "name": "Four viewport full-page captures; no document overflow across all required routes",
+      "status": "PASS",
+      "details": {
+        "sizes": [
+          1440,
+          1366,
+          768,
+          390
+        ],
+        "routes": 7,
+        "captures": 28,
+        "overflow": []
+      },
+      "ms": 47064
+    },
+    {
+      "name": "No browser runtime exceptions in the main journey",
+      "status": "PASS",
+      "details": null,
+      "ms": 0
+    }
+  ],
+  "passed": 26,
+  "failed": 0
+}

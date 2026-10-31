@@ -41,7 +41,7 @@ export function PublicNavbar({
   return (
     <header
       className={cn(
-        "border-b border-wv-border bg-wv-surface text-wv-text shadow-wv-low",
+        "public-navigation border-b border-wv-border bg-wv-surface text-wv-text",
         className
       )}
     >
@@ -51,30 +51,25 @@ export function PublicNavbar({
           className="inline-flex items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wv-primary focus-visible:ring-offset-2"
           aria-label={`${brandName} home`}
         >
-          {logoSrc ? (
-            <img src={logoSrc} alt="Official INARI logo" className="h-10 w-auto rounded-md" />
-          ) : (
-            <span className="flex size-10 items-center justify-center rounded-md bg-wv-primary text-white">
-              <ShieldCheck className="size-5" aria-hidden="true" />
-            </span>
-          )}
-          <span className="font-display text-base font-bold tracking-[-0.03em] text-wv-text">
+          <span className="brand-wordmark">
             {brandName}
+            <span>●</span>
           </span>
         </a>
 
         <nav
-          className="hidden items-center gap-1 md:flex"
+          className="hidden items-center gap-1 lg:flex"
           aria-label="Primary navigation"
         >
-          {links.map((link) => (
+          {links.map(link => (
             <a
               key={`${link.href}-${link.label}`}
               href={link.href}
               aria-current={link.isActive ? "page" : undefined}
               className={cn(
                 "rounded-md px-3 py-2 text-[15px] font-medium text-wv-text-secondary transition-colors hover:bg-wv-background hover:text-wv-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wv-primary focus-visible:ring-offset-2",
-                link.isActive && "bg-wv-background font-semibold text-wv-primary"
+                link.isActive &&
+                  "bg-wv-background font-semibold text-wv-primary"
               )}
             >
               {link.label}
@@ -85,7 +80,7 @@ export function PublicNavbar({
         <div className="flex items-center gap-2">
           {children}
           <div className="hidden items-center gap-2 sm:flex">
-            {actions.map((action) => (
+            {actions.map(action => (
               <NavbarAction key={action.label} action={action} />
             ))}
           </div>
@@ -94,12 +89,14 @@ export function PublicNavbar({
               type="button"
               variant="outline"
               size="icon"
-              className="border-wv-border text-wv-text md:hidden"
+              className="border-wv-border text-wv-text lg:hidden"
               onClick={onMobileMenuClick}
               aria-expanded={mobileMenuOpen}
               aria-controls="public-mobile-navigation"
               aria-label={
-                mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"
+                mobileMenuOpen
+                  ? "Close navigation menu"
+                  : "Open navigation menu"
               }
             >
               <Menu className="size-4" aria-hidden="true" />
@@ -110,18 +107,19 @@ export function PublicNavbar({
       {mobileMenuOpen ? (
         <nav
           id="public-mobile-navigation"
-          className="border-t border-wv-border px-4 py-4 md:hidden"
+          className="border-t border-wv-border px-4 py-4 lg:hidden"
           aria-label="Mobile primary navigation"
         >
           <div className="flex flex-col gap-2">
-            {links.map((link) => (
+            {links.map(link => (
               <a
                 key={`mobile-${link.href}-${link.label}`}
                 href={link.href}
                 aria-current={link.isActive ? "page" : undefined}
                 className={cn(
                   "rounded-md px-3 py-3 text-[15px] font-medium text-wv-text-secondary transition-colors hover:bg-wv-background hover:text-wv-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wv-primary focus-visible:ring-offset-2",
-                  link.isActive && "bg-wv-background font-semibold text-wv-primary"
+                  link.isActive &&
+                    "bg-wv-background font-semibold text-wv-primary"
                 )}
               >
                 {link.label}
@@ -129,8 +127,11 @@ export function PublicNavbar({
             ))}
             {actions.length > 0 ? (
               <div className="mt-2 flex flex-col gap-2 border-t border-wv-border pt-3">
-                {actions.map((action) => (
-                  <NavbarAction key={`mobile-${action.label}`} action={action} />
+                {actions.map(action => (
+                  <NavbarAction
+                    key={`mobile-${action.label}`}
+                    action={action}
+                  />
                 ))}
               </div>
             ) : null}
@@ -149,7 +150,11 @@ function NavbarAction({ action }: { action: PublicNavbarAction }) {
 
   if (action.href) {
     return (
-      <Button asChild variant={action.variant === "primary" ? "default" : "outline"} className={className}>
+      <Button
+        asChild
+        variant={action.variant === "primary" ? "default" : "outline"}
+        className={className}
+      >
         <a href={action.href} aria-label={action.ariaLabel}>
           {action.label}
         </a>

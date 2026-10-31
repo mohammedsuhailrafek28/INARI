@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="INARI">
-  <rect width="120" height="120" rx="26" fill="#00695c"/>
-  <path d="M60 14 98 60 60 106 22 60Z" fill="#0c8577" stroke="#c9a15a" stroke-width="3"/>
-  <path d="M60 14 98 60 60 60Z" fill="#f4791f"/>
-  <path d="M60 60 22 60 60 106Z" fill="#f4791f" opacity=".9"/>
-  <path d="M52 40h16v40H52z" fill="#f7fafb"/>
-  <circle cx="60" cy="30" r="5" fill="#f7fafb"/>
+  <rect width="120" height="120" rx="26" fill="#141413"/>
+  <path d="M60 14 98 60 60 106 22 60Z" fill="#252522" stroke="#f1eee6" stroke-width="3"/>
+  <path d="M60 14 98 60 60 60Z" fill="#ff4d2a"/>
+  <path d="M60 60 22 60 60 106Z" fill="#ff4d2a" opacity=".9"/>
+  <path d="M52 40h16v40H52z" fill="#f1eee6"/>
+  <circle cx="60" cy="30" r="5" fill="#f1eee6"/>
 </svg>

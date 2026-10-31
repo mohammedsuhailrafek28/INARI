@@ -38,7 +38,7 @@ export function SectionHeader({
             {eyebrow}
           </p>
         ) : null}
-        <Heading className="font-display text-[var(--wv-section-title)] font-bold leading-[1.12] tracking-[-0.03em] text-wv-text">
+        <Heading className="font-display text-[length:var(--wv-section-title)] font-bold leading-[1.12] tracking-[-0.03em] text-wv-text">
           {title}
         </Heading>
         {description ? (

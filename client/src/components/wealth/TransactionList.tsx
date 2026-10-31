@@ -26,11 +26,11 @@ export function TransactionList({ transactions, className }: TransactionListProp
             const isIncome = transaction.type === "income";
             return (
               <li key={transaction.id} className="flex items-center justify-between gap-4 p-4">
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-bold text-wv-text">
                     {transaction.description}
                   </p>
-                  <p className="mt-1 text-xs text-wv-muted">
+                  <p className="mt-1 break-words text-xs text-wv-muted">
                     {formatTitle(transaction.category)} · {formatDate(transaction.date)} · {type}
                   </p>
                 </div>

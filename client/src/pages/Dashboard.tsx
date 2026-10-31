@@ -1,3 +1,4 @@
+import { LedgerPulse, LedgerCategories } from "@/components/inari/LedgerOverview";
 import inariLogo from "@/assets/inari/inari-logo.svg";
 import { DashboardNavbar, type DashboardNavLink } from "@/components/layout/DashboardNavbar";
 import { AlertCard } from "@/components/wealth/AlertCard";
@@ -316,6 +317,8 @@ export default function Dashboard() {
           onAskAdvisor={() => setLocation("/avatar")}
         />
 
+        {imported && <LedgerPulse income={data.monthlyIncome} expenses={data.monthlyExpenses} surplus={wealth.monthlySurplus} savingsRate={data.savingsRate} />}
+        {imported && <div className="grid gap-6 lg:grid-cols-2"><TrendPanel /><LedgerCategories /></div>}
         <QuickActionRail actions={quickActions} />
 
         <section className="grid gap-4 lg:grid-cols-[1.35fr_0.65fr]">
@@ -560,8 +563,7 @@ export default function Dashboard() {
 
         {imported ? (
           <div className="grid gap-6 xl:grid-cols-2">
-            <TrendPanel />
-            <div className="space-y-6">
+            <div className="space-y-6 xl:col-span-2">
               <CoveragePanel />
             </div>
             <div className="xl:col-span-2">
@@ -655,7 +657,7 @@ function DashboardFrame({
         onMobileMenuClick={() => setMobileMenuOpen((open) => !open)}
         onLogout={onLogout}
       />
-      <main className="mx-auto max-w-[var(--wv-content-width)] px-4 py-6 sm:px-6 lg:px-8">
+      <main id="workspace-content" tabIndex={-1} className="mx-auto max-w-[var(--wv-content-width)] px-4 py-6 sm:px-6 lg:px-8">
         {children}
       </main>
     </div>
@@ -681,7 +683,7 @@ function SecondaryPanel({
         </div>
         <div>
           <h2 className="text-[13px] font-semibold uppercase tracking-[0.1em] text-wv-text-secondary">{title}</h2>
-          <p className="mt-1 font-display text-[var(--wv-metric-number)] font-extrabold leading-none tracking-[-0.03em] text-wv-text tabular-nums">{value}</p>
+          <p className="mt-1 font-display text-[length:var(--wv-metric-number)] font-extrabold leading-none tracking-[-0.03em] text-wv-text tabular-nums">{value}</p>
           <p className="mt-2 text-[15px] font-normal leading-6 text-wv-text-secondary">
             {description}
           </p>

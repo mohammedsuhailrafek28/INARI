@@ -634,7 +634,7 @@ function AdvisorFrame({
         onMobileMenuClick={() => setMobileMenuOpen((open) => !open)}
         onLogout={onLogout}
       />
-      <main className="mx-auto max-w-[var(--wv-content-width)] px-4 py-6 sm:px-6 lg:px-8">
+      <main id="workspace-content" tabIndex={-1} className="mx-auto max-w-[var(--wv-content-width)] px-4 py-6 sm:px-6 lg:px-8">
         {children}
       </main>
     </div>

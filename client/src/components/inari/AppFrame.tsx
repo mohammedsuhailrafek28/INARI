@@ -25,9 +25,9 @@ export function AppFrame({ active, title, description, children }: { active: str
         onMobileMenuClick={() => setMenu(o => !o)}
         onLogout={async () => { await logout(); setLocation("/"); }}
       />
-      <main className="mx-auto max-w-[var(--wv-content-width)] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+      <main id="workspace-content" tabIndex={-1} className="mx-auto max-w-[var(--wv-content-width)] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
         <header>
-          <h1 className="font-display text-[var(--wv-section-title)] font-bold tracking-[-0.03em]">{title}</h1>
+          <h1 className="font-display text-[length:var(--wv-section-title)] font-bold tracking-[-0.03em]">{title}</h1>
           {description ? <p className="mt-1 max-w-3xl text-[15px] text-wv-text-secondary">{description}</p> : null}
         </header>
         {children}

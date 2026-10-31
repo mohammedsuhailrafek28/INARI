@@ -57,12 +57,12 @@ export function FinancialMetricCard({
       )}
     >
       <div className="flex items-start justify-between gap-4">
-        <div>
+        <div className="min-w-0 flex-1">
           <h3 className="text-[13px] font-semibold uppercase tracking-[0.1em] text-wv-text-secondary">{title}</h3>
-          <div className="mt-2 font-display text-[var(--wv-metric-number)] font-extrabold leading-none tracking-[-0.03em] tabular-nums">{value}</div>
+          <div style={typeof value === "string" && /[a-zA-Z]/.test(value) ? { fontSize: "clamp(1.25rem, 1.8vw, 1.6rem)" } : undefined} className="mt-2 break-words font-display text-[length:var(--wv-metric-number)] font-extrabold leading-none tracking-[-0.03em] tabular-nums">{value}</div>
         </div>
         {icon ? (
-          <div className="flex size-10 items-center justify-center rounded-md bg-wv-background text-wv-primary transition-colors duration-200 group-hover:bg-wv-primary/10">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-wv-background text-wv-primary transition-colors duration-200 group-hover:bg-wv-primary/10">
             {icon}
           </div>
         ) : null}

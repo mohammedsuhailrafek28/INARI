@@ -1,0 +1,22 @@
+{
+  "results": [
+    {
+      "name": "Original fictional-persona onboarding and profile switching remain interactive",
+      "status": "PASS"
+    },
+    {
+      "name": "Mobile CSV preview and confirm are usable with explicit confirmation",
+      "status": "PASS"
+    },
+    {
+      "name": "Mobile what-if uses actual backend results and refreshed parameter state",
+      "status": "PASS"
+    },
+    {
+      "name": "Mobile advisor textarea accepts dictated-style text and submits a grounded answer",
+      "status": "PASS"
+    }
+  ],
+  "passed": 4,
+  "failed": 0
+}

@@ -47,7 +47,7 @@ export function HealthScoreCard({
               aria-label={`Financial health score ${safeScore} out of 100`}
             >
               <div>
-                <p className="font-display text-[var(--wv-metric-number)] font-extrabold leading-none tracking-[-0.03em] text-wv-text tabular-nums">
+                <p className="font-display text-[length:var(--wv-metric-number)] font-extrabold leading-none tracking-[-0.03em] text-wv-text tabular-nums">
                   {safeScore}
                 </p>
                 <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-wv-muted">out of 100</p>

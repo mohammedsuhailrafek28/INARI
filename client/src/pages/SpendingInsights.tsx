@@ -1,3 +1,4 @@
+import { PageSections } from "@/components/inari/LedgerOverview";
 import inariLogo from "@/assets/inari/inari-logo.svg";
 import { DashboardNavbar, type DashboardNavLink } from "@/components/layout/DashboardNavbar";
 import { SavingsOpportunityCard } from "@/components/spending/SavingsOpportunityCard";
@@ -230,6 +231,7 @@ export default function SpendingInsights() {
       <div className="space-y-6">
         <ModeBanner />
         <DemoNotice />
+        {mode.imported && <PageSections items={[{"href": "#transactions", "label": "Transactions & corrections"}, {"href": "#manual", "label": "Cash entries"}, {"href": "#balances", "label": "Confirmed balances"}, {"href": "#recurring", "label": "Recurring"}, {"href": "#claims", "label": "Refunds & reimbursements"}]} />}
         <section className="rounded-[var(--wv-radius-card)] border border-wv-border bg-wv-surface p-5 shadow-wv-card sm:p-6">
           <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
             <div>
@@ -265,7 +267,7 @@ export default function SpendingInsights() {
             title="Monthly spending summary"
             description={mode.imported ? "Average per month over your latest complete months, from your ledger. Credit-card repayments and refunds are handled by the reconciliation rules." : "Totals are derived from returned transaction categories and spending endpoints."}
           />
-          <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+          <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
             <FinancialMetricCard
               title="Total expenses"
               value={formatCurrencyINR(totalSpend)}
@@ -499,7 +501,7 @@ function SpendingFrame({
         onMobileMenuClick={() => setMobileMenuOpen((open) => !open)}
         onLogout={onLogout}
       />
-      <main className="mx-auto max-w-[var(--wv-content-width)] px-4 py-6 sm:px-6 lg:px-8">
+      <main id="workspace-content" tabIndex={-1} className="mx-auto max-w-[var(--wv-content-width)] px-4 py-6 sm:px-6 lg:px-8">
         {children}
       </main>
     </div>

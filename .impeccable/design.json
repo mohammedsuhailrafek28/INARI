@@ -1,0 +1,436 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-31T16:32:29.843616+00:00",
+  "title": "Design System: INARI",
+  "extensions": {
+    "shadows": [
+      {
+        "name": "wv-shadow-card",
+        "value": "none",
+        "purpose": "Flat financial panels."
+      },
+      {
+        "name": "wv-shadow-low",
+        "value": "none",
+        "purpose": "Flat low surfaces."
+      }
+    ],
+    "motion": [
+      {
+        "name": "navigation-state",
+        "value": "160ms",
+        "purpose": "Background and color state changes."
+      },
+      {
+        "name": "landing-action-hover",
+        "value": "180ms",
+        "purpose": "Action background change."
+      },
+      {
+        "name": "thread-in",
+        "value": "1s cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Decorative thread drawing."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "0.01ms",
+        "purpose": "Animations and transitions collapse; smooth scrolling is disabled."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "mobile-max",
+        "value": "767px"
+      },
+      {
+        "name": "compact-layout-max",
+        "value": "1100px"
+      },
+      {
+        "name": "desktop-sidebar-min",
+        "value": "1280px"
+      }
+    ],
+    "colorMeta": {
+      "background": {
+        "role": "neutral",
+        "displayName": "Background",
+        "tonalRamp": [
+          "oklch(15% 0.0021 106.64)",
+          "oklch(26% 0.0021 106.64)",
+          "oklch(38% 0.0021 106.64)",
+          "oklch(49% 0.0021 106.64)",
+          "oklch(61% 0.0021 106.64)",
+          "oklch(72% 0.0021 106.64)",
+          "oklch(84% 0.0021 106.64)",
+          "oklch(95% 0.0021 106.64)"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Surface",
+        "tonalRamp": [
+          "oklch(15% 0.0020 106.58)",
+          "oklch(26% 0.0020 106.58)",
+          "oklch(38% 0.0020 106.58)",
+          "oklch(49% 0.0020 106.58)",
+          "oklch(61% 0.0020 106.58)",
+          "oklch(72% 0.0020 106.58)",
+          "oklch(84% 0.0020 106.58)",
+          "oklch(95% 0.0020 106.58)"
+        ]
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "Text",
+        "tonalRamp": [
+          "oklch(15% 0.0111 89.72)",
+          "oklch(26% 0.0111 89.72)",
+          "oklch(38% 0.0111 89.72)",
+          "oklch(49% 0.0111 89.72)",
+          "oklch(61% 0.0111 89.72)",
+          "oklch(72% 0.0111 89.72)",
+          "oklch(84% 0.0111 89.72)",
+          "oklch(95% 0.0111 89.72)"
+        ]
+      },
+      "text-secondary": {
+        "role": "neutral",
+        "displayName": "Text Secondary",
+        "tonalRamp": [
+          "oklch(15% 0.0129 91.54)",
+          "oklch(26% 0.0129 91.54)",
+          "oklch(38% 0.0129 91.54)",
+          "oklch(49% 0.0129 91.54)",
+          "oklch(61% 0.0129 91.54)",
+          "oklch(72% 0.0129 91.54)",
+          "oklch(84% 0.0129 91.54)",
+          "oklch(95% 0.0129 91.54)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted",
+        "tonalRamp": [
+          "oklch(15% 0.0131 91.55)",
+          "oklch(26% 0.0131 91.55)",
+          "oklch(38% 0.0131 91.55)",
+          "oklch(49% 0.0131 91.55)",
+          "oklch(61% 0.0131 91.55)",
+          "oklch(72% 0.0131 91.55)",
+          "oklch(84% 0.0131 91.55)",
+          "oklch(95% 0.0131 91.55)"
+        ]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Border",
+        "tonalRamp": [
+          "oklch(15% 0.0069 106.76)",
+          "oklch(26% 0.0069 106.76)",
+          "oklch(38% 0.0069 106.76)",
+          "oklch(49% 0.0069 106.76)",
+          "oklch(61% 0.0069 106.76)",
+          "oklch(72% 0.0069 106.76)",
+          "oklch(84% 0.0069 106.76)",
+          "oklch(95% 0.0069 106.76)"
+        ]
+      },
+      "primary": {
+        "role": "primary",
+        "displayName": "Primary",
+        "tonalRamp": [
+          "oklch(15% 0.1604 33.33)",
+          "oklch(26% 0.1604 33.33)",
+          "oklch(38% 0.1604 33.33)",
+          "oklch(49% 0.1604 33.33)",
+          "oklch(61% 0.1604 33.33)",
+          "oklch(72% 0.1604 33.33)",
+          "oklch(84% 0.1604 33.33)",
+          "oklch(95% 0.1604 33.33)"
+        ]
+      },
+      "primary-dark": {
+        "role": "primary",
+        "displayName": "Primary Dark",
+        "tonalRamp": [
+          "oklch(15% 0.1700 33.42)",
+          "oklch(26% 0.1700 33.42)",
+          "oklch(38% 0.1700 33.42)",
+          "oklch(49% 0.1700 33.42)",
+          "oklch(61% 0.1700 33.42)",
+          "oklch(72% 0.1700 33.42)",
+          "oklch(84% 0.1700 33.42)",
+          "oklch(95% 0.1700 33.42)"
+        ]
+      },
+      "accent": {
+        "role": "primary",
+        "displayName": "Accent",
+        "tonalRamp": [
+          "oklch(15% 0.1741 33.21)",
+          "oklch(26% 0.1741 33.21)",
+          "oklch(38% 0.1741 33.21)",
+          "oklch(49% 0.1741 33.21)",
+          "oklch(61% 0.1741 33.21)",
+          "oklch(72% 0.1741 33.21)",
+          "oklch(84% 0.1741 33.21)",
+          "oklch(95% 0.1741 33.21)"
+        ]
+      },
+      "accent-hover": {
+        "role": "primary",
+        "displayName": "Accent Hover",
+        "tonalRamp": [
+          "oklch(15% 0.1651 32.54)",
+          "oklch(26% 0.1651 32.54)",
+          "oklch(38% 0.1651 32.54)",
+          "oklch(49% 0.1651 32.54)",
+          "oklch(61% 0.1651 32.54)",
+          "oklch(72% 0.1651 32.54)",
+          "oklch(84% 0.1651 32.54)",
+          "oklch(95% 0.1651 32.54)"
+        ]
+      },
+      "vermilion": {
+        "role": "primary",
+        "displayName": "Vermilion",
+        "tonalRamp": [
+          "oklch(15% 0.1997 33.25)",
+          "oklch(26% 0.1997 33.25)",
+          "oklch(38% 0.1997 33.25)",
+          "oklch(49% 0.1997 33.25)",
+          "oklch(61% 0.1997 33.25)",
+          "oklch(72% 0.1997 33.25)",
+          "oklch(84% 0.1997 33.25)",
+          "oklch(95% 0.1997 33.25)"
+        ]
+      },
+      "hero-accent": {
+        "role": "primary",
+        "displayName": "Hero Accent",
+        "tonalRamp": [
+          "oklch(15% 0.1785 33.56)",
+          "oklch(26% 0.1785 33.56)",
+          "oklch(38% 0.1785 33.56)",
+          "oklch(49% 0.1785 33.56)",
+          "oklch(61% 0.1785 33.56)",
+          "oklch(72% 0.1785 33.56)",
+          "oklch(84% 0.1785 33.56)",
+          "oklch(95% 0.1785 33.56)"
+        ]
+      },
+      "ivory-ink": {
+        "role": "neutral",
+        "displayName": "Ivory Ink",
+        "tonalRamp": [
+          "oklch(15% 0.0057 106.85)",
+          "oklch(26% 0.0057 106.85)",
+          "oklch(38% 0.0057 106.85)",
+          "oklch(49% 0.0057 106.85)",
+          "oklch(61% 0.0057 106.85)",
+          "oklch(72% 0.0057 106.85)",
+          "oklch(84% 0.0057 106.85)",
+          "oklch(95% 0.0057 106.85)"
+        ]
+      },
+      "ivory-body": {
+        "role": "neutral",
+        "displayName": "Ivory Body",
+        "tonalRamp": [
+          "oklch(15% 0.0143 106.97)",
+          "oklch(26% 0.0143 106.97)",
+          "oklch(38% 0.0143 106.97)",
+          "oklch(49% 0.0143 106.97)",
+          "oklch(61% 0.0143 106.97)",
+          "oklch(72% 0.0143 106.97)",
+          "oklch(84% 0.0143 106.97)",
+          "oklch(95% 0.0143 106.97)"
+        ]
+      },
+      "ivory-surface": {
+        "role": "neutral",
+        "displayName": "Ivory Surface",
+        "tonalRamp": [
+          "oklch(15% 0.0054 95.10)",
+          "oklch(26% 0.0054 95.10)",
+          "oklch(38% 0.0054 95.10)",
+          "oklch(49% 0.0054 95.10)",
+          "oklch(61% 0.0054 95.10)",
+          "oklch(72% 0.0054 95.10)",
+          "oklch(84% 0.0054 95.10)",
+          "oklch(95% 0.0054 95.10)"
+        ]
+      },
+      "ivory-border": {
+        "role": "neutral",
+        "displayName": "Ivory Border",
+        "tonalRamp": [
+          "oklch(15% 0.0152 98.33)",
+          "oklch(26% 0.0152 98.33)",
+          "oklch(38% 0.0152 98.33)",
+          "oklch(49% 0.0152 98.33)",
+          "oklch(61% 0.0152 98.33)",
+          "oklch(72% 0.0152 98.33)",
+          "oklch(84% 0.0152 98.33)",
+          "oklch(95% 0.0152 98.33)"
+        ]
+      },
+      "success": {
+        "role": "semantic",
+        "displayName": "Success",
+        "tonalRamp": [
+          "oklch(15% 0.1359 167.02)",
+          "oklch(26% 0.1359 167.02)",
+          "oklch(38% 0.1359 167.02)",
+          "oklch(49% 0.1359 167.02)",
+          "oklch(61% 0.1359 167.02)",
+          "oklch(72% 0.1359 167.02)",
+          "oklch(84% 0.1359 167.02)",
+          "oklch(95% 0.1359 167.02)"
+        ]
+      },
+      "warning": {
+        "role": "semantic",
+        "displayName": "Warning",
+        "tonalRamp": [
+          "oklch(15% 0.1192 84.19)",
+          "oklch(26% 0.1192 84.19)",
+          "oklch(38% 0.1192 84.19)",
+          "oklch(49% 0.1192 84.19)",
+          "oklch(61% 0.1192 84.19)",
+          "oklch(72% 0.1192 84.19)",
+          "oklch(84% 0.1192 84.19)",
+          "oklch(95% 0.1192 84.19)"
+        ]
+      },
+      "error": {
+        "role": "semantic",
+        "displayName": "Error",
+        "tonalRamp": [
+          "oklch(15% 0.1236 25.05)",
+          "oklch(26% 0.1236 25.05)",
+          "oklch(38% 0.1236 25.05)",
+          "oklch(49% 0.1236 25.05)",
+          "oklch(61% 0.1236 25.05)",
+          "oklch(72% 0.1236 25.05)",
+          "oklch(84% 0.1236 25.05)",
+          "oklch(95% 0.1236 25.05)"
+        ]
+      },
+      "info": {
+        "role": "semantic",
+        "displayName": "Info",
+        "tonalRamp": [
+          "oklch(15% 0.1044 259.71)",
+          "oklch(26% 0.1044 259.71)",
+          "oklch(38% 0.1044 259.71)",
+          "oklch(49% 0.1044 259.71)",
+          "oklch(61% 0.1044 259.71)",
+          "oklch(72% 0.1044 259.71)",
+          "oklch(84% 0.1044 259.71)",
+          "oklch(95% 0.1044 259.71)"
+        ]
+      },
+      "focus": {
+        "role": "semantic",
+        "displayName": "Focus",
+        "tonalRamp": [
+          "oklch(15% 0.1335 32.56)",
+          "oklch(26% 0.1335 32.56)",
+          "oklch(38% 0.1335 32.56)",
+          "oklch(49% 0.1335 32.56)",
+          "oklch(61% 0.1335 32.56)",
+          "oklch(72% 0.1335 32.56)",
+          "oklch(84% 0.1335 32.56)",
+          "oklch(95% 0.1335 32.56)"
+        ]
+      }
+    }
+  },
+  "components": [
+    {
+      "name": "Ledger primary action",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Confirms an explicit ledger action; white labels require the dark fill.",
+      "html": "<button class=\"ds-primary\">Confirm import</button>",
+      "css": ".ds-primary{background:var(--wv-primary-dark,#b8371c);color:#fff;padding:10px 12px;border:0;border-radius:6px;font:600 14px \"Segoe UI\",sans-serif;min-height:44px;cursor:pointer;transition:background .15s}.ds-primary:hover{background:#b8371c}.ds-primary:focus-visible{outline:2px solid #ff947e;outline-offset:4px}.ds-primary:disabled{opacity:.5;cursor:not-allowed}"
+    },
+    {
+      "name": "Ghost action",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Secondary action with a structural border.",
+      "html": "<button class=\"ds-ghost\">Review evidence</button>",
+      "css": ".ds-ghost{background:var(--wv-surface,#161615);color:var(--wv-text,#f1eee6);border:1px solid var(--wv-border,#373733);border-radius:6px;padding:10px 12px;min-height:44px;font:500 14px \"Segoe UI\",sans-serif;cursor:pointer}.ds-ghost:hover{border-color:#ff8065}.ds-ghost:focus-visible{outline:2px solid #ff947e;outline-offset:4px}"
+    },
+    {
+      "name": "Landing action",
+      "kind": "button",
+      "refersTo": "landing-action",
+      "description": "Bright vermilion action with dark text.",
+      "html": "<a class=\"ds-landing\" href=\"#import\">Import a statement →</a>",
+      "css": ".ds-landing{display:inline-flex;align-items:center;min-height:24px;background:#ff6040;color:#0c0c0b;border-radius:6px;padding:14px 22px;font:650 15px \"Segoe UI\",sans-serif;text-decoration:none;transition:background .18s}.ds-landing:hover{background:#ff8065}.ds-landing:focus-visible{outline:2px solid #ff947e;outline-offset:4px}"
+    },
+    {
+      "name": "Ledger field",
+      "kind": "input",
+      "description": "Visible label and native numeric input; ledger form treatment.",
+      "html": "<label class=\"ds-label\">Monthly contribution<input class=\"ds-field\" type=\"number\" placeholder=\"Amount in INR\"></label>",
+      "css": ".ds-label{display:grid;gap:8px;color:var(--wv-text,#f1eee6);font:14px \"Segoe UI\",sans-serif}.ds-field{background:var(--wv-surface,#161615);color:var(--wv-text,#f1eee6);border:1px solid var(--wv-border,#373733);border-radius:6px;padding:10px 8px;min-height:22px;font:14px \"Segoe UI\",sans-serif}.ds-field::placeholder{color:#aaa79f}.ds-field:focus-visible{outline:2px solid #ff947e;outline-offset:4px}"
+    },
+    {
+      "name": "Application navigation",
+      "kind": "nav",
+      "refersTo": "navigation-active",
+      "description": "Current page has both a semantic marker and visual highlight.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Workspace preview\"><a href=\"#dashboard\" aria-current=\"page\">Dashboard <span>●</span></a><a href=\"#import\">Import</a></nav>",
+      "css": ".ds-nav{display:grid;gap:6px;background:#111110;padding:18px;font:500 14px \"Segoe UI\",sans-serif}.ds-nav a{display:flex;justify-content:space-between;align-items:center;padding:12px;border-radius:8px;min-height:24px;color:#c1beb5;text-decoration:none;transition:background .16s,color .16s}.ds-nav a:hover{background:#20201e;color:#f1eee6}.ds-nav a[aria-current]{background:#ff6040;color:#0c0c0b;font-weight:650}.ds-nav a:focus-visible{outline:2px solid #ff947e;outline-offset:4px}"
+    },
+    {
+      "name": "Financial panel",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "Flat shared section, heading and explanation.",
+      "html": "<section class=\"ds-panel\"><h2>Where your money goes</h2><p>Monthly category averages from the same imported ledger. Amounts in INR.</p></section>",
+      "css": ".ds-panel{background:var(--wv-surface,#161615);color:var(--wv-text,#f1eee6);border:1px solid var(--wv-border,#373733);border-radius:14px;padding:clamp(18px,2.4vw,30px)}.ds-panel h2{font:700 1.35rem Archivo,\"Segoe UI\",sans-serif;letter-spacing:-.02em;line-height:1.15;margin:0 0 8px}.ds-panel p{color:var(--wv-text-secondary,#c1beb5);font:14px/1.6 \"Segoe UI\",sans-serif;margin:0}"
+    },
+    {
+      "name": "Page-section link",
+      "kind": "chip",
+      "description": "Wrapping local anchors used on feature-rich pages.",
+      "html": "<nav aria-label=\"Page sections\"><a class=\"ds-section\" href=\"#transactions\">Transactions</a></nav>",
+      "css": ".ds-section{display:inline-flex;align-items:center;min-height:22px;border:1px solid var(--wv-border,#373733);padding:10px 14px;border-radius:6px;font:13px \"Segoe UI\",sans-serif;color:var(--wv-text-secondary,#c1beb5);background:var(--wv-surface,#161615);text-decoration:none}.ds-section:hover{border-color:#ff8065;color:#f1eee6}.ds-section:focus-visible{outline:2px solid #ff947e;outline-offset:4px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Editorial Money Model",
+    "overview": "The approved Swathi direction becomes an editorial financial interface: near-black working surfaces, warm ivory landing sections, emphatic Archivo headings, and vermilion accents. Financial screens use compact, readable controls and restrained panel boundaries; the landing page carries the larger typographic expression.\n\nThis records the implemented system, rather than a new visual proposal. The authoritative visual source is the final editorial override in client/src/index.css, together with the layout and ledger components. Earlier teal and light theme declarations in that stylesheet are compatibility history, not the current palette. Both :root and .dark receive the editorial theme.",
+    "keyCharacteristics": [
+      "Black working canvas and ivory editorial sections.",
+      "Strong headings with quiet, legible supporting text.",
+      "Flat bordered panels and explicit financial labels.",
+      "Restrained motion with content visible independently of animation."
+    ],
+    "rules": [
+      {
+        "name": "The Action Pairing Rule",
+        "body": "Keep white action labels on primary-dark; keep bright vermilion action fills paired with background-colored text. Do not substitute the light text accent beneath white small text.",
+        "section": "colors"
+      }
+    ],
+    "dos": [
+      "**Do** use the existing wv token contract for every financial feature.",
+      "**Do** pair filled-action colors with their documented text colors.",
+      "**Do** keep financial evidence, units, unknown values, and data-source notices visible.",
+      "**Do** preserve native controls, named landmarks, focus visibility, and reduced-motion behavior."
+    ],
+    "donts": [
+      "**Don't** reproduce financial calculations or replace backend amounts with display fixtures.",
+      "**Don't** restore the historical teal palette by copying an earlier declaration block.",
+      "**Don't** hide essential content behind decorative animation.",
+      "**Don't** introduce portfolio branding, property-management imagery, or external font requests."
+    ]
+  }
+}

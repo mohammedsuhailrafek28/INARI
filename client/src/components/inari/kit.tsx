@@ -23,7 +23,7 @@ export const appLinks = (activeHref: string) => APP_LINKS.map(l => ({ ...l, isAc
 
 export function Panel({ title, description, children, id, action, className }: { title: string; description?: string; children: ReactNode; id?: string; action?: ReactNode; className?: string }) {
   return (
-    <section id={id} className={cn("rounded-wv-card border border-wv-border bg-wv-surface p-5 text-wv-text shadow-wv-card space-y-3", className)}>
+    <section id={id} className={cn("rounded-wv-card border border-wv-border bg-wv-surface p-5 text-wv-text inari-panel shadow-wv-card space-y-3", className)}>
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <h2 className="font-display text-lg font-bold tracking-[-0.02em]">{title}</h2>
@@ -42,9 +42,9 @@ export const Note = ({ children, tone = "info" }: { children: ReactNode; tone?: 
   <p className={cn("text-sm", tone === "warn" ? "text-amber-700" : "text-wv-text-secondary")}>{children}</p>
 );
 
-export const fieldCls = "rounded-md border border-wv-border bg-wv-surface px-2 py-1.5 text-sm text-wv-text";
-export const btnCls = "inline-flex items-center justify-center rounded-md bg-wv-primary px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-wv-primary-dark disabled:cursor-not-allowed disabled:opacity-50";
-export const btnGhostCls = "inline-flex items-center justify-center rounded-md border border-wv-border bg-wv-surface px-3 py-1.5 text-sm font-medium text-wv-text transition hover:border-wv-primary/40 disabled:cursor-not-allowed disabled:opacity-50";
+export const fieldCls = "rounded-md border border-wv-border bg-wv-surface px-2 py-2.5 text-sm text-wv-text";
+export const btnCls = "inline-flex items-center justify-center rounded-md bg-wv-primary px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-wv-primary-dark disabled:cursor-not-allowed disabled:opacity-50";
+export const btnGhostCls = "inline-flex items-center justify-center rounded-md border border-wv-border bg-wv-surface px-3 py-2.5 text-sm font-medium text-wv-text transition hover:border-wv-primary/40 disabled:cursor-not-allowed disabled:opacity-50";
 
 /** Whether the signed-in demo identity has imported data. Drives the imported-mode / persona-mode separation. */
 export function useInariMode() {

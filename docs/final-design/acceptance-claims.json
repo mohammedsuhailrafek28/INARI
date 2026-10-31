@@ -1,0 +1,28 @@
+{
+  "base": "http://127.0.0.1:4320",
+  "runAt": "2026-10-31T16:29:42.601Z",
+  "browser": "Playwright / Chrome, production build",
+  "results": [
+    {
+      "name": "Browser reimbursement creation, two settlements, complete-month netting and undo",
+      "status": "PASS",
+      "details": {
+        "baseline": [
+          106500,
+          9100
+        ],
+        "settled": [
+          104500,
+          7100
+        ],
+        "restored": [
+          106500,
+          9100
+        ]
+      },
+      "ms": 4012
+    }
+  ],
+  "passed": 1,
+  "failed": 0
+}

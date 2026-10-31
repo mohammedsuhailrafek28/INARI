@@ -74,7 +74,7 @@ export function WhatIfPanel() {
     <Panel id="whatif" title="What-if scenario" description="Test a change before making it. This never changes your ledger.">
       <div className="flex flex-wrap items-end gap-2">
         <label className="text-sm">Scenario
-          <select className={`${fieldCls} block`} value={kind} onChange={e => setKind(e.target.value as typeof kind)}>
+          <select aria-label="Scenario" disabled={sim.isPending} className={`${fieldCls} block`} value={kind} onChange={e => { setKind(e.target.value as typeof kind); sim.reset(); }}>
             <option value="income">Change monthly income by</option>
             <option value="category">Reduce a category by</option>
             <option value="oneoff">One-off expense of</option>
@@ -85,39 +85,40 @@ export function WhatIfPanel() {
           </select></label>
         {kind === "cancel" && (
           <label className="text-sm">Recurring payment
-            <select className={`${fieldCls} block`} value={subId} onChange={e => setSubId(e.target.value)}>
+            <select aria-label="Recurring payment" disabled={sim.isPending} className={`${fieldCls} block`} value={subId} onChange={e => { setSubId(e.target.value); sim.reset(); }}>
               <option value="">Choose…</option>
               {(subsQ.data?.items ?? []).filter(x => x.status !== "dismissed").map(x => <option key={x.id} value={x.id}>{x.merchant}</option>)}
             </select></label>
         )}
         {kind === "category" && (
           <label className="text-sm">Category
-            <select className={`${fieldCls} block`} value={category} onChange={e => setCategory(e.target.value)}>
+            <select className={`${fieldCls} block`} value={category} onChange={e => { setCategory(e.target.value); sim.reset(); }}>
               {WHATIF_CATEGORIES.map(c => <option key={c}>{c}</option>)}
             </select></label>
         )}
         {kind === "goal" && (
           <label className="text-sm">Goal
-            <select className={`${fieldCls} block`} value={goalId} onChange={e => setGoalId(e.target.value)}>
+            <select aria-label="Scenario goal" disabled={sim.isPending} className={`${fieldCls} block`} value={goalId} onChange={e => { setGoalId(e.target.value); sim.reset(); }}>
               <option value="">Choose…</option>
               {(goals.data?.items ?? []).map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
             </select></label>
         )}
         {kind !== "cancel" && <label className="text-sm">₹ {kind === "oneoff" ? "amount" : "per month"}
-          <input className={`${fieldCls} block w-32`} inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} aria-label="Scenario amount in rupees" /></label>}
+          <input className={`${fieldCls} block w-32`} inputMode="decimal" value={amount} onChange={e => { setAmount(e.target.value); sim.reset(); }} disabled={sim.isPending} aria-label="Scenario amount in rupees" /></label>}
         <button type="button" className={btnCls} onClick={run} disabled={sim.isPending}>{sim.isPending ? "Running…" : "Run scenario"}</button>
       </div>
       <Err msg={sim.error ? errMsg(sim.error) : null} />
       {r && (r.status === "insufficient_data" ? <Muted>Not enough data to simulate. Import a statement covering a full month first.</Muted> : (
-        <table className="w-full text-sm" data-testid="whatif-result">
+        <div className="overflow-x-auto"><table className="w-full text-sm" data-testid="whatif-result">
           <thead><tr className="text-left text-wv-text-secondary"><th>Metric</th><th>Now</th><th>Scenario</th></tr></thead>
           <tbody>{r.metrics.map(m => (
             <tr key={m.label} className="border-t border-wv-border"><td className="py-1">{m.label}</td>
               <td>{m.unit === "inr" ? inr(m.baseline) : m.baseline ?? "—"}{m.unit === "percent" ? "%" : ""}</td>
               <td>{m.unit === "inr" ? inr(m.scenario) : m.scenario ?? "—"}{m.unit === "percent" ? "%" : ""}</td></tr>
           ))}</tbody>
-        </table>
+        </table></div>
       ))}
+      {r && r.goals.length > 0 && <div className="scenario-goals" data-testid="scenario-goals"><h3 className="text-base font-semibold">Goal arrival comparison</h3>{r.goals.map(g=><div key={g.goalId}><strong>{g.goalName}</strong><p>Now: {g.baselineCompletion ?? "Not enough information"} → Scenario: {g.scenarioCompletion ?? "Not enough information"}</p><Muted>{g.monthsSaved === null ? "A completion shift cannot be calculated from the provided information." : `${g.monthsSaved} month(s) saved.`}</Muted></div>)}</div>}
       {r?.warnings.map((w, i) => <Note key={i} tone="warn">{w}</Note>)}
       {r && r.assumptions.length > 0 && <Muted>Assumptions: {r.assumptions.join(" ")}</Muted>}
       {r && <Muted>{r.disclaimer} Your ledger was not changed.</Muted>}
@@ -473,7 +474,7 @@ export function ClaimsPanel() {
       <div className="space-y-2 border-t border-wv-border pt-3">
         <h3 className="text-sm font-semibold">Start tracking a claim</h3>
         <div className="flex flex-wrap items-end gap-2">
-          <label className="text-sm">Type<select className={`${fieldCls} block`} value={kind} onChange={e => setKind(e.target.value as typeof kind)}><option value="refund">Refund I am waiting for</option><option value="reimbursement">Money others owe me</option></select></label>
+          <label className="text-sm">Type<select className={`${fieldCls} block`} aria-label="Claim type" value={kind} onChange={e => setKind(e.target.value as typeof kind)}><option value="refund">Refund I am waiting for</option><option value="reimbursement">Money others owe me</option></select></label>
           <label className="text-sm">Find the payment<input className={`${fieldCls} block`} value={txq} onChange={e => { setTxq(e.target.value); setTxId(""); }} placeholder="e.g. amazon" aria-label="Search for the original payment" /></label>
           {txs.data && txs.data.items.length > 0 && (
             <label className="text-sm">Payment
