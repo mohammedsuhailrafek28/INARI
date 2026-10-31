@@ -18,6 +18,8 @@ const HTTP_CODE: Record<InariErrorCode, TRPCError["code"]> = {
   CONFLICT: "CONFLICT",
   FORBIDDEN_OWNER: "FORBIDDEN",
   NOT_IMPLEMENTED: "NOT_IMPLEMENTED",
+  INVALID_INPUT: "BAD_REQUEST",
+  INTERNAL: "INTERNAL_SERVER_ERROR",
 };
 
 /** Domain error with a stable code and a message that is safe to show to the user (never contains file contents). */

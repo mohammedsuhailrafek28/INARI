@@ -404,5 +404,9 @@ export const INARI_ERROR_CODES = [
   "UNSUPPORTED_FORMAT", "FILE_TOO_LARGE", "TOO_MANY_ROWS", "PARSE_FAILED", "PASSWORD_REQUIRED",
   "SCANNED_PDF_UNSUPPORTED", "PREVIEW_EXPIRED", "NO_DATA", "INSUFFICIENT_DATA", "INVALID_SCENARIO",
   "GUARDRAIL_REFUSED", "LLM_UNAVAILABLE", "NOT_FOUND", "CONFLICT", "FORBIDDEN_OWNER", "NOT_IMPLEMENTED",
+  "INVALID_INPUT", "INTERNAL",
 ] as const;
+
+/** Shape of `error.data.inari` on every failed tRPC call. Never contains user content or raw validation payloads. */
+export type InariErrorData = { code: InariErrorCode; fields?: Array<{ path: string; issue: string }> };
 export type InariErrorCode = (typeof INARI_ERROR_CODES)[number];
