@@ -134,13 +134,19 @@ gh pr create --draft --base main --head backend --title "INARI backend: ingestio
 Do not merge until a reviewer other than the author has approved. Protect `main` (require review and passing checks) in the repository settings.
 
 **A4 (approval) - teammate integration, on their machine, in a throwaway branch**
+
+Important: `main` here is a new root commit (28477df). Its tree is exactly WealthVerse cd75ef1 plus five added docs (`NOTICE.md`, `BACKEND_AUDIT.md`, `APA_CONTRACT_PROPOSAL.md`, `IMPLEMENTATION_PLAN.md`, `PS04_GAP_ANALYSIS.md`); no file differs. So the teammate's branch (built on cd75ef1 in the `wealth-verse` repository) has **unrelated history** with ours, and a plain merge is refused. Carry their UI work over as a patch instead; nothing of theirs is rewritten:
 ```bash
-git fetch origin
-git switch -c integration/ui-on-backend frontend
-git merge origin/backend          # resolve Dashboard.tsx / AvatarAdvisor.tsx in favour of the teammate's version
+# in the teammate's existing clone, on their UI branch (here called ui-work); cd75ef1 is the shared starting point
+git diff cd75ef1 ui-work -- client > ../ui.patch
+git remote add inari https://github.com/mohammedsuhailrafek28/INARI.git
+git fetch inari
+git switch -c integration/ui-on-backend inari/backend
+git apply --3way ../ui.patch      # conflicts only in Dashboard.tsx / AvatarAdvisor.tsx; keep the teammate's version
 pnpm install && pnpm check && pnpm test && pnpm build
+git push -u inari integration/ui-on-backend
 ```
-Then merge `integration/ui-on-backend` into `frontend` by pull request.
+Then open a pull request `integration/ui-on-backend` -> `main` for review. The patch is limited to `client`, so `shared/inari/*` keeps the backend's copy; if the UI needs a contract change, ask the backend owner rather than editing it. Their original branch stays untouched.
 
 **A5 (separate approval) - deployment.** Not prepared beyond section 5. Requires B3, B6, B7 and your go-ahead.
 
