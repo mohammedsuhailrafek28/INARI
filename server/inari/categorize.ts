@@ -6,6 +6,9 @@ import type { Category, CategorySource } from "../../shared/inari/contracts";
 
 type Rule = { category: Category; pattern: RegExp; direction?: "debit" | "credit" };
 
+/** Credit-card bill payments made from a bank account. */
+export const CARD_REPAYMENT = /\b(credit card (payment|bill|repayment)|cc (payment|bill)|card ?pay)\b/i;
+
 // Order matters: the first matching rule wins, so specific rules come before broad ones.
 export const DETERMINISTIC_RULES: Rule[] = [
   { category: "salary", direction: "credit", pattern: /\b(salary|sal cr|payroll|wages|stipend)\b/i },
@@ -16,7 +19,7 @@ export const DETERMINISTIC_RULES: Rule[] = [
   { category: "investment", pattern: /\b(sip|mutual fund|zerodha|groww|upstox|kuvera|nps|ppf|etmoney|coin by zerodha)\b/i },
   { category: "savings", pattern: /\b(fixed deposit|recurring deposit|\bfd\b|\brd\b|savings goal|goal fund)\b/i },
   // Card repayments are NOT utilities/bill-pay; they stay "other" and are surfaced as a reconciliation exception.
-  { category: "other", pattern: /(credit card (payment|bill|repayment)|cc (payment|bill)|card ?pay)/i },
+  { category: "other", pattern: CARD_REPAYMENT },
   { category: "groceries", pattern: /\b(bigbasket|blinkit|zepto|dmart|grofers|instamart|reliance fresh|more retail|jiomart|grocery|kirana|supermarket|nature'?s basket)\b/i },
   { category: "dining", pattern: /\b(swiggy|zomato|restaurant|cafe|starbucks|mcdonald|domino|kfc|pizza|eatery|barbeque|burger|chai|tea stall|snack|juice|bakery|canteen|biryani)\b/i },
   { category: "fuel", pattern: /\b(petrol|diesel|hpcl|bpcl|iocl|indian oil|shell|fuel|bharat petroleum)\b/i },

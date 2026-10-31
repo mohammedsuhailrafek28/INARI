@@ -14,6 +14,7 @@
  */
 import type { Category, LedgerTransaction, Snapshot } from "../../shared/inari/contracts";
 import type { StoredBatch, StoredProfile } from "./ledger/types";
+import { assumptionNotes, reconciliationNotes } from "./reconcile";
 
 export const EDGE_TOLERANCE_DAYS = 5;
 export const MAX_AVERAGING_MONTHS = 3;
@@ -159,8 +160,17 @@ export function deriveFinancialSnapshot(args: {
   }
   const dupCount = transactions.filter(t => t.possibleDuplicateOf).length;
   if (dupCount > 0) dataQuality.push({ code: "possible_duplicates", severity: "warning", message: `${dupCount} transaction(s) may duplicate existing ones; review them.` });
-  const unclassified = transactions.filter(t => t.categorySource === "unclassified").length;
-  if (unclassified > 0) dataQuality.push({ code: "unclassified", severity: "info", message: `${unclassified} transaction(s) could not be categorised automatically.` });
+  const unclassified = transactions.filter(t => t.categorySource === "unclassified");
+  if (unclassified.length > 0) {
+    dataQuality.push({
+      code: "unclassified",
+      severity: "info",
+      message: `${unclassified.length} transaction(s) could not be categorised automatically.`,
+      transactionIds: unclassified.slice(0, 50).map(t => t.id),
+    });
+  }
+  dataQuality.push(...reconciliationNotes(transactions));
+  dataQuality.push(...assumptionNotes(used.map(m => m.month), partial.map(m => m.month)));
 
   const bal = (v: number | null | undefined): [number | null, Snapshot["provenance"]["emergencyFund"]] =>
     v === null || v === undefined ? [null, "missing"] : [v, "user_input"];

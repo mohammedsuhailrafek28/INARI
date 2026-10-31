@@ -183,7 +183,11 @@ export type BalancesInput = z.infer<typeof BalancesInput>;
 export const FieldProvenance = z.enum(["observed", "estimated", "user_input", "missing"]);
 export type FieldProvenance = z.infer<typeof FieldProvenance>;
 
-export const DataQualityNote = z.object({ code: z.string(), severity: z.enum(["info", "warning"]), message: z.string() });
+/** `transactionIds` lets the UI show the exact rows behind a note (evidence); capped at 50. */
+export const DataQualityNote = z.object({
+  code: z.string(), severity: z.enum(["info", "warning"]), message: z.string(),
+  transactionIds: z.array(z.string()).max(50).optional(),
+});
 
 export const Snapshot = z.object({
   ...impl,

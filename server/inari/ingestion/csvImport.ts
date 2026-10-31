@@ -105,7 +105,9 @@ export function detectInstrument(narration: string): Instrument {
 const NOISE = new Set(["upi", "neft", "imps", "rtgs", "pos", "ach", "nach", "payment", "pay", "txn", "to", "from", "ref", "dr", "cr", "paid", "via", "debit", "credit", "card", "purchase", "transfer"]);
 
 export function extractMerchant(narration: string): string | null {
-  const parts = narration.split(/[/|]|\s-\s|-(?=[A-Za-z])/).map(p => p.trim()).filter(Boolean);
+  // masked card/account numbers (4147XXXXXXXX1234, ****1234) are never merchants
+  const cleaned = narration.replace(/\d*[Xx*]{3,}\d*/g, " ");
+  const parts = cleaned.split(/[/|]|\s-\s|-(?=[A-Za-z])/).map(p => p.trim()).filter(Boolean);
   for (const part of parts) {
     if (part.includes("@")) continue;
     const letters = part.replace(/[^A-Za-z .&']/g, " ").replace(/\s+/g, " ").trim();
