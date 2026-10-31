@@ -1,0 +1,61 @@
+{
+  "first_date": "2026-04-01",
+  "last_date": "2026-09-28",
+  "last_three_months": [
+    "2026-07",
+    "2026-08",
+    "2026-09"
+  ],
+  "months": {
+    "2026-04": {
+      "expenses": 53294.64,
+      "expenses_excluding_cc_repayment": 48794.64,
+      "income": 85000.0,
+      "transactions": 76
+    },
+    "2026-05": {
+      "expenses": 50243.9,
+      "expenses_excluding_cc_repayment": 45743.9,
+      "income": 85000.0,
+      "transactions": 87
+    },
+    "2026-06": {
+      "expenses": 51089.0,
+      "expenses_excluding_cc_repayment": 46589.0,
+      "income": 85296.0,
+      "transactions": 82
+    },
+    "2026-07": {
+      "expenses": 69833.39,
+      "expenses_excluding_cc_repayment": 65333.39,
+      "income": 85000.0,
+      "transactions": 85
+    },
+    "2026-08": {
+      "expenses": 52145.48,
+      "expenses_excluding_cc_repayment": 47645.48,
+      "income": 85000.0,
+      "transactions": 79
+    },
+    "2026-09": {
+      "expenses": 50449.24,
+      "expenses_excluding_cc_repayment": 45949.24,
+      "income": 85306.0,
+      "transactions": 85
+    }
+  },
+  "policy": "Months are complete calendar months. Average over the last 3 months. Income = salary + other_income credits. Expenses = debits in expense categories minus credits in expense categories (refunds). investment/savings/transfer are neutral. A credit-card repayment is counted as an expense by default (INARI cannot see card spending) and flagged as a reconciliation exception.",
+  "rows": 494,
+  "seed": 20261031,
+  "snapshot": {
+    "monthlyExpenses": 57476.04,
+    "monthlyIncome": 85102.0,
+    "monthlySurplus": 27625.96,
+    "savingsRate": 32.46
+  },
+  "snapshot_if_cc_repayment_excluded": {
+    "monthlyExpenses": 52976.04,
+    "monthlySurplus": 32125.96,
+    "savingsRate": 37.75
+  }
+}

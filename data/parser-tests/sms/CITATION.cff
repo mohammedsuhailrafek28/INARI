@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+title: Indian Payment SMS Corpus
+version: 0.2.0
+date-released: 2026-08-28
+type: dataset
+authors:
+  - name: SplitEasy contributors
+license: CC-BY-4.0
+repository-code: https://github.com/skyaara/indian-payment-sms-dataset
+url: https://github.com/skyaara/indian-payment-sms-dataset
+keywords:
+  - India
+  - SMS parsing
+  - UPI
+  - bank notifications
+  - expense tracking
+  - synthetic data
+abstract: >-
+  A privacy-safe, redacted corpus of synthetic Indian payment SMS patterns,
+  expected parser labels, and adversarial non-transaction alerts.

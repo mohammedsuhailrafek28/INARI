@@ -1,0 +1,40 @@
+{
+  "note": "Synthetic. See data/README.md.",
+  "examples": [
+    {
+      "id": "match-exact-26",
+      "sms": "Sent Rs.146.00\\nFrom FICTIONAL BANK A/C XX0000\\nTo SWIGGY\\nOn 07/04/26\\nNot You? Report it to your bank.",
+      "csv_row_id": 26,
+      "expected": "match",
+      "why": "same date, amount, direction and merchant"
+    },
+    {
+      "id": "match-exact-223",
+      "sms": "Sent Rs.1046.83\\nFrom FICTIONAL BANK A/C XX0000\\nTo BIGBASKET\\nOn 21/06/26\\nNot You? Report it to your bank.",
+      "csv_row_id": 223,
+      "expected": "match",
+      "why": "same date, amount, direction and merchant"
+    },
+    {
+      "id": "match-uncertain-11",
+      "sms": "Rs.243.00 debited from A/C XX0000 on 03/04/26. Info: UPI-RAPIDO",
+      "csv_row_id": 11,
+      "expected": "possible_match_needs_review",
+      "why": "amount/date/direction agree but several same-amount rides can exist; must NOT be auto-merged without review"
+    },
+    {
+      "id": "decoy-different-amount",
+      "sms": "Sent Rs.749.00\\nFrom FICTIONAL BANK A/C XX0000\\nTo NETFLIX\\nOn 05/04/26",
+      "csv_row_id": null,
+      "expected": "no_match",
+      "why": "amount differs by Rs 100"
+    },
+    {
+      "id": "decoy-future-debit",
+      "sms": "Your a/c XX0000 will be debited Rs.649.00 on 05/10/26 towards NETFLIX mandate.",
+      "csv_row_id": null,
+      "expected": "not_a_transaction",
+      "why": "upcoming mandate, nothing was paid"
+    }
+  ]
+}
