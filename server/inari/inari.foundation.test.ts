@@ -82,6 +82,8 @@ describe("shared contracts and fixtures", () => {
   });
 });
 
+const TINY_CSV = ["Date,Description,Debit,Credit", "01/09/2026,UPI/123/SWIGGY/x@y,250.00,", "02/09/2026,NEFT ACME SALARY,,50000.00"].join("\n");
+
 describe("inari router: stub honesty", () => {
   beforeEach(() => setLedgerRepositoryForTests(new FileLedgerRepository()));
 
@@ -92,17 +94,31 @@ describe("inari router: stub honesty", () => {
     setBalances: c => c.inari.setBalances({ emergencyFund: null, investments: null, creditCardDebt: null }),
     useDemoData: c => c.inari.useDemoData({ enabled: true }),
     clearMyData: c => c.inari.clearMyData({ confirm: "DELETE" }),
-    importPreview: c => c.inari.importPreview({ kind: "csv", filename: "a.csv", content: "a,b" }),
-    importCommit: c => c.inari.importCommit({ previewId: "p" }),
-    importUndo: c => c.inari.importUndo({ batchId: "b" }),
+    importPreview: c => c.inari.importPreview({ kind: "csv", filename: "a.csv", content: TINY_CSV }),
+    importCommit: async c => c.inari.importCommit({ previewId: (await c.inari.importPreview({ kind: "csv", filename: "a.csv", content: TINY_CSV })).previewId }),
+    importUndo: async c => {
+      const p = await c.inari.importPreview({ kind: "csv", filename: "a.csv", content: TINY_CSV });
+      return c.inari.importUndo({ batchId: (await c.inari.importCommit({ previewId: p.previewId })).batchId });
+    },
     importHistory: c => c.inari.importHistory(),
     listTransactions: c => c.inari.listTransactions(),
     getTransactions: c => c.inari.getTransactions(),
     getCategories: c => c.inari.getCategories(),
-    correctCategory: c => c.inari.correctCategory({ transactionId: "t", category: "dining", applyToMerchant: false }),
+    correctCategory: async c => {
+      const p = await c.inari.importPreview({ kind: "csv", filename: "a.csv", content: TINY_CSV });
+      await c.inari.importCommit({ previewId: p.previewId });
+      const tx = (await c.inari.listTransactions()).items[0];
+      return c.inari.correctCategory({ transactionId: tx.id, category: "dining", applyToMerchant: false });
+    },
     listLearnedRules: c => c.inari.listLearnedRules(),
     getLearnedRules: c => c.inari.getLearnedRules(),
-    deleteLearnedRule: c => c.inari.deleteLearnedRule({ ruleId: "r" }),
+    deleteLearnedRule: async c => {
+      const p = await c.inari.importPreview({ kind: "csv", filename: "a.csv", content: TINY_CSV });
+      await c.inari.importCommit({ previewId: p.previewId });
+      const tx = (await c.inari.listTransactions()).items[0];
+      await c.inari.correctCategory({ transactionId: tx.id, category: "dining", applyToMerchant: true });
+      return c.inari.deleteLearnedRule({ ruleId: (await c.inari.listLearnedRules()).items[0].ruleId });
+    },
     getBreakdown: c => c.inari.getBreakdown({ month: "2026-09" }),
     listSubscriptions: c => c.inari.listSubscriptions(),
     getSubscriptions: c => c.inari.getSubscriptions(),
@@ -134,7 +150,7 @@ describe("inari router: stub honesty", () => {
     const meta = await caller().inari.meta();
     expect(meta.identity.productionGrade).toBe(false);
     expect(meta.storage.durable).toBe(false);
-    expect(meta.features.csv).toBe(false);
+    expect(meta.features.csv).toBe(true);
   });
 
   it("rejects invalid input (unknown category, bad month, oversize question)", async () => {

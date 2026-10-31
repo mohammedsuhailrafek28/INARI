@@ -7,6 +7,7 @@ import type {
   LedgerStorageInfo,
   StoredBatch,
   StoredLearnedRule,
+  StoredProfile,
   TransactionFilter,
 } from "./types";
 
@@ -15,6 +16,7 @@ type UserData = {
   batches: StoredBatch[];
   audit: CorrectionAudit[];
   rules: StoredLearnedRule[];
+  profile?: StoredProfile;
 };
 type FileShape = { version: 1; users: Record<string, UserData> };
 
@@ -57,7 +59,15 @@ export class FileLedgerRepository implements LedgerRepository {
       : { kind: "memory", durable: false, note: "In-memory only. All imported data is lost when the server restarts." };
   }
 
-  private async load() {
+  private loading: Promise<void> | null = null;
+
+  /** All callers await the same in-flight load, so concurrent first calls never see a half-loaded store. */
+  private load(): Promise<void> {
+    this.loading ??= this.doLoad();
+    return this.loading;
+  }
+
+  private async doLoad() {
     if (this.loaded) return;
     this.loaded = true;
     if (!this.filePath) return;
@@ -202,6 +212,17 @@ export class FileLedgerRepository implements LedgerRepository {
     if (data.rules.length === before) return false;
     await this.persist();
     return true;
+  }
+
+  async getProfile(userKey: string) {
+    const data = await this.data(userKey);
+    return data?.profile ? clone(data.profile) : null;
+  }
+
+  async setProfile(userKey: string, profile: StoredProfile) {
+    const data = (await this.data(userKey, true))!;
+    data.profile = clone(profile);
+    await this.persist();
   }
 
   async deleteAll(userKey: string) {

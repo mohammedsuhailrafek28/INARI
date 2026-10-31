@@ -27,6 +27,17 @@ export type TransactionFilter = {
   needsReview?: boolean;
 };
 
+/** User-supplied facts that cannot be inferred from transactions. null = unknown. */
+export type StoredProfile = {
+  emergencyFund: number | null;
+  investments: number | null;
+  creditCardDebt: number | null;
+  age?: number;
+  riskPreference?: "conservative" | "moderate" | "aggressive";
+  /** true when the user explicitly asked to see the demo persona instead of imported data */
+  useDemo: boolean;
+};
+
 export type LedgerStorageInfo = { kind: "memory" | "json"; durable: boolean; note: string };
 
 export interface LedgerRepository {
@@ -47,6 +58,9 @@ export interface LedgerRepository {
   listRules(userKey: string): Promise<StoredLearnedRule[]>;
   upsertRule(userKey: string, rule: StoredLearnedRule): Promise<void>;
   deleteRule(userKey: string, ruleId: string): Promise<boolean>;
+
+  getProfile(userKey: string): Promise<StoredProfile | null>;
+  setProfile(userKey: string, profile: StoredProfile): Promise<void>;
 
   /** Deletes everything owned by this user. Returns what was removed. */
   deleteAll(userKey: string): Promise<{ transactions: number; batches: number; rules: number }>;

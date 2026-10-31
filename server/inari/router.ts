@@ -14,7 +14,12 @@ import {
   SuccessOutput, YearMonth, DataSource, type Category,
 } from "../../shared/inari/contracts";
 import * as fx from "../../shared/inari/fixtures";
+import { guarded } from "./errors";
 import { getLedgerRepository } from "./ledger";
+import {
+  commitImport, correctCategory, deleteLearnedRule, getBreakdown, getSnapshotFor, previewImport, setBalances,
+  setUseDemo, undoImport, isImportedMode,
+} from "./service";
 
 const LIMITS = { maxCsvBytes: 5_000_000, maxSmsChars: 500_000, maxPdfBytes: 6_000_000 } as const;
 
@@ -70,9 +75,10 @@ const listTransactionsProcedure = ownerProcedure
       : "demo";
     return { implementation: "implemented" as const, items, nextCursor: next, dataSource };
   });
-const listLearnedRulesProcedure = ownerProcedure
-  .output(LearnedRulesOutput)
-  .query(() => ({ implementation: "stub" as const, items: fx.sampleLearnedRules }));
+const listLearnedRulesProcedure = ownerProcedure.output(LearnedRulesOutput).query(async ({ ctx }) => ({
+  implementation: "implemented" as const,
+  items: (await getLedgerRepository().listRules(ctx.ownerKey)).map(r => ({ ...r, createdAt: new Date(r.createdAt) })),
+}));
 const listSubscriptionsProcedure = ownerProcedure.output(SubscriptionsOutput).query(() => ({
   implementation: "stub" as const, items: fx.sampleSubscriptions, monthlyTotal: 649, annualTotal: 7788,
 }));
@@ -85,7 +91,7 @@ export const inariRouter = router({
   // ---------- implemented ----------
   meta: ownerProcedure.output(MetaOutput).query(async ({ ctx }) => {
     const repo = getLedgerRepository();
-    const hasData = (await repo.listBatches(ctx.ownerKey)).some(b => b.status === "committed");
+    const hasData = await isImportedMode(ctx.ownerKey);
     const storage = repo.storageInfo();
     return {
       implementation: "implemented" as const,
@@ -98,7 +104,7 @@ export const inariRouter = router({
       storage,
       limits: LIMITS,
       features: {
-        ledger: true, csv: false, sms: false, pdf: false, categorization: false, subscriptions: false,
+        ledger: true, csv: true, sms: false, pdf: false, categorization: true, subscriptions: false,
         simulations: false, reports: false, guardrails: false, voiceIntent: false, llm: false,
       },
       procedures: PROCEDURE_STATUS,
@@ -131,37 +137,41 @@ export const inariRouter = router({
     };
   }),
 
-  // ---------- stubs: fixture data only ----------
-  getSnapshot: ownerProcedure.output(Snapshot).query(() => fx.sampleSnapshot),
-  setBalances: ownerProcedure.input(BalancesInput).output(Snapshot).mutation(() => fx.sampleSnapshot),
+  getSnapshot: ownerProcedure.output(Snapshot).query(({ ctx }) => getSnapshotFor(ctx.ownerKey)),
+  setBalances: ownerProcedure.input(BalancesInput).output(Snapshot).mutation(({ ctx, input }) => setBalances(ctx.ownerKey, input)),
   useDemoData: ownerProcedure
     .input(z.object({ enabled: z.boolean() }))
-    .output(z.object({ implementation: z.literal("stub"), dataSource: DataSource }))
-    .mutation(() => ({ implementation: "stub" as const, dataSource: "demo" as const })),
+    .output(z.object({ implementation: z.literal("implemented"), dataSource: DataSource }))
+    .mutation(async ({ ctx, input }) => ({ implementation: "implemented" as const, dataSource: await setUseDemo(ctx.ownerKey, input.enabled) })),
 
-  importPreview: ownerProcedure.input(ImportSourceInput).output(ImportPreview).mutation(() => fx.samplePreview),
+  importPreview: ownerProcedure.input(ImportSourceInput).output(ImportPreview).mutation(({ ctx, input }) => guarded(() => previewImport(ctx.ownerKey, input))),
   importCommit: ownerProcedure
     .input(z.object({ previewId: z.string(), accountLabel: z.string().max(60).optional() }))
     .output(ImportBatch)
-    .mutation(() => fx.sampleBatch),
+    .mutation(({ ctx, input }) => guarded(() => commitImport(ctx.ownerKey, input))),
   importUndo: ownerProcedure
     .input(z.object({ batchId: z.string() }))
     .output(ImportBatch)
-    .mutation(() => ({ ...fx.sampleBatch, status: "undone" as const })),
+    .mutation(({ ctx, input }) => guarded(() => undoImport(ctx.ownerKey, input.batchId))),
 
-  correctCategory: ownerProcedure.input(CorrectionInput).output(CorrectionResult).mutation(() => ({
-    implementation: "stub" as const, updated: 1, breakdown: fx.sampleBreakdown,
-  })),
+  correctCategory: ownerProcedure.input(CorrectionInput).output(CorrectionResult).mutation(({ ctx, input }) =>
+    guarded(async () => ({ implementation: "implemented" as const, ...(await correctCategory(ctx.ownerKey, input)) }))
+  ),
   listLearnedRules: listLearnedRulesProcedure,
   getLearnedRules: listLearnedRulesProcedure, // alias
   deleteLearnedRule: ownerProcedure
     .input(z.object({ ruleId: z.string() }))
-    .output(SuccessOutput)
-    .mutation(() => ({ implementation: "stub" as const, success: true as const })),
+    .output(z.object({ implementation: z.literal("implemented"), success: z.literal(true) }))
+    .mutation(({ ctx, input }) =>
+      guarded(async () => {
+        await deleteLearnedRule(ctx.ownerKey, input.ruleId);
+        return { implementation: "implemented" as const, success: true as const };
+      })
+    ),
   getBreakdown: ownerProcedure
     .input(z.object({ month: YearMonth }))
     .output(BreakdownOutput)
-    .query(({ input }) => ({ implementation: "stub" as const, month: input.month, items: fx.sampleBreakdown })),
+    .query(async ({ ctx, input }) => ({ implementation: "implemented" as const, month: input.month, items: await getBreakdown(ctx.ownerKey, input.month) })),
 
   listSubscriptions: listSubscriptionsProcedure,
   getSubscriptions: listSubscriptionsProcedure, // alias

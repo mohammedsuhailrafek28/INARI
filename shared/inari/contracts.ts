@@ -44,11 +44,11 @@ export const PROCEDURE_ALIASES: Partial<Record<ProcedureName, ProcedureName>> = 
  */
 export const PROCEDURE_STATUS: Record<ProcedureName, ImplementationStatus> = {
   meta: "implemented",
-  getSnapshot: "stub", setBalances: "stub", useDemoData: "stub", clearMyData: "implemented",
-  importPreview: "stub", importCommit: "stub", importUndo: "stub", importHistory: "implemented",
+  getSnapshot: "implemented", setBalances: "implemented", useDemoData: "implemented", clearMyData: "implemented",
+  importPreview: "implemented", importCommit: "implemented", importUndo: "implemented", importHistory: "implemented",
   listTransactions: "implemented", getTransactions: "implemented",
-  getCategories: "implemented", correctCategory: "stub", listLearnedRules: "stub", getLearnedRules: "stub",
-  deleteLearnedRule: "stub", getBreakdown: "stub",
+  getCategories: "implemented", correctCategory: "implemented", listLearnedRules: "implemented", getLearnedRules: "implemented",
+  deleteLearnedRule: "implemented", getBreakdown: "implemented",
   listSubscriptions: "stub", getSubscriptions: "stub", confirmSubscription: "stub",
   simulate: "stub",
   ask: "stub", askAdvisor: "stub", analyzeIntent: "stub",
