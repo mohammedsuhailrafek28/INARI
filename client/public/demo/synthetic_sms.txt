@@ -1,0 +1,4 @@
+Rs.1250.00 debited from A/c XX1234 on 12-09-26 to swiggy@ybl (UPI Ref No 5551000001)
+Rs.349.00 debited from A/c XX1234 on 13-09-26 to netflix@icici (UPI Ref No 5551000002)
+INR 52,000.00 credited to A/c XX1234 on 01-09-26 by NEFT. Info: ACME PAYROLL. Avl bal INR 90,000.00
+Rs.800.00 debited from A/c XX1234 on 14-09-26 at BIGBASKET (Card Ref 5551000003)

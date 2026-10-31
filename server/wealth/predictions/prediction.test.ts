@@ -246,7 +246,7 @@ describe("prediction spending and outlook", () => {
 
     expect(outlook.topRisk.length).toBeGreaterThan(0);
     expect(outlook.topOpportunity.length).toBeGreaterThan(0);
-    expect(outlook.forecastSummary).toContain("WealthVerse projects");
+    expect(outlook.forecastSummary).toContain("INARI projects");
   });
 
   it("builds a full prediction bundle from demo context", () => {

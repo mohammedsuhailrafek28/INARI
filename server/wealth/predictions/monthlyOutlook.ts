@@ -53,7 +53,7 @@ export function buildMonthlyOutlook(
     topRisk,
     topOpportunity,
     recommendedFocus,
-    forecastSummary: `For ${nextMonthLabel()}, WealthVerse projects a ${healthForecast.direction} health-score trend with expected surplus near ₹${expectedSurplus.toLocaleString("en-IN")}.`,
+    forecastSummary: `For ${nextMonthLabel()}, INARI projects a ${healthForecast.direction} health-score trend with expected surplus near ₹${expectedSurplus.toLocaleString("en-IN")}.`,
     confidence:
       healthForecast.confidence === "high" && spendingForecasts.some((forecast) => forecast.confidence === "high")
         ? "high"

@@ -58,7 +58,7 @@ export function ProfileHero({
       <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
         <div className="min-w-0">
           <p className="text-[13px] font-semibold uppercase tracking-[0.14em] text-wv-primary">
-            Wealth command centre
+            Financial command centre
           </p>
           <h1
             id="dashboard-title"

@@ -29,7 +29,7 @@ export const supportCategories: SupportCategory[] = [
   {
     id: "getting-started",
     title: "Getting started",
-    description: "Learn what WealthVerse currently offers and how to begin.",
+    description: "Learn what INARI currently offers and how to begin.",
     icon: HelpCircle,
   },
   {
@@ -64,7 +64,7 @@ export const supportCategories: SupportCategory[] = [
   },
   {
     id: "advisor",
-    title: "Avatar Advisor",
+    title: "INARI Advisor",
     description: "Understand what the digital advisor can and cannot do.",
     icon: Bot,
   },
@@ -88,14 +88,14 @@ export const supportFaqs: FaqItem[] = [
     category: "access",
     question: "How do I sign in?",
     answer:
-      "Use the secure sign-in action on the login page. When OAuth is configured, it opens the configured OAuth flow and returns you to WealthVerse after authentication.",
+      "Use the secure sign-in action on the login page. When OAuth is configured, it opens the configured OAuth flow and returns you to INARI after authentication.",
   },
   {
     id: "without-oauth",
     category: "access",
-    question: "Can I use WealthVerse without OAuth?",
+    question: "Can I use INARI without OAuth?",
     answer:
-      "In local or demo environments, WealthVerse can fall back to demo access. This lets the prototype run without a configured OAuth provider.",
+      "In local or demo environments, INARI can fall back to demo access. This lets the prototype run without a configured OAuth provider.",
   },
   {
     id: "demo-mode",
@@ -107,7 +107,7 @@ export const supportFaqs: FaqItem[] = [
   {
     id: "passwords-otp",
     category: "access",
-    question: "Does WealthVerse support passwords or OTP?",
+    question: "Does INARI support passwords or OTP?",
     answer:
       "No. This prototype does not support email passwords, mobile OTP, password reset, or standalone account creation. Access goes through OAuth or the existing demo fallback.",
   },
@@ -130,19 +130,19 @@ export const supportFaqs: FaqItem[] = [
     category: "recommendations",
     question: "Are recommendations generated from real financial-advisor advice?",
     answer:
-      "No. Recommendations are educational prototype outputs generated from deterministic WealthVerse logic and demo context. They are not licensed financial advice.",
+      "No. Recommendations are educational prototype outputs generated from deterministic INARI logic and demo context. They are not licensed financial advice.",
   },
   {
     id: "guaranteed-returns",
     category: "recommendations",
-    question: "Does WealthVerse guarantee returns?",
+    question: "Does INARI guarantee returns?",
     answer:
-      "No. WealthVerse does not guarantee financial, savings, or investment outcomes. Users should consult qualified professionals before making major financial decisions.",
+      "No. INARI does not guarantee financial, savings, or investment outcomes. Users should consult qualified professionals before making major financial decisions.",
   },
   {
     id: "execute-actions",
     category: "recommendations",
-    question: "Can WealthVerse execute investments or transactions?",
+    question: "Can INARI execute investments or transactions?",
     answer:
       "No. The current prototype does not move money, place trades, open accounts, connect live bank accounts, or execute financial transactions.",
   },
@@ -214,7 +214,7 @@ export const supportFaqs: FaqItem[] = [
     category: "security",
     question: "How do I stay safe while using the prototype?",
     answer:
-      "Use only official WealthVerse pages, avoid sharing session links, and sign out on shared devices. This prototype does not ask for passwords or OTPs.",
+      "Use only official INARI pages, avoid sharing session links, and sign out on shared devices. This prototype does not ask for passwords or OTPs.",
   },
   {
     id: "loading-issues",

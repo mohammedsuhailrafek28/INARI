@@ -29,7 +29,7 @@ export function QuickActionRail({ actions, className }: QuickActionRailProps) {
             Quick actions
           </h2>
           <p className="text-sm text-wv-text-secondary">
-            Move to the next useful WealthVerse workspace.
+            Move to the next useful INARI workspace.
           </p>
         </div>
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">

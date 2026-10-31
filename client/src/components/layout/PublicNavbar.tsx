@@ -30,7 +30,7 @@ export type PublicNavbarProps = {
 
 export function PublicNavbar({
   logoSrc,
-  brandName = "WealthVerse",
+  brandName = "INARI",
   links,
   actions = [],
   mobileMenuOpen = false,
@@ -52,7 +52,7 @@ export function PublicNavbar({
           aria-label={`${brandName} home`}
         >
           {logoSrc ? (
-            <img src={logoSrc} alt="Official WealthVerse logo" className="h-10 w-auto rounded-md" />
+            <img src={logoSrc} alt="Official INARI logo" className="h-10 w-auto rounded-md" />
           ) : (
             <span className="flex size-10 items-center justify-center rounded-md bg-wv-primary text-white">
               <ShieldCheck className="size-5" aria-hidden="true" />

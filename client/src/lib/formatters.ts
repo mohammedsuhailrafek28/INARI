@@ -1,6 +1,9 @@
 export function formatCurrencyINR(value: number | null | undefined): string {
   if (!Number.isFinite(value)) return "₹0";
-  return `₹${Math.round(value ?? 0).toLocaleString("en-IN")}`;
+  const paise = Math.round((value ?? 0) * 100);
+  // exact figures: show paise only when there are some, so ₹57,476.04 is never displayed as ₹57,476
+  if (paise % 100 === 0) return `₹${(paise / 100).toLocaleString("en-IN")}`;
+  return `₹${(paise / 100).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 export function formatCompactCurrencyINR(value: number | null | undefined): string {
@@ -15,7 +18,7 @@ export function formatCompactCurrencyINR(value: number | null | undefined): stri
 
 export function formatPercentage(value: number | null | undefined): string {
   if (!Number.isFinite(value)) return "0%";
-  return `${Number(value).toFixed(1)}%`;
+  return `${Number(Number(value).toFixed(2))}%`;
 }
 
 export function formatDate(value: Date | string | null | undefined): string {

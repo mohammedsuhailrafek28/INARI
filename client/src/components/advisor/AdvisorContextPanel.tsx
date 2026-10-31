@@ -30,7 +30,7 @@ export function AdvisorContextPanel({
     <section className="rounded-[var(--wv-radius-card)] border border-wv-border bg-wv-surface p-5 shadow-wv-card">
       <h2 className="text-base font-bold text-wv-text">Profile context</h2>
       <p className="mt-2 text-sm leading-6 text-wv-text-secondary">
-        The advisor uses available WealthVerse profile data, not live bank data.
+        The advisor uses available INARI profile data, not live bank data.
       </p>
       <div className="mt-5 grid gap-3">
         <ContextMetric

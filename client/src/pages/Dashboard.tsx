@@ -1,4 +1,4 @@
-import wealthverseLogo from "@/assets/wealthverse/wealthverse-logo.png";
+import inariLogo from "@/assets/inari/inari-logo.svg";
 import { DashboardNavbar, type DashboardNavLink } from "@/components/layout/DashboardNavbar";
 import { AlertCard } from "@/components/wealth/AlertCard";
 import { EmptyState } from "@/components/wealth/EmptyState";
@@ -14,6 +14,8 @@ import { SectionHeader } from "@/components/wealth/SectionHeader";
 import { TransactionList } from "@/components/wealth/TransactionList";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
+import { DemoNotice, ModeBanner, appLinks } from "@/components/inari/kit";
+import { CoveragePanel, SubscriptionsPanel, TrendPanel } from "@/components/inari/panels";
 import {
   formatCompactCurrencyINR,
   formatCurrencyINR,
@@ -43,15 +45,15 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
 
-const dashboardLinks: DashboardNavLink[] = [
-  { label: "Dashboard", href: "/dashboard", isActive: true },
-  { label: "Spending", href: "/spending" },
-  { label: "Goals", href: "/goals" },
-  { label: "Recommendations", href: "/recommendations" },
-  { label: "Advisor", href: "/avatar" },
-];
+const dashboardLinks: DashboardNavLink[] = appLinks("/dashboard");
 
 const quickActions: QuickAction[] = [
+  {
+    label: "Import statement",
+    description: "CSV, PDF or SMS",
+    href: "/import",
+    icon: ReceiptText,
+  },
   {
     label: "View spending",
     description: "Open cashflow detail",
@@ -72,7 +74,7 @@ const quickActions: QuickAction[] = [
   },
   {
     label: "Ask advisor",
-    description: "Open WealthBot",
+    description: "Open INARI Advisor",
     href: "/avatar",
     icon: Bot,
   },
@@ -101,6 +103,9 @@ export default function Dashboard() {
     enabled: isAuthenticated,
   });
   const goalsQuery = trpc.goals.list.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+  const inariGoalsQuery = trpc.inari.getGoals.useQuery(undefined, {
     enabled: isAuthenticated,
   });
   const alertsQuery = trpc.alerts.list.useQuery(undefined, {
@@ -227,7 +232,7 @@ export default function Dashboard() {
       >
         <EmptyState
           title="No demo profiles available"
-          description="Add or seed a demo profile to populate the WealthVerse dashboard."
+          description="Add or seed a demo profile to populate the INARI dashboard."
         />
       </DashboardFrame>
     );
@@ -255,12 +260,24 @@ export default function Dashboard() {
   }
 
   const predictions = predictionsQuery.data;
-  const goals = goalsQuery.data ?? [];
+  const importedNow = (dashboardQuery.data as { dataSource?: string } | undefined)?.dataSource === "imported";
+  const goals = importedNow
+    ? (inariGoalsQuery.data?.items ?? []).map((g) => ({
+        id: g.id,
+        goalType: g.name,
+        targetAmount: g.targetAmount,
+        currentAmount: g.currentAmount,
+        priority: g.priority,
+        monthlyContribution: g.monthlyContribution ?? 0,
+      }))
+    : (goalsQuery.data ?? []);
   const alerts = alertsQuery.data ?? [];
   const transactions = (transactionsQuery.data ?? []).slice(0, 5);
   const timeline = eventTimelineQuery.data ?? [];
   const notifications = notificationsQuery.data ?? [];
   const profile = data.profile;
+  const imported = (data as { dataSource?: string }).dataSource === "imported";
+  const unknownHealth = new Set<string>((data.financialHealth as { unknownComponents?: string[] } | null)?.unknownComponents ?? []);
   const topInsight = wealth.insights[0];
   const topAlert =
     wealth.alerts.find((alert) => alert.severity === "high") ??
@@ -275,8 +292,8 @@ export default function Dashboard() {
   return (
     <DashboardFrame
       userName={user?.name ?? "Demo User"}
-      profileLabel={profile.name}
-      profileOptions={profileOptions}
+      profileLabel={imported ? "Your imported data" : profile.name}
+      profileOptions={imported ? [] : profileOptions}
       activeProfileId={activeProfileQuery.data?.id ?? null}
       mobileMenuOpen={mobileMenuOpen}
       setMobileMenuOpen={setMobileMenuOpen}
@@ -285,6 +302,8 @@ export default function Dashboard() {
       profileSwitchDisabled={isSwitchingProfile}
     >
       <div className="space-y-6">
+        <ModeBanner />
+        <DemoNotice />
         <ProfileHero
           profileName={profile.name}
           occupation={profile.occupation}
@@ -303,7 +322,7 @@ export default function Dashboard() {
           <HealthScoreCard
             score={data.financialHealth?.overallScore ?? 0}
             category={data.financialHealth?.category ?? "poor"}
-            description="Educational score based on savings, investments, debt, and emergency-fund readiness. It is not a regulated credit score."
+            description={imported ? "Educational score from your imported statements. Components you have not provided (investments, debt, emergency fund) are left out, not scored as zero. Not a regulated credit score." : "Educational score based on savings, investments, debt, and emergency-fund readiness. It is not a regulated credit score."}
             projection={
               predictions
                 ? `90-day projection: ${predictions.healthForecast.projected90DayScore}/100, ${predictions.healthForecast.direction}`
@@ -317,16 +336,19 @@ export default function Dashboard() {
               },
               {
                 label: "Investments",
+                unknown: unknownHealth.has("investment"),
                 score: data.financialHealth?.investmentScore ?? 0,
                 description: "Reflects investment balance and readiness signals.",
               },
               {
                 label: "Debt",
+                unknown: unknownHealth.has("debt"),
                 score: data.financialHealth?.debtScore ?? 0,
                 description: "Reflects credit-card debt pressure.",
               },
               {
                 label: "Emergency fund",
+                unknown: unknownHealth.has("emergencyFund"),
                 score: data.financialHealth?.emergencyFundScore ?? 0,
                 description: "Reflects available emergency-fund coverage.",
               },
@@ -368,14 +390,14 @@ export default function Dashboard() {
         <section aria-labelledby="metrics-heading">
           <SectionHeader
             title="Account overview"
-            description="Demo banking-style view of income, expenses, savings, investments, emergency fund, and credit-card debt."
+            description={imported ? "Income, expenses and savings are calculated from your imported statements. Balances come only from what you confirm on the Spending page." : "Demo banking-style view of income, expenses, savings, investments, emergency fund, and credit-card debt."}
             headingLevel={2}
           />
           <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <FinancialMetricCard
               title="Monthly income"
               value={formatCurrencyINR(data.monthlyIncome)}
-              subtitle="Active profile income"
+              subtitle={imported ? "Average of your latest complete months" : "Active profile income"}
               trend="Income"
               trendDirection="up"
               icon={<Landmark className="size-5" aria-hidden="true" />}
@@ -383,7 +405,7 @@ export default function Dashboard() {
             <FinancialMetricCard
               title="Monthly expenses"
               value={formatCurrencyINR(data.monthlyExpenses)}
-              subtitle="Current monthly outflow"
+              subtitle={imported ? "Average of your latest complete months" : "Current monthly outflow"}
               trend="Expense"
               trendDirection="down"
               icon={<CreditCard className="size-5" aria-hidden="true" />}
@@ -398,8 +420,8 @@ export default function Dashboard() {
             />
             <FinancialMetricCard
               title="Investments"
-              value={formatCompactCurrencyINR(data.investmentBalance)}
-              subtitle="Investment balance in demo profile"
+              value={data.investmentBalance === null ? "Not provided" : formatCompactCurrencyINR(data.investmentBalance)}
+              subtitle={imported ? "Statements cannot show this; you can enter it" : "Investment balance in demo profile"}
               trend="Portfolio"
               trendDirection="flat"
               icon={<TrendingUp className="size-5" aria-hidden="true" />}
@@ -408,8 +430,8 @@ export default function Dashboard() {
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             <FinancialMetricCard
               title="Emergency fund"
-              value={formatCurrencyINR(data.emergencyFundBalance)}
-              subtitle="Available emergency reserve"
+              value={data.emergencyFundBalance === null ? "Not provided" : formatCurrencyINR(data.emergencyFundBalance)}
+              subtitle={imported ? "Statements cannot show this; you can enter it" : "Available emergency reserve"}
               trend="Safety buffer"
               trendDirection="flat"
               icon={<ShieldCheck className="size-5" aria-hidden="true" />}
@@ -429,7 +451,7 @@ export default function Dashboard() {
           <section aria-labelledby="recommendations-heading">
             <SectionHeader
               title="Recommendations preview"
-              description="Top explainable recommendations from the current profile."
+              description={imported ? "Top recommendations from your imported spending, with the reasons shown." : "Top explainable recommendations from the current profile."}
               action={
                 <Button asChild variant="outline" className="border-wv-border text-wv-text">
                   <a href="/recommendations">View all</a>
@@ -461,7 +483,7 @@ export default function Dashboard() {
           <section aria-labelledby="goals-heading">
             <SectionHeader
               title="Goals preview"
-              description="Priority goals from the active profile."
+              description={imported ? "Goals you have created. Manage them on the Goals page." : "Priority goals from the active profile."}
               action={
                 <Button asChild variant="outline" className="border-wv-border text-wv-text">
                   <a href="/goals">View all goals</a>
@@ -483,7 +505,7 @@ export default function Dashboard() {
               ) : (
                 <EmptyState
                   title="No goals available"
-                  description="Goal cards will appear when the active profile has goal data."
+                  description={imported ? "You have not created a goal yet. Add one on the Goals page; INARI only uses amounts you enter." : "Goal cards will appear when the active profile has goal data."}
                 />
               )}
             </div>
@@ -494,7 +516,7 @@ export default function Dashboard() {
           <section aria-labelledby="alerts-heading">
             <SectionHeader
               title="Alerts"
-              description="Important profile signals to review."
+              description={imported ? "Signals found in your imported data." : "Important profile signals to review."}
             />
             <div className="mt-4 grid gap-4">
               {alerts.length > 0 ? (
@@ -521,7 +543,7 @@ export default function Dashboard() {
           <section aria-labelledby="transactions-heading">
             <SectionHeader
               title="Recent transactions"
-              description="Latest activity from the active demo profile."
+              description={imported ? "Most recent transactions from your imported statements." : "Latest activity from the active demo profile."}
             />
             <div className="mt-4">
               {transactions.length > 0 ? (
@@ -536,7 +558,25 @@ export default function Dashboard() {
           </section>
         </div>
 
-        <section className="grid gap-4 lg:grid-cols-3" aria-label="Secondary dashboard signals">
+        {imported ? (
+          <div className="grid gap-6 xl:grid-cols-2">
+            <TrendPanel />
+            <div className="space-y-6">
+              <CoveragePanel />
+            </div>
+            <div className="xl:col-span-2">
+              <SubscriptionsPanel />
+            </div>
+          </div>
+        ) : (
+          <section className="rounded-[var(--wv-radius-card)] border border-wv-border bg-wv-surface p-5 shadow-wv-card">
+            <h2 className="font-display text-lg font-bold">Use your own statements</h2>
+            <p className="mt-1 text-sm text-wv-text-secondary">You are looking at a fictional persona. Import a CSV, digital PDF or SMS alerts (synthetic data only) and INARI will rebuild this dashboard, spending, goals, recommendations and advisor from your ledger.</p>
+            <Button asChild className="mt-3 bg-wv-accent text-white hover:bg-wv-accent-hover"><a href="/import">Open the Import Center</a></Button>
+          </section>
+        )}
+
+        {!imported ? <section className="grid gap-4 lg:grid-cols-3" aria-label="Secondary dashboard signals">
           <SecondaryPanel
             title="Savings streak"
             value={`${data.savingsStreak} months`}
@@ -558,11 +598,11 @@ export default function Dashboard() {
             description="Latest event and unread-notification signals loaded for this session."
             icon={<AlertTriangle className="size-5" aria-hidden="true" />}
           />
-        </section>
+        </section> : null}
 
         <footer className="flex flex-col gap-3 border-t border-wv-border pt-5 text-xs leading-5 text-wv-muted sm:flex-row sm:items-center sm:justify-between">
           <p>
-            WealthVerse provides educational financial insights and does not guarantee
+            INARI provides educational financial insights and does not guarantee
             financial or investment outcomes.
           </p>
           <a
@@ -603,7 +643,7 @@ function DashboardFrame({
   return (
     <div className="min-h-screen bg-wv-background text-wv-text">
       <DashboardNavbar
-        logoSrc={wealthverseLogo}
+        logoSrc={inariLogo}
         links={dashboardLinks}
         userName={userName}
         profileLabel={profileLabel}

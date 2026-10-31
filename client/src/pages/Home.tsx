@@ -1,7 +1,7 @@
 import heroAdvisorConsult from "@/assets/wealthverse/hero-advisor-consult.png";
 import heroBankingSecurity from "@/assets/wealthverse/hero-banking-security.png";
 import heroFamily from "@/assets/wealthverse/hero-family.png";
-import wealthverseLogo from "@/assets/wealthverse/wealthverse-logo.png";
+import inariLogo from "@/assets/inari/inari-logo.svg";
 import { Footer } from "@/components/layout/Footer";
 import { PublicNavbar, type PublicNavLink } from "@/components/layout/PublicNavbar";
 import { Button } from "@/components/ui/button";
@@ -58,13 +58,19 @@ const valuePillars = [
 ];
 
 const howItWorks = [
-  "Understand your current finances through demo-safe account and profile context.",
-  "Identify visible risks, spending patterns, and savings opportunities.",
-  "Plan goals with educational guidance and transparent assumptions.",
-  "Track progress over time as your dashboard, alerts, and advisor context update.",
+  "Import a statement (CSV, digital PDF or SMS alerts) and review the preview before anything is saved.",
+  "See spending, recurring payments, refunds owed and data gaps, with unknown balances shown as not provided.",
+  "Ask the advisor, run what-ifs and plan goals. Answers are calculated deterministically and show their assumptions.",
+  "Corrections, reconciliations and new imports update the dashboard, goals and advisor together.",
 ];
 
 const productFeatures = [
+  {
+    title: "Import Center",
+    description:
+      "Bring in CSV, digital PDF or SMS alerts with duplicate protection, possible-duplicate review and one-click undo.",
+    icon: <WalletCards className="size-5" aria-hidden="true" />,
+  },
   {
     title: "Financial Health",
     description:
@@ -90,9 +96,9 @@ const productFeatures = [
     icon: <CheckCircle2 className="size-5" aria-hidden="true" />,
   },
   {
-    title: "Avatar Advisor",
+    title: "INARI Advisor",
     description:
-      "Explore guidance through an interactive digital advisor experience built around the current WealthContext.",
+      "Ask in plain language, by typing or dictating. The advisor answers from your ledger, asks when it needs more, and never acts without your confirmation.",
     icon: <Bot className="size-5" aria-hidden="true" />,
   },
 ];
@@ -102,16 +108,16 @@ export default function Home() {
   const authActions = useMemo(
     () => [
       {
-        label: "Start Interactive Demo",
-        href: "/choose-profile",
+        label: "Import a statement",
+        href: "/import",
         variant: "secondary" as const,
-        ariaLabel: "Start the interactive WealthVerse demo",
+        ariaLabel: "Import a statement into INARI",
       },
       {
         label: "Sign in",
         href: "/login",
         variant: "primary" as const,
-        ariaLabel: "Sign in to WealthVerse",
+        ariaLabel: "Sign in to INARI",
       },
     ],
     []
@@ -120,7 +126,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-wv-background text-wv-text">
       <PublicNavbar
-        logoSrc={wealthverseLogo}
+        logoSrc={inariLogo}
         links={navLinks}
         actions={authActions}
         mobileMenuOpen={mobileMenuOpen}
@@ -135,15 +141,16 @@ export default function Home() {
             <div>
               <p className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/12 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-white">
                 <ShieldCheck className="size-4" aria-hidden="true" />
-                Educational wealth intelligence
+                Voice-first money coach
               </p>
               <h1 className="mt-6 max-w-3xl font-display text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
                 Your money, understood clearly.
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-white/82 sm:text-lg">
-                WealthVerse helps users understand financial health, track
-                spending, plan goals, review explainable recommendations, and
-                explore guidance through a digital wealth guide.
+                INARI turns your own bank statements into a living picture of your
+                money. Import a CSV, digital PDF or SMS alerts, then ask questions
+                out loud, test what-ifs, plan goals and review explainable
+                recommendations. Every number is calculated from your ledger, never guessed.
               </p>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -151,10 +158,17 @@ export default function Home() {
                   asChild
                   className="min-h-11 bg-wv-accent px-6 text-white hover:bg-wv-accent-hover"
                 >
-                  <a href="/choose-profile" aria-label="Start the interactive WealthVerse demo">
-                    Start Interactive Demo
+                  <a href="/import" aria-label="Import a statement into INARI">
+                    Import a statement
                     <ArrowRight className="size-4" aria-hidden="true" />
                   </a>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="min-h-11 border-white/35 bg-white/10 px-6 text-white hover:bg-white/20"
+                >
+                  <a href="/choose-profile" aria-label="Explore a sample persona">Explore a sample persona</a>
                 </Button>
                 <Button
                   asChild
@@ -166,7 +180,7 @@ export default function Home() {
               </div>
 
               <div className="mt-8 grid gap-3 text-sm text-white/82 sm:grid-cols-3">
-                <TrustItem>Protected app routes</TrustItem>
+                <TrustItem>One ledger behind every page</TrustItem>
                 <TrustItem>Explainable guidance</TrustItem>
                 <TrustItem>No automatic financial actions</TrustItem>
               </div>
@@ -183,7 +197,7 @@ export default function Home() {
             <SectionHeader
               eyebrow="Product value"
               title="A calmer way to understand personal finance"
-              description="The landing experience explains what WealthVerse currently helps users do, without overstating unsupported banking or investment capabilities."
+              description="The landing experience explains what INARI currently helps users do, without overstating unsupported banking or investment capabilities."
             />
             <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {valuePillars.map((pillar) => (
@@ -198,7 +212,7 @@ export default function Home() {
             <SectionHeader
               eyebrow="How it works"
               title="From financial signals to practical next steps"
-              description="WealthVerse keeps the flow understandable: review context, surface insights, explain recommendations, and track progress."
+              description="INARI keeps the flow understandable: review context, surface insights, explain recommendations, and track progress."
             />
             <ol className="grid gap-4">
               {howItWorks.map((step, index) => (
@@ -222,10 +236,10 @@ export default function Home() {
           <div className="mx-auto max-w-[var(--wv-content-width)] px-4 sm:px-6 lg:px-8">
             <SectionHeader
               eyebrow="Currently implemented"
-              title="Product areas built around real demo data"
-              description="These areas map to the existing WealthVerse app and its tRPC-backed demo experience."
+              title="Every product area runs on one ledger"
+              description="Import once and the dashboard, spending, goals, recommendations and advisor all use the same verified figures."
             />
-            <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+            <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {productFeatures.map((feature) => (
                 <FeatureCard key={feature.title} {...feature} compact />
               ))}
@@ -237,7 +251,7 @@ export default function Home() {
           id="security"
           eyebrow="Security and trust"
           title="Designed around protected sessions and explainable guidance"
-          description="WealthVerse uses authenticated application routes and local demo-mode fallbacks for development. Recommendations are educational, explainable, and do not execute financial actions automatically."
+          description="INARI uses authenticated application routes and a temporary per-browser demo identity in this build (not production sign-in). Recommendations are educational, explainable, and do not execute financial actions automatically."
           imageSrc={heroBankingSecurity}
           imageWidth={1120}
           imageHeight={500}
@@ -252,15 +266,15 @@ export default function Home() {
         <ImageStorySection
           id="advisor"
           eyebrow="Digital advisor"
-          title="A guided way to explore your financial context"
-          description="The Avatar Advisor experience helps users ask about financial health, recommendations, spending patterns, and goals using the current WealthContext."
+          title="A guided way to question your own money"
+          description="The advisor answers from your own imported ledger: spending, recurring payments, refunds, what-ifs and goals. It states that no language model is used and shows the evidence behind each number."
           imageSrc={heroAdvisorConsult}
           imageWidth={904}
           imageHeight={468}
           imageAlt="Financial advisor consultation interface"
           reverse
           points={[
-            "Ask focused questions about the current demo profile.",
+            "Ask focused questions about your imported statements.",
             "Review suggested next actions and educational disclaimers.",
             "Use the advisor as a guide, not as licensed financial advice.",
           ]}
@@ -276,7 +290,7 @@ export default function Home() {
                 Move from financial information to personal goals
               </h2>
               <p className="mt-4 text-base leading-7 text-wv-text-secondary">
-                WealthVerse connects insights to goals so users can understand
+                INARI connects insights to goals so users can understand
                 what to improve this month and what to monitor over time.
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
@@ -313,7 +327,7 @@ export default function Home() {
               Start with clarity, then keep improving.
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-white/76 sm:text-base">
-              WealthVerse provides educational financial insights and demo-safe
+              INARI provides educational financial insights and demo-safe
               guidance. It does not guarantee outcomes or replace a qualified
               financial professional.
             </p>
@@ -337,8 +351,8 @@ export default function Home() {
       </main>
 
       <Footer
-        logoSrc={wealthverseLogo}
-        description="WealthVerse is an educational digital wealth experience for understanding financial health, spending, goals, and explainable recommendations."
+        logoSrc={inariLogo}
+        description="INARI is an educational digital wealth experience for understanding financial health, spending, goals, and explainable recommendations."
         sections={[
           {
             title: "Product",
@@ -371,21 +385,21 @@ function ProductHeroVisual() {
   return (
     <div
       className="relative rounded-[28px] border border-white/20 bg-white/12 p-4 shadow-2xl shadow-wv-primary-dark/30 backdrop-blur"
-      aria-label="WealthVerse product preview showing health score, goals, recommendations, and advisor"
+      aria-label="INARI product preview showing health score, goals, recommendations, and advisor"
     >
       <div className="absolute -right-8 -top-8 size-32 rounded-full bg-white/12 blur-2xl" aria-hidden="true" />
       <div className="relative rounded-[22px] border border-white/18 bg-[#f7fbfa] p-4 text-wv-text shadow-[0_28px_80px_-48px_rgba(0,0,0,0.75)]">
         <div className="flex items-center justify-between border-b border-wv-border pb-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-wv-primary">
-              WealthVerse
+              INARI
             </p>
             <h2 className="mt-1 font-display text-xl font-bold tracking-[-0.03em]">
               Financial Intelligence
             </h2>
           </div>
           <span className="rounded-full bg-wv-primary px-3 py-1 text-xs font-semibold text-white">
-            Live demo
+            Illustrative preview
           </span>
         </div>
 

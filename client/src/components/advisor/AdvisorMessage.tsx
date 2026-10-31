@@ -2,6 +2,9 @@ import { Button } from "@/components/ui/button";
 import { formatTitle } from "@/lib/formatters";
 import { Bot, Volume2 } from "lucide-react";
 
+import type { InariAdvisorResponse } from "@shared/inari/contracts";
+import { ActionCard } from "@/components/inari/panels";
+
 export type AdvisorResponseView = {
   answer: string;
   summary?: string;
@@ -12,6 +15,16 @@ export type AdvisorResponseView = {
   confidenceLevel: "low" | "medium" | "high";
   mode: "llm" | "fallback";
   disclaimer: string;
+  /** Present only for answers from the INARI ledger engine (inari.ask). */
+  inari?: {
+    engineLabel: string;
+    guardrail: string;
+    limitations: string[];
+    assumptions: string[];
+    evidence: string[];
+    clarification: string | null;
+    actions: NonNullable<InariAdvisorResponse["proposedActions"]>;
+  };
 };
 
 export type AdvisorMessageView =
@@ -69,7 +82,7 @@ export function AdvisorMessage({
           </div>
           <div>
             <p className="text-xs font-semibold text-wv-muted">
-              WealthVerse Guide · {formatTime(message.createdAt)}
+              INARI Advisor · {formatTime(message.createdAt)}
             </p>
             <h3 className="mt-1 text-lg font-bold text-wv-text">
               {response.summary ?? "Advisor response"}
@@ -78,7 +91,7 @@ export function AdvisorMessage({
         </div>
         <div className="flex flex-wrap gap-2">
           <span className="rounded-full bg-wv-background px-3 py-1 text-xs font-bold text-wv-primary">
-            {formatTitle(response.mode)} mode
+            {response.inari ? response.inari.engineLabel : `${formatTitle(response.mode)} mode`}
           </span>
           <span className="rounded-full bg-wv-background px-3 py-1 text-xs font-semibold text-wv-text-secondary">
             {formatTitle(response.confidenceLevel)} confidence
@@ -87,6 +100,10 @@ export function AdvisorMessage({
       </div>
 
       <p className="mt-5 text-sm leading-7 text-wv-text-secondary">{response.answer}</p>
+
+      {response.inari?.clarification ? (
+        <p className="mt-3 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900" data-testid="advisor-clarification">{response.inari.clarification}</p>
+      ) : null}
 
       {response.relatedMetrics && response.relatedMetrics.length > 0 ? (
         <div className="mt-5 grid gap-3 sm:grid-cols-3">
@@ -99,6 +116,20 @@ export function AdvisorMessage({
               <p className="mt-1 text-sm font-bold text-wv-text">{metric.value}</p>
             </div>
           ))}
+        </div>
+      ) : null}
+
+      {response.inari && (response.inari.limitations.length > 0 || response.inari.assumptions.length > 0 || response.inari.evidence.length > 0) ? (
+        <div className="mt-4 space-y-1 text-xs leading-5 text-wv-text-secondary" data-testid="advisor-evidence">
+          {response.inari.evidence.map((e) => <p key={e}>Evidence: {e}</p>)}
+          {response.inari.assumptions.map((e) => <p key={e}>Assumption: {e}</p>)}
+          {response.inari.limitations.map((e) => <p key={e} className="text-amber-700">Limitation: {e}</p>)}
+        </div>
+      ) : null}
+
+      {response.inari && response.inari.actions.length > 0 ? (
+        <div className="mt-4 space-y-3">
+          {response.inari.actions.map((a, i) => <ActionCard key={`${a.procedure}-${i}`} a={a} />)}
         </div>
       ) : null}
 

@@ -10,7 +10,7 @@ export function RouteLoadingFallback() {
       <div className="rounded-[var(--wv-radius-card)] border border-wv-border bg-wv-surface px-6 py-5 text-center shadow-wv-card">
         <Spinner className="mx-auto size-5 text-wv-primary" />
         <p className="mt-3 text-sm font-medium text-wv-text-secondary">
-          Loading WealthVerse
+          Loading INARI
         </p>
       </div>
     </div>

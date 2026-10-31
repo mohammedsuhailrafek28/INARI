@@ -144,7 +144,7 @@ export function buildNotificationsForEvent(event: WealthEvent): Notification[] {
         makeNotification(event, {
           priority: "low",
           title: "Demo data is active",
-          message: "WealthVerse is using local demo data for this session.",
+          message: "INARI is using local demo data for this session.",
           dedupeKey: "system:demo-mode",
           expiresInDays: 1,
         }),

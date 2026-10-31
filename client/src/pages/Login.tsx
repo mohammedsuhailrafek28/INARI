@@ -1,5 +1,5 @@
 import heroBankingSecurity from "@/assets/wealthverse/hero-banking-security.png";
-import wealthverseLogo from "@/assets/wealthverse/wealthverse-logo.png";
+import inariLogo from "@/assets/inari/inari-logo.svg";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { OAuthLoginButton } from "@/components/auth/OAuthLoginButton";
 import { Button } from "@/components/ui/button";
@@ -41,7 +41,7 @@ export default function Login() {
       <div className="mx-auto grid min-h-screen max-w-[var(--wv-content-width)] gap-8 px-4 py-6 sm:px-6 lg:grid-cols-[1.03fr_0.97fr] lg:px-8 lg:py-8">
         <section
           className="relative hidden overflow-hidden rounded-[var(--wv-radius-card)] bg-wv-primary-dark text-white shadow-wv-card lg:block"
-          aria-label="WealthVerse secure access overview"
+          aria-label="INARI secure access overview"
         >
           <img
             src={heroBankingSecurity}
@@ -59,13 +59,13 @@ export default function Login() {
               className="inline-flex w-fit items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-wv-primary-dark"
             >
               <img
-                src={wealthverseLogo}
-                alt="Official WealthVerse logo"
+                src={inariLogo}
+                alt="Official INARI logo"
                 className="size-10 rounded-md bg-white object-contain p-1"
                 loading="lazy"
                 decoding="async"
               />
-              <span className="font-display text-xl font-bold">WealthVerse</span>
+              <span className="font-display text-xl font-bold">INARI</span>
             </a>
 
             <div className="max-w-xl">
@@ -78,7 +78,7 @@ export default function Login() {
               </h2>
               <p className="mt-4 max-w-lg text-base leading-7 text-white/82">
                 Your financial insights stay connected to your authenticated
-                WealthVerse session, with local demo access available when OAuth
+                INARI session, with local demo access available when OAuth
                 is not configured.
               </p>
             </div>
@@ -94,7 +94,7 @@ export default function Login() {
               </li>
               <li className="flex items-center gap-2">
                 <CheckCircle2 className="size-4 text-wv-accent" aria-hidden="true" />
-                WealthVerse provides educational financial insights only.
+                INARI provides educational financial insights only.
               </li>
             </ul>
           </div>
@@ -107,7 +107,7 @@ export default function Login() {
               className="mb-8 inline-flex items-center gap-3 rounded-md text-sm font-semibold text-wv-text-secondary transition-colors hover:text-wv-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wv-primary focus-visible:ring-offset-2"
             >
               <ArrowLeft className="size-4" aria-hidden="true" />
-              Back to WealthVerse
+              Back to INARI
             </a>
 
             {loading || isAuthenticated ? (
@@ -115,7 +115,7 @@ export default function Login() {
                 eyebrow="Checking access"
                 title="Preparing your workspace"
                 titleLevel={1}
-                description="We are checking your current WealthVerse session before showing sign-in options."
+                description="We are checking your current INARI session before showing sign-in options."
               >
                 <div
                   className="flex min-h-28 items-center justify-center gap-3 rounded-[var(--wv-radius-form)] border border-wv-border bg-wv-background text-sm font-medium text-wv-text-secondary"
@@ -134,7 +134,7 @@ export default function Login() {
                 description="Access your financial health, goals, recommendations, and advisor experience."
                 footer={
                   <p className="text-xs leading-5 text-wv-muted">
-                    WealthVerse provides educational financial insights and does
+                    INARI provides educational financial insights and does
                     not guarantee investment outcomes. Consult a qualified
                     professional before making financial decisions.
                   </p>
@@ -155,7 +155,7 @@ export default function Login() {
                         <p className="mt-1 text-sm leading-6 text-wv-text-secondary">
                           {isDemoFallback
                             ? "OAuth variables are not configured in this environment, so the existing sign-in action opens the demo workspace."
-                            : "The sign-in button opens the configured WealthVerse OAuth flow and returns you to the app after authentication."}
+                            : "The sign-in button opens the configured INARI OAuth flow and returns you to the app after authentication."}
                         </p>
                       </div>
                     </div>
@@ -166,7 +166,7 @@ export default function Login() {
                     variant="outline"
                     className="min-h-11 w-full border-wv-border text-wv-text hover:bg-wv-background"
                   >
-                    <a href="/choose-profile">New to WealthVerse? Start Interactive Demo</a>
+                    <a href="/choose-profile">New to INARI? Start Interactive Demo</a>
                   </Button>
 
                   <p className="text-center text-xs leading-5 text-wv-muted">

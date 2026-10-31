@@ -1,4 +1,4 @@
-import wealthverseLogo from "@/assets/wealthverse/wealthverse-logo.png";
+import inariLogo from "@/assets/inari/inari-logo.svg";
 import { PersonaCard } from "@/components/onboarding/PersonaCard";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/wealth/EmptyState";
@@ -138,8 +138,8 @@ export default function PersonaSelection() {
             href="/"
             className="inline-flex items-center gap-2 rounded-md text-sm font-bold text-wv-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wv-primary focus-visible:ring-offset-2"
           >
-            <img src={wealthverseLogo} alt="Official WealthVerse logo" className="size-8 rounded-md object-contain" />
-            <span>WealthVerse</span>
+            <img src={inariLogo} alt="Official INARI logo" className="size-8 rounded-md object-contain" />
+            <span>INARI</span>
           </a>
           <span className="hidden text-[10px] font-bold uppercase tracking-[0.22em] text-wv-text-secondary sm:inline">
             Onboarding Experience
@@ -158,7 +158,7 @@ export default function PersonaSelection() {
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-wv-text-secondary sm:text-base">
             Select a demo profile to experience personalized financial intelligence tailored
-            to a real WealthVerse persona.
+            to a real INARI persona.
           </p>
         </div>
 
@@ -177,7 +177,7 @@ export default function PersonaSelection() {
           <EmptyState
             className="mx-auto mt-10 max-w-2xl"
             title="No demo profiles available"
-            description="Seed or enable demo data before starting the interactive WealthVerse demo."
+            description="Seed or enable demo data before starting the interactive INARI demo."
           />
         ) : (
           <>
@@ -245,8 +245,8 @@ export default function PersonaSelection() {
 
       <footer className="border-t border-wv-border bg-white px-4 py-6 text-xs text-wv-muted sm:px-6 lg:px-8">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <span className="font-semibold text-wv-text">WealthVerse</span>
-          <span>© 2026 WealthVerse. Financial insights for a calmer future.</span>
+          <span className="font-semibold text-wv-text">INARI</span>
+          <span>© 2026 INARI. Financial insights for a calmer future.</span>
         </div>
       </footer>
     </main>

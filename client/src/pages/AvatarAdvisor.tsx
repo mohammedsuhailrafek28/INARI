@@ -1,4 +1,4 @@
-import wealthverseLogo from "@/assets/wealthverse/wealthverse-logo.png";
+import inariLogo from "@/assets/inari/inari-logo.svg";
 import { AdvisorContextPanel } from "@/components/advisor/AdvisorContextPanel";
 import { AdvisorIdentity } from "@/components/advisor/AdvisorIdentity";
 import {
@@ -21,19 +21,15 @@ import {
   normalizeFinancialText,
 } from "@/lib/formatters";
 import { trpc } from "@/lib/trpc";
+import { DemoNotice, ModeBanner, appLinks, useInariMode } from "@/components/inari/kit";
+import type { AdvisorContext, InariAdvisorResponse } from "@shared/inari/contracts";
 import { Bot, Send, ShieldCheck } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
 
 type AdvisorResponse = AdvisorResponseView;
 
-const advisorLinks: DashboardNavLink[] = [
-  { label: "Dashboard", href: "/dashboard" },
-  { label: "Spending", href: "/spending" },
-  { label: "Goals", href: "/goals" },
-  { label: "Recommendations", href: "/recommendations" },
-  { label: "Advisor", href: "/avatar", isActive: true },
-];
+const advisorLinks: DashboardNavLink[] = appLinks("/avatar");
 
 const defaultQuestions = [
   "How is my financial health?",
@@ -48,6 +44,8 @@ export default function AvatarAdvisor() {
   const { user, isAuthenticated, loading: authLoading, logout } = useAuth();
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
+  const mode = useInariMode();
+  const [inariContext, setInariContext] = useState<AdvisorContext | undefined>(undefined);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [question, setQuestion] = useState("");
   const [conversation, setConversation] = useState<AdvisorMessageView[]>([]);
@@ -117,6 +115,40 @@ export default function AvatarAdvisor() {
     },
   });
 
+  const inariAsk = trpc.inari.ask.useMutation({
+    onSuccess: (response) => {
+      setInariContext(response.context);
+      const advisorResponse = fromInari(response);
+      setConversation((messages) => [
+        ...messages,
+        { id: createId("assistant"), role: "assistant", response: advisorResponse, createdAt: new Date(), status: "complete" },
+      ]);
+      setLastSpokenAnswer(advisorResponse.answer);
+      speak(advisorResponse.answer);
+    },
+    onError: (error) => {
+      setConversation((messages) => [
+        ...messages,
+        {
+          id: createId("assistant-error"),
+          role: "assistant",
+          response: {
+            answer: `I could not answer that: ${error.message}. Your question was not answered; please try again.`,
+            summary: "Advisor request failed",
+            keyInsights: [],
+            suggestedNextActions: ["Try the question again."],
+            confidenceLevel: "low",
+            mode: "fallback",
+            disclaimer: "This is educational demo guidance, not licensed financial advice.",
+          },
+          createdAt: new Date(),
+          status: "error",
+        },
+      ]);
+    },
+  });
+  const isAsking = advisorMutation.isPending || inariAsk.isPending;
+
   const setActiveProfileMutation = trpc.profiles.setActive.useMutation({
     onSuccess: async () => {
       stopSpeaking();
@@ -142,11 +174,11 @@ export default function AvatarAdvisor() {
 
   const profileOptions = useMemo(
     () =>
-      (profilesQuery.data ?? []).map((profile) => ({
+      (mode.imported ? [] : profilesQuery.data ?? []).map((profile) => ({
         id: profile.id,
         label: profile.name,
       })),
-    [profilesQuery.data]
+    [profilesQuery.data, mode.imported]
   );
 
   const recommendations = useMemo(
@@ -177,7 +209,7 @@ export default function AvatarAdvisor() {
     return questions.filter((item, index, all) => all.indexOf(item) === index).slice(0, 8);
   }, [recommendations, wealthContextQuery.data]);
 
-  const profileLabel = activeProfileQuery.data?.name;
+  const profileLabel = mode.imported ? "Your imported data" : activeProfileQuery.data?.name;
   const isSwitchingProfile = setActiveProfileMutation.isPending;
   const isPrimaryLoading =
     authLoading ||
@@ -216,7 +248,7 @@ export default function AvatarAdvisor() {
 
   const askAdvisor = (rawQuestion: string) => {
     const trimmed = rawQuestion.trim();
-    if (trimmed.length < 3 || advisorMutation.isPending) return;
+    if (trimmed.length < 3 || isAsking) return;
     stopSpeaking();
     setConversation((messages) => [
       ...messages,
@@ -228,13 +260,14 @@ export default function AvatarAdvisor() {
         status: "complete",
       },
     ]);
-    advisorMutation.mutate({ question: trimmed });
+    if (mode.imported) inariAsk.mutate({ question: trimmed, locale: "en", ...(inariContext ? { previous: inariContext } : {}) });
+    else advisorMutation.mutate({ question: trimmed });
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const trimmed = question.trim();
-    if (trimmed.length < 3 || advisorMutation.isPending) return;
+    if (trimmed.length < 3 || isAsking) return;
     askAdvisor(trimmed);
     setQuestion("");
   };
@@ -324,7 +357,7 @@ export default function AvatarAdvisor() {
     dashboard && dashboard.monthlyExpenses && dashboard.monthlyExpenses > 0 && dashboard.emergencyFundBalance !== null
       ? Math.round((dashboard.emergencyFundBalance / dashboard.monthlyExpenses) * 10) / 10
       : null;
-  const firstName = (profileLabel ?? dashboard?.profile.name ?? "there").split(" ")[0];
+  const firstName = mode.imported ? "there" : (profileLabel ?? dashboard?.profile.name ?? "there").split(" ")[0];
   const welcomeMessage: AdvisorMessageView = {
     id: `welcome-${activeProfileQuery.data?.id ?? "demo"}`,
     role: "assistant",
@@ -358,6 +391,9 @@ export default function AvatarAdvisor() {
       confidenceLevel: "medium",
       mode: "fallback",
       disclaimer: "This is educational demo guidance, not licensed financial advice.",
+      ...(mode.imported
+        ? { inari: { engineLabel: "Deterministic · no language model", guardrail: "passed", limitations: [], assumptions: [], evidence: [], clarification: null, actions: [] } }
+        : {}),
     },
   };
   const latestAssistant =
@@ -376,19 +412,21 @@ export default function AvatarAdvisor() {
       profileSwitchDisabled={isSwitchingProfile}
     >
       <div className="space-y-6">
+        <ModeBanner />
+        <DemoNotice />
         <section className="rounded-[var(--wv-radius-card)] border border-wv-border bg-wv-surface p-5 shadow-wv-card sm:p-6">
           <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-wv-primary">
-                Digital wealth guidance
+                Voice-first money coach
               </p>
               <h1 className="mt-2 font-display text-2xl font-bold tracking-tight text-wv-text sm:text-3xl">
-                Avatar Advisor
+                INARI Advisor
               </h1>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-wv-text-secondary sm:text-base">
-                Explore explainable guidance based on your current WealthVerse profile.
+                {mode.imported ? "Ask about your own imported statements. Answers are calculated deterministically from your ledger (no language model is used); money-changing actions always wait for your confirmation. Type, or dictate with Wispr Flow into the box below." : "Explore explainable guidance based on the sample persona. Import a statement to ask about your own data."}
               </p>
-              {profileLabel ? (
+              {profileLabel && !mode.imported ? (
                 <p className="mt-3 text-sm font-semibold text-wv-primary">
                   Active profile: {profileLabel}
                 </p>
@@ -408,7 +446,7 @@ export default function AvatarAdvisor() {
                   <Bot className="size-5" aria-hidden="true" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-wv-text">Your Digital Wealth Guide</h2>
+                  <h2 className="text-lg font-bold text-wv-text">Your INARI money coach</h2>
                   <p className="mt-2 text-sm leading-6 text-wv-text-secondary">
                     Ask about health score, goals, spending, recommendations, and risk review.
                     This conversation is available for the current session.
@@ -434,7 +472,7 @@ export default function AvatarAdvisor() {
                     onSpeak={speak}
                     speaking={isSpeaking}
                     muted={isMuted}
-                    disabled={advisorMutation.isPending}
+                    disabled={isAsking}
                   />
                 ) : (
                   conversation.map((message) => (
@@ -445,13 +483,13 @@ export default function AvatarAdvisor() {
                       onSpeak={speak}
                       speaking={isSpeaking}
                       muted={isMuted}
-                      disabled={advisorMutation.isPending}
+                      disabled={isAsking}
                     />
                   ))
                 )}
-                {advisorMutation.isPending ? (
+                {isAsking ? (
                   <div className="rounded-[var(--wv-radius-card)] border border-wv-border bg-wv-surface p-5 text-sm font-semibold text-wv-text-secondary shadow-wv-card">
-                    WealthVerse Guide is preparing a response...
+                    INARI Advisor is preparing a response...
                   </div>
                 ) : null}
               </div>
@@ -465,7 +503,7 @@ export default function AvatarAdvisor() {
                     key={prompt}
                     question={prompt}
                     onSelect={askAdvisor}
-                    disabled={advisorMutation.isPending}
+                    disabled={isAsking}
                   />
                 ))}
               </div>
@@ -485,7 +523,7 @@ export default function AvatarAdvisor() {
                   onChange={(event) => setQuestion(event.target.value)}
                   placeholder="What should I focus on this month?"
                   className="min-h-24 flex-1 rounded-[var(--wv-radius-form)] border border-wv-border bg-white px-4 py-3 text-sm text-wv-text outline-none focus-visible:ring-2 focus-visible:ring-wv-primary focus-visible:ring-offset-2"
-                  disabled={advisorMutation.isPending}
+                  disabled={isAsking}
                   onKeyDown={(event) => {
                     if (event.key === "Enter" && !event.shiftKey) {
                       event.preventDefault();
@@ -496,7 +534,7 @@ export default function AvatarAdvisor() {
                 <Button
                   type="submit"
                   className="min-h-11 bg-wv-primary text-white hover:bg-wv-primary-dark sm:self-start"
-                  disabled={advisorMutation.isPending || question.trim().length < 3}
+                  disabled={isAsking || question.trim().length < 3}
                   aria-label="Send question to advisor"
                 >
                   <Send className="size-4" aria-hidden="true" />
@@ -512,7 +550,7 @@ export default function AvatarAdvisor() {
           <aside className="space-y-6">
             <AdvisorIdentity
               isSpeaking={isSpeaking}
-              statusLabel={isSpeaking ? "Speaking" : advisorMutation.isPending ? "Thinking" : "Ready"}
+              statusLabel={isSpeaking ? "Speaking" : isAsking ? "Thinking" : "Ready"}
             />
             <VoiceControls
               supported={speechSupported}
@@ -545,7 +583,7 @@ export default function AvatarAdvisor() {
                 <div>
                   <h2 className="text-base font-bold text-wv-text">Safety note</h2>
                   <p className="mt-2 text-sm leading-6 text-wv-text-secondary">
-                    WealthVerse provides educational financial insights only. It does not
+                    INARI provides educational financial insights only. It does not
                     guarantee outcomes, execute transactions, or replace qualified professional advice.
                   </p>
                 </div>
@@ -584,7 +622,7 @@ function AdvisorFrame({
   return (
     <div className="min-h-screen bg-wv-background text-wv-text">
       <DashboardNavbar
-        logoSrc={wealthverseLogo}
+        logoSrc={inariLogo}
         links={advisorLinks}
         userName={userName}
         profileLabel={profileLabel}
@@ -601,6 +639,29 @@ function AdvisorFrame({
       </main>
     </div>
   );
+}
+
+function fromInari(r: InariAdvisorResponse): AdvisorResponseView {
+  return {
+    answer: r.answer,
+    summary: r.summary,
+    keyInsights: r.keyInsights,
+    suggestedNextActions: r.suggestedNextActions,
+    followUpQuestions: r.followUpQuestions,
+    relatedMetrics: r.relatedMetrics,
+    confidenceLevel: r.confidenceLevel,
+    mode: "fallback",
+    disclaimer: r.disclaimer,
+    inari: {
+      engineLabel: r.engine?.llmUsed ? "Model-assisted" : "Deterministic · no language model",
+      guardrail: r.guardrail.status,
+      limitations: r.limitations ?? [],
+      assumptions: r.assumptions ?? [],
+      evidence: (r.evidence ?? []).map((e) => e.message),
+      clarification: r.intent?.needsClarification ? r.intent.clarificationQuestion : null,
+      actions: r.proposedActions ?? [],
+    },
+  };
 }
 
 function normalizeAdvisorResponse(response: AdvisorResponse): AdvisorResponse {

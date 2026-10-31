@@ -24,11 +24,11 @@ export type FooterProps = {
 
 export function Footer({
   logoSrc,
-  brandName = "WealthVerse",
+  brandName = "INARI",
   description = "Educational wealth intelligence for clearer financial decisions.",
   sections,
   legalLinks = [],
-  copyright = `© ${new Date().getFullYear()} WealthVerse. All rights reserved.`,
+  copyright = `© ${new Date().getFullYear()} INARI. All rights reserved.`,
   className,
   children,
 }: FooterProps) {
@@ -42,7 +42,7 @@ export function Footer({
             aria-label={`${brandName} home`}
           >
             {logoSrc ? (
-              <img src={logoSrc} alt="Official WealthVerse logo" className="h-11 w-auto rounded-md" />
+              <img src={logoSrc} alt="Official INARI logo" className="h-11 w-auto rounded-md" />
             ) : null}
             <span className="font-display text-lg font-bold">{brandName}</span>
           </a>

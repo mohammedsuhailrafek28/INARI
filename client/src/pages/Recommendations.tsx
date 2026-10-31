@@ -1,4 +1,4 @@
-import wealthverseLogo from "@/assets/wealthverse/wealthverse-logo.png";
+import inariLogo from "@/assets/inari/inari-logo.svg";
 import { DashboardNavbar, type DashboardNavLink } from "@/components/layout/DashboardNavbar";
 import { PriorityRecommendation } from "@/components/recommendations/PriorityRecommendation";
 import {
@@ -22,6 +22,8 @@ import {
   normalizeFinancialText,
 } from "@/lib/formatters";
 import { trpc } from "@/lib/trpc";
+import { DemoNotice, ModeBanner, appLinks, useInariMode } from "@/components/inari/kit";
+import { EmiPanel, ReportPanel, SubscriptionsPanel, WhatIfPanel } from "@/components/inari/panels";
 import {
   BarChart3,
   Gauge,
@@ -47,18 +49,13 @@ type RecommendationViewModel = RecommendationGroupItem & {
   normalizedRisk: string;
 };
 
-const recommendationLinks: DashboardNavLink[] = [
-  { label: "Dashboard", href: "/dashboard" },
-  { label: "Spending", href: "/spending" },
-  { label: "Goals", href: "/goals" },
-  { label: "Recommendations", href: "/recommendations", isActive: true },
-  { label: "Advisor", href: "/avatar" },
-];
+const recommendationLinks: DashboardNavLink[] = appLinks("/recommendations");
 
 export default function Recommendations() {
   const { user, isAuthenticated, loading: authLoading, logout } = useAuth();
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
+  const mode = useInariMode();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedRisk, setSelectedRisk] = useState("all");
@@ -90,11 +87,11 @@ export default function Recommendations() {
 
   const profileOptions = useMemo(
     () =>
-      (profilesQuery.data ?? []).map((profile) => ({
+      (mode.imported ? [] : profilesQuery.data ?? []).map((profile) => ({
         id: profile.id,
         label: profile.name,
       })),
-    [profilesQuery.data]
+    [profilesQuery.data, mode.imported]
   );
 
   const recommendations = useMemo(
@@ -133,7 +130,7 @@ export default function Recommendations() {
     [recommendations]
   );
 
-  const profileLabel = activeProfileQuery.data?.name;
+  const profileLabel = mode.imported ? "Your imported data" : activeProfileQuery.data?.name;
   const isSwitchingProfile = setActiveProfileMutation.isPending;
   const isPrimaryLoading =
     authLoading ||
@@ -237,6 +234,8 @@ export default function Recommendations() {
       profileSwitchDisabled={isSwitchingProfile}
     >
       <div className="space-y-6">
+        <ModeBanner />
+        <DemoNotice />
         <section className="rounded-[var(--wv-radius-card)] border border-wv-border bg-wv-surface p-5 shadow-wv-card sm:p-6">
           <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
             <div>
@@ -250,7 +249,7 @@ export default function Recommendations() {
                 Review the guidance generated from your current financial profile
                 and understand why each suggestion appears.
               </p>
-              {profileLabel ? (
+              {profileLabel && !mode.imported ? (
                 <p className="mt-3 text-sm font-semibold text-wv-primary">
                   Active profile: {profileLabel}
                 </p>
@@ -369,6 +368,19 @@ export default function Recommendations() {
           </>
         )}
 
+        {mode.imported ? (
+          <div className="space-y-6" data-testid="inari-plan-tools">
+            <ReportPanel />
+            <div className="grid gap-6 xl:grid-cols-2">
+              <WhatIfPanel />
+              <EmiPanel />
+            </div>
+            <SubscriptionsPanel />
+          </div>
+        ) : (
+          <EmiPanel />
+        )}
+
         <section className="rounded-[var(--wv-radius-card)] border border-wv-border bg-wv-surface p-5 shadow-wv-card">
           <div className="flex items-start gap-4">
             <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-wv-background text-wv-primary">
@@ -415,7 +427,7 @@ function RecommendationFrame({
   return (
     <div className="min-h-screen bg-wv-background text-wv-text">
       <DashboardNavbar
-        logoSrc={wealthverseLogo}
+        logoSrc={inariLogo}
         links={recommendationLinks}
         userName={userName}
         profileLabel={profileLabel}

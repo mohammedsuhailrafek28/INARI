@@ -37,7 +37,7 @@ export async function createContext(
       id: anon.numericId,
       openId: "local-demo-user",
       name: "Demo User",
-      email: "demo@wealthverse.local",
+      email: "demo@inari.local",
       loginMethod: "local-demo",
       role: "user",
       createdAt: new Date(),

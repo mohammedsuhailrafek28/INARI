@@ -1,4 +1,4 @@
-import wealthverseLogo from "@/assets/wealthverse/wealthverse-logo.png";
+import inariLogo from "@/assets/inari/inari-logo.svg";
 import { DashboardNavbar, type DashboardNavLink } from "@/components/layout/DashboardNavbar";
 import { ContributionOverview } from "@/components/goals/ContributionOverview";
 import { GoalFocusPanel } from "@/components/goals/GoalFocusPanel";
@@ -20,6 +20,8 @@ import {
   formatTitle,
 } from "@/lib/formatters";
 import { trpc } from "@/lib/trpc";
+import { DemoNotice, ModeBanner, appLinks, useInariMode } from "@/components/inari/kit";
+import { BalancesPanel, GoalsPanel, WhatIfPanel } from "@/components/inari/panels";
 import {
   CalendarClock,
   CircleDollarSign,
@@ -47,13 +49,7 @@ type GoalWithProgress = Goal & {
   statusLabel: string;
 };
 
-const goalLinks: DashboardNavLink[] = [
-  { label: "Dashboard", href: "/dashboard" },
-  { label: "Spending", href: "/spending" },
-  { label: "Goals", href: "/goals", isActive: true },
-  { label: "Recommendations", href: "/recommendations" },
-  { label: "Advisor", href: "/avatar" },
-];
+const goalLinks: DashboardNavLink[] = appLinks("/goals");
 
 const priorityRank: Record<string, number> = {
   high: 0,
@@ -65,6 +61,7 @@ export default function GoalPlanner() {
   const { user, isAuthenticated, loading: authLoading, logout } = useAuth();
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
+  const mode = useInariMode();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const profilesQuery = trpc.profiles.list.useQuery(undefined, {
@@ -74,9 +71,29 @@ export default function GoalPlanner() {
     enabled: isAuthenticated,
     refetchOnWindowFocus: false,
   });
-  const goalsQuery = trpc.goals.list.useQuery(undefined, {
+  const personaGoalsQuery = trpc.goals.list.useQuery(undefined, {
     enabled: isAuthenticated,
   });
+  const inariGoalsQuery = trpc.inari.getGoals.useQuery(undefined, {
+    enabled: isAuthenticated && mode.imported,
+  });
+  // Imported mode shows only goals the user created; persona goals are never mixed in.
+  const goalsQuery = mode.imported
+    ? {
+        isLoading: inariGoalsQuery.isLoading,
+        isError: inariGoalsQuery.isError,
+        refetch: inariGoalsQuery.refetch,
+        data: (inariGoalsQuery.data?.items ?? []).map((g) => ({
+          id: g.id as unknown as number,
+          goalType: g.name,
+          targetAmount: g.targetAmount,
+          currentAmount: g.currentAmount,
+          timelineMonths: g.timelineMonths ?? 0,
+          priority: g.priority,
+          monthlyContribution: g.monthlyContribution ?? 0,
+        })),
+      }
+    : personaGoalsQuery;
 
   const setActiveProfileMutation = trpc.profiles.setActive.useMutation({
     onSuccess: async () => {
@@ -93,11 +110,11 @@ export default function GoalPlanner() {
 
   const profileOptions = useMemo(
     () =>
-      (profilesQuery.data ?? []).map((profile) => ({
+      (mode.imported ? [] : profilesQuery.data ?? []).map((profile) => ({
         id: profile.id,
         label: profile.name,
       })),
-    [profilesQuery.data]
+    [profilesQuery.data, mode.imported]
   );
 
   const goals = useMemo(
@@ -120,7 +137,7 @@ export default function GoalPlanner() {
   const summary = useMemo(() => buildGoalSummary(goals), [goals]);
   const focusGoal = useMemo(() => chooseFocusGoal(goals), [goals]);
   const distribution = useMemo(() => buildDistribution(goals), [goals]);
-  const profileLabel = activeProfileQuery.data?.name;
+  const profileLabel = mode.imported ? "Your imported data" : activeProfileQuery.data?.name;
   const isSwitchingProfile = setActiveProfileMutation.isPending;
   const isPrimaryLoading =
     authLoading || activeProfileQuery.isLoading || goalsQuery.isLoading || isSwitchingProfile;
@@ -211,6 +228,8 @@ export default function GoalPlanner() {
       profileSwitchDisabled={isSwitchingProfile}
     >
       <div className="space-y-6">
+        <ModeBanner />
+        <DemoNotice />
         <section className="rounded-[var(--wv-radius-card)] border border-wv-border bg-wv-surface p-5 shadow-wv-card sm:p-6">
           <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
             <div>
@@ -223,7 +242,7 @@ export default function GoalPlanner() {
               <p className="mt-2 max-w-2xl text-sm leading-6 text-wv-text-secondary sm:text-base">
                 Turn long-term priorities into visible, trackable progress.
               </p>
-              {profileLabel ? (
+              {profileLabel && !mode.imported ? (
                 <p className="mt-3 text-sm font-semibold text-wv-primary">
                   Active profile: {profileLabel}
                 </p>
@@ -243,7 +262,7 @@ export default function GoalPlanner() {
         <section>
           <SectionHeader
             title="Goal summary"
-            description="Summary values are derived from active-profile goal records."
+            description={mode.imported ? "Summary values come from the goals you created and the balances you confirmed." : "Summary values are derived from active-profile goal records."}
           />
           <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
             <FinancialMetricCard
@@ -287,8 +306,8 @@ export default function GoalPlanner() {
 
         {goals.length === 0 ? (
           <EmptyState
-            title="No financial goals are available for this profile yet"
-            description="Goal records will appear here when the active profile includes planning data."
+            title={mode.imported ? "You have not created a goal yet" : "No financial goals are available for this profile yet"}
+            description={mode.imported ? "Create one below. Goals use only the amounts you enter; nothing is assumed." : "Goal records will appear here when the active profile includes planning data."}
           />
         ) : (
           <>
@@ -340,6 +359,16 @@ export default function GoalPlanner() {
           </>
         )}
 
+        {mode.imported ? (
+          <>
+            <GoalsPanel />
+            <div className="grid gap-6 xl:grid-cols-2">
+              <WhatIfPanel />
+              <BalancesPanel />
+            </div>
+          </>
+        ) : null}
+
         <section className="rounded-[var(--wv-radius-card)] border border-wv-border bg-wv-surface p-5 shadow-wv-card">
           <div className="flex items-start gap-4">
             <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-wv-background text-wv-primary">
@@ -386,7 +415,7 @@ function GoalFrame({
   return (
     <div className="min-h-screen bg-wv-background text-wv-text">
       <DashboardNavbar
-        logoSrc={wealthverseLogo}
+        logoSrc={inariLogo}
         links={goalLinks}
         userName={userName}
         profileLabel={profileLabel}
@@ -471,7 +500,7 @@ function buildDistribution(goals: GoalWithProgress[]): GoalProgressDistributionC
 
 function buildFocusReason(goal?: GoalWithProgress) {
   if (!goal) {
-    return "No goal records are available yet, so WealthVerse cannot identify a planning focus.";
+    return "No goal records are available yet, so INARI cannot identify a planning focus.";
   }
   if (goal.priority.toLowerCase() === "high" && goal.progress < 100) {
     return `${formatTitle(goal.goalType)} is a high-priority goal with ${formatCurrencyINR(goal.remainingAmount)} still remaining.`;

@@ -1,4 +1,4 @@
-import wealthverseLogo from "@/assets/wealthverse/wealthverse-logo.png";
+import inariLogo from "@/assets/inari/inari-logo.svg";
 import { Footer } from "@/components/layout/Footer";
 import { SupportCategoryCard } from "@/components/support/SupportCategoryCard";
 import { SupportNotice } from "@/components/support/SupportNotice";
@@ -75,20 +75,20 @@ export default function Support() {
   return (
     <div className="min-h-screen bg-wv-background text-wv-text">
       <PublicNavbar
-        logoSrc={wealthverseLogo}
+        logoSrc={inariLogo}
         links={navLinks}
         actions={[
           {
             label: "Start Interactive Demo",
             href: "/choose-profile",
             variant: "secondary",
-            ariaLabel: "Start the interactive WealthVerse demo",
+            ariaLabel: "Start the interactive INARI demo",
           },
           {
             label: "Sign in",
             href: "/login",
             variant: "primary",
-            ariaLabel: "Sign in to WealthVerse",
+            ariaLabel: "Sign in to INARI",
           },
         ]}
         mobileMenuOpen={mobileMenuOpen}
@@ -108,7 +108,7 @@ export default function Support() {
                 How can we help?
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-white/82 sm:text-lg">
-                Find answers about your WealthVerse account, financial insights,
+                Find answers about your INARI account, financial insights,
                 goals, recommendations, and advisor experience.
               </p>
             </div>
@@ -175,7 +175,7 @@ export default function Support() {
             <SectionHeader
               eyebrow="Frequently asked questions"
               title={selectedCategoryTitle ? `${selectedCategoryTitle} FAQs` : "Common questions"}
-              description="Answers are based on the current WealthVerse prototype capabilities."
+              description="Answers are based on the current INARI prototype capabilities."
               action={
                 query || selectedCategory ? (
                   <Button
@@ -254,14 +254,14 @@ export default function Support() {
             <SupportNotice
               icon={LockKeyhole}
               title="Security guidance"
-              description="Use only official WealthVerse pages, do not share session links, and sign out on shared devices. WealthVerse does not request passwords or OTPs through this prototype."
+              description="Use only official INARI pages, do not share session links, and sign out on shared devices. INARI does not request passwords or OTPs through this prototype."
               className="lg:col-span-1"
             />
 
             <SupportNotice
               icon={AlertTriangle}
               title="Financial guidance disclaimer"
-              description="WealthVerse provides educational financial insights and does not guarantee financial or investment outcomes. Seek qualified professional advice before major financial decisions."
+              description="INARI provides educational financial insights and does not guarantee financial or investment outcomes. Seek qualified professional advice before major financial decisions."
               tone="warning"
               className="lg:col-span-1"
             />
@@ -270,8 +270,8 @@ export default function Support() {
       </main>
 
       <Footer
-        logoSrc={wealthverseLogo}
-        description="WealthVerse is an educational digital wealth experience for understanding financial health, spending, goals, and explainable recommendations."
+        logoSrc={inariLogo}
+        description="INARI is an educational digital wealth experience for understanding financial health, spending, goals, and explainable recommendations."
         sections={[
           {
             title: "Product",

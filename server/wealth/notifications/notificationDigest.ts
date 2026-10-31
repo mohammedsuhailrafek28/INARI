@@ -22,13 +22,13 @@ export function buildNotificationDigest(
     highPriority[0]?.message ||
     active[0]?.message ||
     events.find((event) => event.category === "prediction")?.description ||
-    "Keep reviewing your WealthVerse dashboard weekly.";
+    "Keep reviewing your INARI dashboard weekly.";
 
   return {
-    title: "Weekly WealthVerse Digest",
+    title: "Weekly INARI Digest",
     summary:
       active.length === 0
-        ? "No active notifications yet. Keep using WealthVerse to build your activity trail."
+        ? "No active notifications yet. Keep using INARI to build your activity trail."
         : `${active.length} active notification${active.length === 1 ? "" : "s"}, including ${highPriority.length} high-priority item${highPriority.length === 1 ? "" : "s"}.`,
     highPriorityCount: highPriority.length,
     unreadCount: unread.length,

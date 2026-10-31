@@ -134,7 +134,7 @@ describe("notification rules and digest", () => {
       { ...createNotification(3), category: "recommendation", title: "Savings opportunity" },
     ]);
 
-    expect(digest.title).toBe("Weekly WealthVerse Digest");
+    expect(digest.title).toBe("Weekly INARI Digest");
     expect(digest.highPriorityCount).toBeGreaterThan(0);
     expect(digest.unreadCount).toBe(3);
     expect(digest.recommendedFocus.length).toBeGreaterThan(0);

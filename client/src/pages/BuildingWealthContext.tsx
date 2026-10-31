@@ -1,4 +1,4 @@
-import wealthverseLogo from "@/assets/wealthverse/wealthverse-logo.png";
+import inariLogo from "@/assets/inari/inari-logo.svg";
 import {
   ContextBuildingChecklist,
   type ContextChecklistItem,
@@ -18,7 +18,7 @@ const checklistLabels = [
   "Evaluating financial health",
   "Assessing risk tolerance",
   "Preparing personalized recommendations",
-  "Initializing Wealth Advisor",
+  "Initializing INARI",
 ];
 
 function usePrefersReducedMotion() {
@@ -148,8 +148,8 @@ export default function BuildingWealthContext() {
       <main className="flex min-h-screen items-center justify-center bg-[#202522] px-4 py-10 text-white">
         <div className="w-full max-w-xl">
           <ErrorState
-            title="We could not build your Wealth Context"
-            message="Choose a demo persona again so WealthVerse can activate a valid profile before opening the dashboard."
+            title="We could not build your financial context"
+            message="Choose a demo persona again so INARI can activate a valid profile before opening the dashboard."
             className="border-white/10 bg-white text-wv-text"
           />
           <div className="mt-5 text-center">
@@ -185,8 +185,8 @@ export default function BuildingWealthContext() {
 
       <section className="relative w-full max-w-lg text-center" aria-labelledby="context-title">
         <img
-          src={wealthverseLogo}
-          alt="Official WealthVerse logo"
+          src={inariLogo}
+          alt="Official INARI logo"
           className={cn(
             "mx-auto size-20 rounded-2xl object-contain shadow-[0_0_50px_rgba(150,228,202,0.18)]",
             !isComplete && "motion-safe:animate-pulse",
@@ -216,11 +216,11 @@ export default function BuildingWealthContext() {
         <p className="mt-7 text-xs text-white/42" role="status" aria-live="polite">
           {isComplete
             ? "Financial twin ready. Opening your dashboard."
-            : `Preparing WealthVerse intelligence: ${Math.round(progress)} percent.`}
+            : `Preparing INARI intelligence: ${Math.round(progress)} percent.`}
         </p>
 
         <div className="mt-8 text-[10px] font-bold uppercase tracking-[0.22em] text-white/38">
-          WealthVerse Intelligence System
+          INARI Intelligence System
           <span className="mt-1 block text-[9px] font-medium tracking-[0.2em] text-white/24">
             Safe demo onboarding
           </span>

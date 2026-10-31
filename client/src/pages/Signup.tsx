@@ -1,5 +1,5 @@
 import heroFamily from "@/assets/wealthverse/hero-family.png";
-import wealthverseLogo from "@/assets/wealthverse/wealthverse-logo.png";
+import inariLogo from "@/assets/inari/inari-logo.svg";
 import { AuthBenefitList } from "@/components/auth/AuthBenefitList";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { OAuthLoginButton } from "@/components/auth/OAuthLoginButton";
@@ -41,7 +41,7 @@ const onboardingBenefits = [
 
 const onboardingSteps = [
   "Choose a guided demo financial persona.",
-  "Let WealthVerse build the profile's Wealth Context.",
+  "Let INARI build the profile's financial context.",
   "Explore financial health, goals, recommendations, and advisor tools.",
 ];
 
@@ -63,14 +63,14 @@ export default function Signup() {
 
   const setupLabel = isDemoFallback
     ? "Start Interactive Demo"
-    : "Create my WealthVerse access";
+    : "Create my INARI access";
 
   return (
     <main className="min-h-screen bg-wv-background text-wv-text">
       <div className="mx-auto grid min-h-screen max-w-[var(--wv-content-width)] gap-8 px-4 py-6 sm:px-6 lg:grid-cols-[1fr_1fr] lg:px-8 lg:py-8">
         <section
           className="relative hidden overflow-hidden rounded-[var(--wv-radius-card)] bg-wv-primary-dark text-white shadow-wv-card lg:block"
-          aria-label="WealthVerse onboarding overview"
+          aria-label="INARI onboarding overview"
         >
           <img
             src={heroFamily}
@@ -88,13 +88,13 @@ export default function Signup() {
               className="inline-flex w-fit items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-wv-primary-dark"
             >
               <img
-                src={wealthverseLogo}
-                alt="Official WealthVerse logo"
+                src={inariLogo}
+                alt="Official INARI logo"
                 className="size-10 rounded-md bg-white object-contain p-1"
                 loading="lazy"
                 decoding="async"
               />
-              <span className="font-display text-xl font-bold">WealthVerse</span>
+              <span className="font-display text-xl font-bold">INARI</span>
             </a>
 
             <div className="max-w-xl">
@@ -106,7 +106,7 @@ export default function Signup() {
                 Begin with clarity before making financial decisions.
               </h2>
               <p className="mt-4 max-w-lg text-base leading-7 text-white/82">
-                WealthVerse helps you enter a session-backed workspace for
+                INARI helps you enter a session-backed workspace for
                 understanding financial health, goals, recommendations, and
                 advisor guidance.
               </p>
@@ -123,7 +123,7 @@ export default function Signup() {
               className="mb-8 inline-flex items-center gap-3 rounded-md text-sm font-semibold text-wv-text-secondary transition-colors hover:text-wv-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wv-primary focus-visible:ring-offset-2"
             >
               <ArrowLeft className="size-4" aria-hidden="true" />
-              Back to WealthVerse
+              Back to INARI
             </a>
 
             {loading || isAuthenticated ? (
@@ -131,7 +131,7 @@ export default function Signup() {
                 eyebrow="Checking access"
                 title="Preparing your workspace"
                 titleLevel={1}
-                description="We are checking your current WealthVerse session before showing onboarding options."
+                description="We are checking your current INARI session before showing onboarding options."
               >
                 <div
                   className="flex min-h-28 items-center justify-center gap-3 rounded-[var(--wv-radius-form)] border border-wv-border bg-wv-background text-sm font-medium text-wv-text-secondary"
@@ -145,12 +145,12 @@ export default function Signup() {
             ) : (
               <AuthCard
                 eyebrow="Get started"
-                title="Begin your WealthVerse experience"
+                title="Begin your INARI experience"
                 titleLevel={1}
                 description="Continue through secure sign-in to access your financial health, goals, recommendations, and digital advisor experience."
                 footer={
                   <p className="text-xs leading-5 text-wv-muted">
-                    WealthVerse provides educational financial insights and does
+                    INARI provides educational financial insights and does
                     not guarantee financial or investment outcomes.
                   </p>
                 }
@@ -179,7 +179,7 @@ export default function Signup() {
                     variant="outline"
                     className="min-h-11 w-full border-wv-border text-wv-text hover:bg-wv-background"
                   >
-                    <a href="/login">Already use WealthVerse? Sign in</a>
+                    <a href="/login">Already use INARI? Sign in</a>
                   </Button>
 
                   <p className="text-center text-xs leading-5 text-wv-muted">

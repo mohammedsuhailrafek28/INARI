@@ -267,8 +267,8 @@ function answerForIntent(
         return {
           summary: "Spending forecast is ready.",
           answer: topForecast
-            ? `If spending continues like this, WealthVerse projects next month's surplus near ${currency(outlook.expectedSurplus)} with a savings rate around ${outlook.expectedSavingsRate.toFixed(1)}%. The top spending signal is ${topForecast.category}, projected ${topForecast.direction} by ${Math.abs(topForecast.changePercent)}%. ${topForecast.suggestedAction}`
-            : `If spending continues like this, WealthVerse projects next month's surplus near ${currency(outlook.expectedSurplus)} with a savings rate around ${outlook.expectedSavingsRate.toFixed(1)}%. Keep monitoring category trends before increasing commitments.`,
+            ? `If spending continues like this, INARI projects next month's surplus near ${currency(outlook.expectedSurplus)} with a savings rate around ${outlook.expectedSavingsRate.toFixed(1)}%. The top spending signal is ${topForecast.category}, projected ${topForecast.direction} by ${Math.abs(topForecast.changePercent)}%. ${topForecast.suggestedAction}`
+            : `If spending continues like this, INARI projects next month's surplus near ${currency(outlook.expectedSurplus)} with a savings rate around ${outlook.expectedSavingsRate.toFixed(1)}%. Keep monitoring category trends before increasing commitments.`,
         };
       }
       return topCategory
@@ -307,7 +307,7 @@ function answerForIntent(
           }
         : {
             summary: "No active goals are visible.",
-            answer: "I do not see active goal data yet. Add a target amount and timeline so WealthVerse can evaluate progress.",
+            answer: "I do not see active goal data yet. Add a target amount and timeline so INARI can evaluate progress.",
           };
     case "investmentReadiness":
       return months >= 3 && context.monthlySurplus > 0 && context.unusualExpenses.length === 0
@@ -383,7 +383,7 @@ function answerForIntent(
       };
     default:
       return {
-        summary: "WealthVerse reviewed your current context.",
+        summary: "INARI reviewed your current context.",
         answer: `For ${context.activeProfile.name}, focus on cash-flow stability, emergency reserves, and goal-based decisions that fit a ${context.riskProfile.profile} risk capacity.`,
       };
   }
@@ -471,7 +471,7 @@ export async function answerWealthAdvisorQuestion(
         {
           role: "system",
           content:
-            "You are WealthVerse's educational wealth intelligence assistant. Classify intent, answer from provided context, avoid licensed financial advice, never promise returns, and always include a disclaimer.",
+            "You are INARI's educational wealth intelligence assistant. Classify intent, answer from provided context, avoid licensed financial advice, never promise returns, and always include a disclaimer.",
         },
         {
           role: "user",

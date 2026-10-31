@@ -6,6 +6,8 @@ export type HealthScoreBreakdown = {
   label: string;
   score: number;
   description?: string;
+  /** true when the user has not provided the balance this component needs; shown as "Not provided", never as 0 */
+  unknown?: boolean;
 };
 
 export type HealthScoreCardProps = {
@@ -75,11 +77,11 @@ export function HealthScoreCard({
                   <div className="flex items-center justify-between gap-3">
                     <h3 className="text-[14px] font-semibold text-wv-text">{item.label}</h3>
                     <span className="text-[14px] font-semibold text-wv-primary tabular-nums">
-                      {itemScore}/100
+                      {item.unknown ? "Not provided" : `${itemScore}/100`}
                     </span>
                   </div>
                   <Progress
-                    value={itemScore}
+                    value={item.unknown ? 0 : itemScore}
                     className="mt-3 h-2 bg-wv-border"
                     aria-label={`${item.label} score ${itemScore} out of 100`}
                   />

@@ -33,7 +33,7 @@ export type DashboardNavbarProps = {
 
 export function DashboardNavbar({
   logoSrc,
-  brandName = "WealthVerse",
+  brandName = "INARI",
   links,
   userName,
   profileLabel,
@@ -61,7 +61,7 @@ export function DashboardNavbar({
           aria-label={`${brandName} dashboard`}
         >
           {logoSrc ? (
-            <img src={logoSrc} alt="Official WealthVerse logo" className="h-10 w-auto rounded-md" />
+            <img src={logoSrc} alt="Official INARI logo" className="h-10 w-auto rounded-md" />
           ) : (
             <span className="flex size-10 items-center justify-center rounded-md bg-white/12">
               <UserRound className="size-5" aria-hidden="true" />

@@ -1,4 +1,4 @@
-import wealthverseLogo from "@/assets/wealthverse/wealthverse-logo.png";
+import inariLogo from "@/assets/inari/inari-logo.svg";
 import { DashboardNavbar, type DashboardNavLink } from "@/components/layout/DashboardNavbar";
 import { SavingsOpportunityCard } from "@/components/spending/SavingsOpportunityCard";
 import { SpendingBreakdownChart, type SpendingCategoryDatum } from "@/components/spending/SpendingBreakdownChart";
@@ -18,6 +18,8 @@ import {
   formatTitle,
 } from "@/lib/formatters";
 import { trpc } from "@/lib/trpc";
+import { DemoNotice, ModeBanner, appLinks, useInariMode } from "@/components/inari/kit";
+import { BalancesPanel, ClaimsPanel, ManualEntryPanel, SubscriptionsPanel, TransactionReview } from "@/components/inari/panels";
 import { useAuth } from "@/_core/hooks/useAuth";
 import {
   AlertTriangle,
@@ -31,13 +33,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
 
-const spendingLinks: DashboardNavLink[] = [
-  { label: "Dashboard", href: "/dashboard" },
-  { label: "Spending", href: "/spending", isActive: true },
-  { label: "Goals", href: "/goals" },
-  { label: "Recommendations", href: "/recommendations" },
-  { label: "Advisor", href: "/avatar" },
-];
+const spendingLinks: DashboardNavLink[] = appLinks("/spending");
 
 const categoryColors = [
   "#0c8577",
@@ -53,6 +49,7 @@ export default function SpendingInsights() {
   const { user, isAuthenticated, loading: authLoading, logout } = useAuth();
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
+  const mode = useInariMode();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const profilesQuery = trpc.profiles.list.useQuery(undefined, {
@@ -93,11 +90,11 @@ export default function SpendingInsights() {
 
   const profileOptions = useMemo(
     () =>
-      (profilesQuery.data ?? []).map((profile) => ({
+      (mode.imported ? [] : profilesQuery.data ?? []).map((profile) => ({
         id: profile.id,
         label: profile.name,
       })),
-    [profilesQuery.data]
+    [profilesQuery.data, mode.imported]
   );
 
   const categories = useMemo<SpendingCategoryDatum[]>(() => {
@@ -114,7 +111,10 @@ export default function SpendingInsights() {
     }));
   }, [breakdownQuery.data]);
 
-  const totalSpend = categories.reduce((sum, category) => sum + category.amount, 0);
+  const snapshotQuery = trpc.inari.getSnapshot.useQuery(undefined, { enabled: isAuthenticated && mode.imported });
+  const categorySum = categories.reduce((sum, category) => sum + category.amount, 0);
+  // imported mode: the exact ledger figure, not a sum of per-category rounded averages
+  const totalSpend = mode.imported && snapshotQuery.data?.monthlyExpenses != null ? snapshotQuery.data.monthlyExpenses : categorySum;
   const topCategory = categories[0];
   const opportunities = opportunitiesQuery.data ?? [];
   const totalOpportunity = opportunities.reduce((sum, item) => sum + item.amount, 0);
@@ -125,7 +125,7 @@ export default function SpendingInsights() {
   const largestUnusual = [...unusual].sort((a, b) => b.amount - a.amount)[0];
   const largestOpportunity = opportunities[0];
 
-  const profileLabel = activeProfileQuery.data?.name;
+  const profileLabel = mode.imported ? "Your imported data" : activeProfileQuery.data?.name;
   const isPrimaryLoading =
     authLoading ||
     activeProfileQuery.isLoading ||
@@ -228,6 +228,8 @@ export default function SpendingInsights() {
       profileSwitchDisabled={setActiveProfileMutation.isPending}
     >
       <div className="space-y-6">
+        <ModeBanner />
+        <DemoNotice />
         <section className="rounded-[var(--wv-radius-card)] border border-wv-border bg-wv-surface p-5 shadow-wv-card sm:p-6">
           <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
             <div>
@@ -241,7 +243,7 @@ export default function SpendingInsights() {
                 Understand where your money goes and which changes could improve
                 your monthly position.
               </p>
-              {profileLabel ? (
+              {profileLabel && !mode.imported ? (
                 <p className="mt-3 text-sm font-semibold text-wv-primary">
                   Active profile: {profileLabel}
                 </p>
@@ -261,7 +263,7 @@ export default function SpendingInsights() {
         <section>
           <SectionHeader
             title="Monthly spending summary"
-            description="Totals are derived from returned transaction categories and spending endpoints."
+            description={mode.imported ? "Average per month over your latest complete months, from your ledger. Credit-card repayments and refunds are handled by the reconciliation rules." : "Totals are derived from returned transaction categories and spending endpoints."}
           />
           <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
             <FinancialMetricCard
@@ -413,7 +415,7 @@ export default function SpendingInsights() {
         <section>
           <SectionHeader
             title="Recent expense activity"
-            description="Latest expense transactions from the active demo profile."
+            description={mode.imported ? "Latest expense transactions from your imported statements." : "Latest expense transactions from the active demo profile."}
           />
           <div className="mt-4">
             {transactionsQuery.isError ? (
@@ -432,6 +434,23 @@ export default function SpendingInsights() {
             )}
           </div>
         </section>
+
+        {mode.imported ? (
+          <div className="space-y-6" data-testid="inari-spending-tools">
+            <TransactionReview />
+            <div className="grid gap-6 xl:grid-cols-2">
+              <ManualEntryPanel />
+              <BalancesPanel />
+            </div>
+            <SubscriptionsPanel />
+            <ClaimsPanel />
+          </div>
+        ) : (
+          <section className="rounded-[var(--wv-radius-card)] border border-wv-border bg-wv-surface p-5 shadow-wv-card">
+            <h2 className="font-display text-lg font-bold">Review and correct your own transactions</h2>
+            <p className="mt-1 text-sm text-wv-text-secondary">Transaction review, category corrections, reconciliation, recurring payments, cash entries and refund tracking work on your imported ledger. <a className="font-semibold underline" href="/import">Import a statement</a> to use them.</p>
+          </section>
+        )}
 
         <footer className="border-t border-wv-border pt-5 text-xs leading-5 text-wv-muted">
           Spending insights are educational estimates based on available demo
@@ -468,7 +487,7 @@ function SpendingFrame({
   return (
     <div className="min-h-screen bg-wv-background text-wv-text">
       <DashboardNavbar
-        logoSrc={wealthverseLogo}
+        logoSrc={inariLogo}
         links={spendingLinks}
         userName={userName}
         profileLabel={profileLabel}
