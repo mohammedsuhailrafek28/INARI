@@ -401,6 +401,8 @@ export const ReportMonthsOutput = z.object({ ...impl, months: z.array(YearMonth)
 export const INTENTS = [
   "spending_question", "category_explanation", "category_correction", "subscription_query",
   "monthly_review", "goal_progress", "what_if", "clarification_followup", "unsafe_request", "unknown",
+  // additive: set by the advisor (not by analyzeIntent) when a question is about the claim, EMI or manual-entry tools
+  "refund_status", "reimbursement_status", "emi_check", "manual_entry",
 ] as const;
 export const Intent = z.enum(INTENTS);
 export type Intent = z.infer<typeof Intent>;
@@ -446,7 +448,7 @@ export const AskInput = z.object({
   previous: AdvisorContext.optional(),
 });
 export const AdvisorProposedAction = z.object({
-  type: z.enum(["correct_category", "reconcile", "confirm_subscription", "import_data", "set_balances"]),
+  type: z.enum(["correct_category", "reconcile", "confirm_subscription", "import_data", "set_balances", "create_claim", "confirm_claim_match", "manual_entry", "emi_check"]),
   title: z.string(), description: z.string(),
   /** The procedure the client should call after the user confirms, with ready-made input. The advisor never performs it. */
   procedure: z.string(), input: z.record(z.string(), z.unknown()),

@@ -17,6 +17,9 @@ import { monthlyReportFor } from "./report";
 import { detectSubscriptions, isActiveSubscription } from "./recurring";
 import { runSimulation } from "./simulate";
 import { listGoalsFor } from "./goals";
+import { claimMatchesFor, listClaimsFor } from "./claims";
+import { emiCheckFor } from "./emi";
+import { manualEntryPreviewFor } from "./manual";
 import { breakdownForMonth } from "./service";
 import { isExcluded, isExpenseCategory } from "./snapshot";
 
@@ -492,6 +495,148 @@ async function goalsDraft(ownerKey: string, fb: FactBook, ctx: AdvisorContext, n
   return d;
 }
 
+// ---------- refund watch, reimbursements, EMI and manual entries ----------
+const WORD_NUMBERS: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, twelve: 12, eighteen: 18, "twenty four": 24, twenty: 20, thirty: 30 };
+const numberOf = (w: string) => (/^\d+$/.test(w) ? Number(w) : (WORD_NUMBERS[w.toLowerCase()] ?? null));
+const NUM_WORD = "(\\d+|one|two|three|four|five|six|seven|eight|nine|ten|twelve|eighteen|twenty four|twenty|thirty)";
+
+function rupeeAmounts(text: string): number[] {
+  const out: number[] = [];
+  const re = /(?:₹|\brs\.?\s*|\binr\s*)\s*([\d,]+(?:\.\d{1,2})?)\s*(k\b)?|\b(\d[\d,]*(?:\.\d{1,2})?)\s*(k\b|rupees\b)/gi;
+  for (const m of Array.from(text.matchAll(re))) {
+    const n = Number((m[1] ?? m[3]).replace(/,/g, ""));
+    if (Number.isFinite(n) && n > 0) out.push(m[2] || /^k/i.test(m[4] ?? "") ? n * 1000 : n);
+  }
+  return out;
+}
+const monthsIn = (text: string) => {
+  const m = new RegExp(`\\b${NUM_WORD}[- ]?(?:months?|mo)\\b`, "i").exec(text);
+  return m ? numberOf(m[1].toLowerCase()) : null;
+};
+const daysIn = (text: string) => {
+  const m = new RegExp(`\\b${NUM_WORD}\\s+days?\\b`, "i").exec(text);
+  return m ? numberOf(m[1].toLowerCase()) : null;
+};
+const isoDay = (d: Date) => d.toISOString().slice(0, 10);
+
+type NoveltyKind = "refund_status" | "reimbursement_status" | "emi_check" | "manual_entry";
+function noveltyKind(question: string, previous?: AdvisorContext): NoveltyKind | null {
+  const q = question.toLowerCase();
+  const amounts = rupeeAmounts(question);
+  if (/\b(emi|no[- ]?cost|instal+ments?|installments?)\b/.test(q) || (previous?.intent === "emi_check" && amounts.length > 0 && !question.trim().endsWith("?"))) return "emi_check";
+  if (/\brefunds?\b/.test(q) || /\bi returned\b/.test(q)) return "refund_status";
+  if (/\b(owe|owes|owed|reimburse\w*|paid for (my )?(friends?|colleagues?|family))\b/.test(q) || /\b(belongs? to|share of) (my )?friends?\b/.test(q)) return "reimbursement_status";
+  if (/^\s*(i|we)\b/i.test(question) && /\b(spent|paid|bought|gave|received|got|earned)\b/.test(q) && amounts.length > 0 && !question.includes("?")) return "manual_entry";
+  return null;
+}
+
+async function noveltyDraft(kind: NoveltyKind, ownerKey: string, question: string, fb: FactBook, ctx0: AdvisorContext, previous: AdvisorContext | undefined, now: Date): Promise<Draft> {
+  const ctx: AdvisorContext = { ...ctx0, intent: kind };
+  const d = base(ctx);
+  d.confidence = "high";
+  const amounts = rupeeAmounts(question);
+
+  if (kind === "emi_check") {
+    const carried = previous?.intent === "emi_check" && previous.amount ? previous.amount : null;
+    const months = monthsIn(question);
+    const price = carried ?? amounts[0] ?? null;
+    const monthly = carried ? (amounts[0] ?? null) : (amounts.find((a, i) => i > 0 && price !== null && a < price) ?? null);
+    ctx.amount = price;
+    const need = [price === null ? "the cash price" : null, months === null ? "the number of months" : null, monthly === null ? "the monthly instalment" : null].filter(Boolean) as string[];
+    if (need.length) {
+      d.answer = `To compare the EMI with paying upfront I need ${need.join(", ")}. Also tell me about any processing fee, taxes, or a discount you only get when paying upfront; I will not assume them.`;
+      d.summary = "Need the EMI terms";
+      d.confidence = "medium";
+      d.limitations = ["No interest rate, fee or tax is assumed: the comparison uses only the terms you give."];
+      d.followUps = ["The phone costs ₹40,000 upfront, or ₹6,700 a month for 6 months with a processing fee of ₹500."];
+      const input: Record<string, unknown> = { ...(price ? { cashPrice: price } : {}), ...(months ? { months } : {}), ...(monthly ? { emiMonthly: monthly } : {}) };
+      const missingFields = ["cashPrice", "emiMonthly", "months"].filter(f => !(f in input));
+      d.proposed = [{ type: "emi_check", title: "Run the EMI comparison", description: "Compares total payable and monthly impact. Creates no debt or transaction.", procedure: "inari.emiCheck", input, requiresConfirmation: true, inputComplete: false, missingFields }];
+      return d;
+    }
+    const fee = /processing fees?\s*(?:of|is|:)?\s*(?:₹|rs\.?\s*)?([\d,]+)/i.exec(question);
+    const tax = /(?:taxes|gst)\s*(?:of|is|:)?\s*(?:₹|rs\.?\s*)?([\d,]+)/i.exec(question);
+    const r = await emiCheckFor(ownerKey, {
+      cashPrice: price!, emiMonthly: monthly!, months: months!,
+      ...(fee ? { processingFee: Number(fee[1].replace(/,/g, "")) } : {}), ...(tax ? { taxes: Number(tax[1].replace(/,/g, "")) } : {}),
+    });
+    const extra = r.extraCostOfEmiPaise;
+    const verdict = extra > 0 ? `On these terms the EMI costs ${fb.r(extra / 100)} more than paying upfront, so it is not really "no cost".` : extra === 0 ? "On these terms the EMI costs the same as paying upfront." : `On these terms the EMI costs ${fb.r(-extra / 100)} less than paying upfront.`;
+    d.answer = `${verdict} Paying upfront is ${fb.r(r.totalPayableUpfrontPaise / 100)}; the EMI plan totals ${fb.r(r.totalPayableEmiPaise / 100)} over ${months} months (${fb.r(r.monthlyCommitmentPaise / 100)} a month).${r.surplusAfterEmiPaise !== null ? ` Your monthly surplus would go from ${fb.r((r.monthlySurplusPaise ?? 0) / 100)} to ${fb.r(r.surplusAfterEmiPaise / 100)} while it runs.` : ""}`;
+    d.summary = r.isReallyNoCost ? "EMI costs no more on these terms" : "EMI costs more than paying upfront";
+    d.metrics = r.breakdown.map(b => ({ label: b.label, value: fb.r(b.paise / 100) }));
+    d.assumptions = r.assumptions;
+    d.limitations = r.missingTerms.length ? [`Not provided and counted as zero: ${r.missingTerms.join("; ")}.`] : [];
+    d.insights = r.warnings;
+    d.evidence = [{ code: "emi_comparison", severity: "info", message: "Computed from the terms in your question; nothing was created or saved." }];
+    return d;
+  }
+
+  if (kind === "manual_entry") {
+    const p = await manualEntryPreviewFor(ownerKey, { text: question }, now);
+    if (p.needsUserInput.length) {
+      d.answer = `I can add that as a manual entry, but I still need ${p.needsUserInput.map(f => (f === "amount" ? "the amount" : "whether it was money spent or received")).join(" and ")}.`;
+      d.summary = "Need more detail for the manual entry";
+      d.confidence = "medium";
+      return d;
+    }
+    const e = p.entry;
+    d.answer = `I can record a ${e.direction === "debit" ? "spend" : "receipt"} of ${fb.r((e.amountPaise ?? 0) / 100)} (${e.paymentType}) under ${(e.category ?? "other").replace(/_/g, " ")} dated ${e.postedOn}. Nothing is added until you confirm.`;
+    d.summary = "Manual entry ready to confirm";
+    d.assumptions = p.assumptions;
+    d.limitations = ["Manual entries are marked as user-entered; I cannot verify them against a statement."];
+    d.evidence = [{ code: "manual_entry_preview", severity: "info", message: "Preview only; the ledger has not changed." }];
+    d.proposed = [{ type: "manual_entry", title: "Add this entry", description: "Adds one user-confirmed transaction to your ledger. You can undo it.", procedure: "inari.manualEntryCommit", input: { previewId: p.previewId }, requiresConfirmation: true, inputComplete: false, missingFields: ["idempotencyKey"] }];
+    return d;
+  }
+
+  const wanted = kind === "refund_status" ? "refund" : "reimbursement";
+  const list = await listClaimsFor(ownerKey, wanted, now);
+  const open = list.items.filter(c => c.status !== "cancelled" && c.status !== "received");
+  const creating = amounts.length > 0 && open.length === 0 && (kind === "refund_status" ? /\b(returned|should arrive|will arrive|promised|expect)/i.test(question) : /\b(owe|owes|belongs?|paid for)/i.test(question));
+  if (creating) {
+    const amount = amounts[0];
+    const debits = (await getLedgerRepository().listTransactions(ownerKey)).filter(t => t.direction === "debit" && (wanted === "refund" ? t.amountPaise === Math.round(amount * 100) : t.amountPaise > Math.round(amount * 100)));
+    const days = daysIn(question);
+    const input: Record<string, unknown> = { kind: wanted, expectedAmount: amount, ...(wanted === "refund" && days ? { expectedDate: isoDay(new Date(now.getTime() + days * 86_400_000)) } : {}) };
+    const exact = debits.length === 1;
+    if (exact) input.transactionId = debits[0].id;
+    d.answer = exact
+      ? `I found one payment that fits (${debits[0].narration}, ${fb.r(debits[0].amountPaise / 100)} on ${debits[0].postedOn}). I can track ${fb.r(amount)} as an expected ${wanted}. It is not counted as money received until a matching credit arrives and you confirm it.`
+      : `I can track ${fb.r(amount)} as an expected ${wanted}, but I need to know which payment it relates to${debits.length > 1 ? ` (${debits.length} payments could fit)` : ""}. It is not counted as money received.`;
+    d.summary = `Track an expected ${wanted}`;
+    d.confidence = exact ? "high" : "medium";
+    d.limitations = [`An expected ${wanted} is never counted as cash.`];
+    d.proposed = [{ type: "create_claim", title: `Track this ${wanted}`, description: "Creates a claim linked to an existing payment. It changes no totals.", procedure: "inari.createClaim", input, requiresConfirmation: true, inputComplete: exact, ...(exact ? {} : { missingFields: ["transactionId"] }) }];
+    return d;
+  }
+  if (open.length === 0) {
+    d.answer = list.items.length > 0
+      ? `All tracked ${wanted}s are received or cancelled, so nothing is outstanding.`
+      : `I am not tracking any ${wanted}s yet. Tell me the amount and which payment it relates to and I can start tracking it. It will not count as money received until you confirm a matching credit.`;
+    d.summary = `No open ${wanted}s`;
+    return d;
+  }
+  const lines: string[] = [];
+  for (const c of open) {
+    const who = c.counterparty ?? c.original?.merchant ?? c.original?.narration ?? "a payment";
+    lines.push(`${who}: ${fb.r(c.outstandingAmountPaise / 100)} still ${wanted === "refund" ? "expected" : "owed"} (${c.status.replace("_", " ")}${c.expectedDate ? `, due ${c.expectedDate}` : ""}).`);
+    const top = (await claimMatchesFor(ownerKey, c.id, now)).suggestions[0];
+    if (top) {
+      lines.push(`A possible match is a credit of ${fb.r(top.amountPaise / 100)} on ${top.postedOn}${top.ambiguous ? " (not certain)" : ""}; I need your confirmation before treating it as the ${wanted}.`);
+      d.proposed.push({ type: "confirm_claim_match", title: `Confirm that credit as the ${wanted}`, description: "Links the credit to the claim. You can undo it.", procedure: "inari.confirmClaimMatch", input: { claimId: c.id, creditTransactionId: top.creditTransactionId }, requiresConfirmation: true, inputComplete: true });
+    }
+  }
+  d.answer = lines.join(" ");
+  d.summary = wanted === "refund" ? `${open.length} refund${open.length === 1 ? "" : "s"} not yet received` : `${fb.r(list.summary.outstandingReimbursementPaise / 100)} outstanding from others`;
+  d.metrics = wanted === "refund"
+    ? [{ label: "Refunds expected (not cash)", value: fb.r(list.summary.pendingRefundPaise / 100) }]
+    : [{ label: "Outstanding reimbursements (not cash)", value: fb.r(list.summary.outstandingReimbursementPaise / 100) }, { label: "Your personal share of those payments", value: fb.r(list.summary.personalShareOfReimbursablePaise / 100) }];
+  d.limitations = [`Expected ${wanted}s are not counted as received money.`];
+  d.evidence = [{ code: "claims", severity: "info", message: `${open.length} open ${wanted} claim(s).` }];
+  return d;
+}
+
 function unknownTopic(ctx: AdvisorContext): Draft {
   const d = base(ctx);
   d.answer = "I can answer questions about your own imported transactions: spending by category or merchant, recurring payments, monthly reviews, flagged transactions, and what-if changes.";
@@ -532,6 +677,8 @@ export async function askAdvisorFor(
   } else if (intent.intent === "goal_progress" || (intent.intent === "unknown" && /\b(my goals?|savings? goals?|savings? targets?)\b/i.test(question))) {
     const m = model?.metrics ?? null;
     draft = await goalsDraft(ownerKey, fb, ctx0, now, m ? m.monthlyIncome - m.monthlyExpenses : null);
+  } else if (noveltyKind(question, previous)) {
+    draft = await noveltyDraft(noveltyKind(question, previous)!, ownerKey, question, fb, ctx0, previous, now);
   } else if (!model) {
     draft = noData(ctx0, false);
   } else {

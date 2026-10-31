@@ -29,7 +29,10 @@ const CREDIT_WORDS = /\b(received|got|earned|credited|came in|income|salary|refu
 function parseText(text: string, now: Date) {
   const t = text.replace(/\s+/g, " ").trim();
   let amountPaise: number | null = null;
-  const m = /(?:₹|\brs\.?|\binr)\s*([\d,]+(?:\.\d{1,2})?)|([\d,]+(?:\.\d{1,2})?)\s*(?:rupees|rs\b|inr\b|₹)|\b(\d[\d,]*(?:\.\d{1,2})?)\b/i.exec(t);
+  const AMOUNT = /(?:₹|\brs\.?|\binr)\s*([\d,]+(?:\.\d{1,2})?)|([\d,]+(?:\.\d{1,2})?)\s*(?:rupees|rs\b|inr\b|₹)|\b(\d[\d,]*(?:\.\d{1,2})?)\b/i;
+  // a self-correction ("no sorry 530", "I mean 530") replaces the amount said before it
+  const fix = /\b(?:no,?\s+(?:sorry|wait)|sorry|i mean|actually|make that|correction)\b[,:]?\s*(.*)$/i.exec(t);
+  const m = (fix && AMOUNT.exec(fix[1])) || AMOUNT.exec(t);
   if (m) {
     const parsed = parseAmountToPaise(m[1] ?? m[2] ?? m[3]);
     if (parsed && parsed.ok && parsed.paise > 0) amountPaise = parsed.paise;
