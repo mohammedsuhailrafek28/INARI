@@ -1,0 +1,263 @@
+%PDF-1.3
+%“Œ‹ž ReportLab Generated PDF document (opensource)
+1 0 obj
+<<
+/F1 2 0 R /F2 3 0 R
+>>
+endobj
+2 0 obj
+<<
+/BaseFont /Helvetica /Encoding /WinAnsiEncoding /Name /F1 /Subtype /Type1 /Type /Font
+>>
+endobj
+3 0 obj
+<<
+/BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding /Name /F2 /Subtype /Type1 /Type /Font
+>>
+endobj
+4 0 obj
+<<
+/Contents 9 0 R /MediaBox [ 0 0 595 842 ] /Parent 8 0 R /Resources <<
+/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>> /Rotate 0 /Trans <<
+
+>> 
+  /Type /Page
+>>
+endobj
+5 0 obj
+<<
+/Contents 10 0 R /MediaBox [ 0 0 595 842 ] /Parent 8 0 R /Resources <<
+/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>> /Rotate 0 /Trans <<
+
+>> 
+  /Type /Page
+>>
+endobj
+6 0 obj
+<<
+/PageMode /UseNone /Pages 8 0 R /Type /Catalog
+>>
+endobj
+7 0 obj
+<<
+/Author (INARI synthetic test data) /CreationDate (D:20000101000000+00'00') /Creator (anonymous) /Keywords () /ModDate (D:20000101000000+00'00') /Producer (ReportLab PDF Library - \(opensource\)) 
+  /Subject (unspecified) /Title (Sample Bank C synthetic statement) /Trapped /False
+>>
+endobj
+8 0 obj
+<<
+/Count 2 /Kids [ 4 0 R 5 0 R ] /Type /Pages
+>>
+endobj
+9 0 obj
+<<
+/Length 4847
+>>
+stream
+1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET
+BT /F2 11 Tf 13.2 TL ET
+BT 1 0 0 1 40 810 Tm (Sample Bank C - Statement of Account \(SYNTHETIC DEMO\)) Tj T* ET
+BT /F1 8 Tf 9.6 TL ET
+BT 1 0 0 1 40 796 Tm (Account holder: DEMO ACCOUNT HOLDER    Account No: XXXXXX1234    Period: 01 Aug 2026 to 03 Sep 2026) Tj T* ET
+BT 1 0 0 1 40 786 Tm (Fictional document generated for software testing. Not a real bank statement.) Tj T* ET
+BT /F2 8 Tf 9.6 TL ET
+BT 1 0 0 1 40 740 Tm (Txn Date) Tj T* ET
+BT 1 0 0 1 100 740 Tm (Description) Tj T* ET
+BT 1 0 0 1 372 740 Tm (Dr/Cr) Tj T* ET
+BT 1 0 0 1 398.456 740 Tm (Amount \(INR\)) Tj T* ET
+BT 1 0 0 1 492.992 740 Tm (Balance \(INR\)) Tj T* ET
+BT /F1 8 Tf 9.6 TL ET
+BT 1 0 0 1 40 724 Tm (03-09-26) Tj T* ET
+BT 1 0 0 1 100 724 Tm (ATM CASH WDL STATION ROAD) Tj T* ET
+BT 1 0 0 1 372 724 Tm (DR) Tj T* ET
+BT 1 0 0 1 418.864 724 Tm (3,000.00) Tj T* ET
+BT 1 0 0 1 502.744 724 Tm (1,55,539.50) Tj T* ET
+BT 1 0 0 1 40 710 Tm (02-09-26) Tj T* ET
+BT 1 0 0 1 100 710 Tm (UPI/424242424209/IRCTC/irctc@demobank/Train) Tj T* ET
+BT 1 0 0 1 372 710 Tm (DR) Tj T* ET
+BT 1 0 0 1 418.864 710 Tm (1,355.00) Tj T* ET
+BT 1 0 0 1 502.744 710 Tm (1,58,539.50) Tj T* ET
+BT 1 0 0 1 100 700 Tm (ticket booking) Tj T* ET
+BT 1 0 0 1 40 686 Tm (01-09-26) Tj T* ET
+BT 1 0 0 1 100 686 Tm (NEFT CR ACME TECHNOLOGIES SALARY SEP) Tj T* ET
+BT 1 0 0 1 372 686 Tm (CR) Tj T* ET
+BT 1 0 0 1 414.416 686 Tm (85,000.00) Tj T* ET
+BT 1 0 0 1 502.744 686 Tm (1,59,894.50) Tj T* ET
+BT 1 0 0 1 40 672 Tm (31-08-26) Tj T* ET
+BT 1 0 0 1 100 672 Tm (NEFT CR ACME TECHNOLOGIES REIMBURSEMENT) Tj T* ET
+BT 1 0 0 1 372 672 Tm (CR) Tj T* ET
+BT 1 0 0 1 418.864 672 Tm (1,200.00) Tj T* ET
+BT 1 0 0 1 509.416 672 Tm (74,894.50) Tj T* ET
+BT 1 0 0 1 40 658 Tm (30-08-26) Tj T* ET
+BT 1 0 0 1 100 658 Tm (BIL/BPAY/ELECTRICITY BOARD/AUG BILL) Tj T* ET
+BT 1 0 0 1 372 658 Tm (DR) Tj T* ET
+BT 1 0 0 1 418.864 658 Tm (1,843.00) Tj T* ET
+BT 1 0 0 1 509.416 658 Tm (73,694.50) Tj T* ET
+BT 1 0 0 1 40 644 Tm (28-08-26) Tj T* ET
+BT 1 0 0 1 100 644 Tm (UPI/424242424208/PHARMEASY/pharmeasy@demoban) Tj T* ET
+BT 1 0 0 1 372 644 Tm (DR) Tj T* ET
+BT 1 0 0 1 425.536 644 Tm (760.25) Tj T* ET
+BT 1 0 0 1 509.416 644 Tm (75,537.50) Tj T* ET
+BT 1 0 0 1 100 634 Tm (k/Medicines) Tj T* ET
+BT 1 0 0 1 40 620 Tm (27-08-26) Tj T* ET
+BT 1 0 0 1 100 620 Tm (ACH D- HDFC LIFE INSURANCE PREMIUM POLICY) Tj T* ET
+BT 1 0 0 1 372 620 Tm (DR) Tj T* ET
+BT 1 0 0 1 418.864 620 Tm (2,500.00) Tj T* ET
+BT 1 0 0 1 509.416 620 Tm (76,297.75) Tj T* ET
+BT 1 0 0 1 100 610 Tm (77001) Tj T* ET
+BT 1 0 0 1 40 596 Tm (25-08-26) Tj T* ET
+BT 1 0 0 1 100 596 Tm (UPI/424242424207/FRIEND) Tj T* ET
+BT 1 0 0 1 372 596 Tm (CR) Tj T* ET
+BT 1 0 0 1 425.536 596 Tm (450.00) Tj T* ET
+BT 1 0 0 1 509.416 596 Tm (78,797.75) Tj T* ET
+BT 1 0 0 1 100 586 Tm (REFUND/friend@demobank/Dinner split) Tj T* ET
+BT 1 0 0 1 40 572 Tm (23-08-26) Tj T* ET
+BT 1 0 0 1 100 572 Tm (POS 4147XXXXXXXX1234 RELIANCE DIGITAL MUMBAI) Tj T* ET
+BT 1 0 0 1 372 572 Tm (DR) Tj T* ET
+BT 1 0 0 1 414.416 572 Tm (14,999.00) Tj T* ET
+BT 1 0 0 1 509.416 572 Tm (78,347.75) Tj T* ET
+BT 1 0 0 1 40 558 Tm (21-08-26) Tj T* ET
+BT 1 0 0 1 100 558 Tm (UPI/424242424206/DMART/dmart@demobank/Grocer) Tj T* ET
+BT 1 0 0 1 372 558 Tm (DR) Tj T* ET
+BT 1 0 0 1 418.864 558 Tm (2,100.50) Tj T* ET
+BT 1 0 0 1 509.416 558 Tm (93,346.75) Tj T* ET
+BT 1 0 0 1 100 548 Tm (ies) Tj T* ET
+BT 1 0 0 1 40 534 Tm (19-08-26) Tj T* ET
+BT 1 0 0 1 100 534 Tm (CHQ DEP CLEARING 000451) Tj T* ET
+BT 1 0 0 1 372 534 Tm (CR) Tj T* ET
+BT 1 0 0 1 418.864 534 Tm (2,500.00) Tj T* ET
+BT 1 0 0 1 509.416 534 Tm (95,447.25) Tj T* ET
+BT 1 0 0 1 40 520 Tm (18-08-26) Tj T* ET
+BT 1 0 0 1 100 520 Tm (UPI/424242424205/SPOTIFY/spotify@demobank/Pr) Tj T* ET
+BT 1 0 0 1 372 520 Tm (DR) Tj T* ET
+BT 1 0 0 1 425.536 520 Tm (119.00) Tj T* ET
+BT 1 0 0 1 509.416 520 Tm (92,947.25) Tj T* ET
+BT 1 0 0 1 100 510 Tm (emium) Tj T* ET
+BT 1 0 0 1 40 496 Tm (16-08-26) Tj T* ET
+BT 1 0 0 1 100 496 Tm (NEFT DR LANDLORD A KUMAR HOUSE RENT AUGUST) Tj T* ET
+BT 1 0 0 1 372 496 Tm (DR) Tj T* ET
+BT 1 0 0 1 414.416 496 Tm (18,000.00) Tj T* ET
+BT 1 0 0 1 509.416 496 Tm (93,066.25) Tj T* ET
+BT 1 0 0 1 40 482 Tm (14-08-26) Tj T* ET
+BT 1 0 0 1 100 482 Tm (UPI/424242424204/UBER) Tj T* ET
+BT 1 0 0 1 372 482 Tm (DR) Tj T* ET
+BT 1 0 0 1 425.536 482 Tm (234.00) Tj T* ET
+BT 1 0 0 1 502.744 482 Tm (1,11,066.25) Tj T* ET
+BT 1 0 0 1 100 472 Tm (INDIA/uber@demobank/Ride) Tj T* ET
+BT 1 0 0 1 40 458 Tm (14-08-26) Tj T* ET
+BT 1 0 0 1 100 458 Tm (UPI/424242424204/UBER) Tj T* ET
+BT 1 0 0 1 372 458 Tm (DR) Tj T* ET
+BT 1 0 0 1 425.536 458 Tm (234.00) Tj T* ET
+BT 1 0 0 1 502.744 458 Tm (1,11,300.25) Tj T* ET
+BT 1 0 0 1 100 448 Tm (INDIA/uber@demobank/Ride) Tj T* ET
+BT /F1 7 Tf 8.4 TL ET
+BT 1 0 0 1 40 40 Tm (This is a computer generated statement and does not require a signature.) Tj T* ET
+BT 1 0 0 1 519.195 40 Tm (Page 1 of 2) Tj T* ET
+ 
+endstream
+endobj
+10 0 obj
+<<
+/Length 3428
+>>
+stream
+1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET
+BT /F2 11 Tf 13.2 TL ET
+BT 1 0 0 1 40 810 Tm (Sample Bank C - Statement of Account \(SYNTHETIC DEMO\)) Tj T* ET
+BT /F1 8 Tf 9.6 TL ET
+BT 1 0 0 1 40 796 Tm (Account holder: DEMO ACCOUNT HOLDER    Account No: XXXXXX1234    Period: 01 Aug 2026 to 03 Sep 2026) Tj T* ET
+BT 1 0 0 1 40 786 Tm (Fictional document generated for software testing. Not a real bank statement.) Tj T* ET
+BT /F2 8 Tf 9.6 TL ET
+BT 1 0 0 1 40 740 Tm (Txn Date) Tj T* ET
+BT 1 0 0 1 100 740 Tm (Description) Tj T* ET
+BT 1 0 0 1 372 740 Tm (Dr/Cr) Tj T* ET
+BT 1 0 0 1 398.456 740 Tm (Amount \(INR\)) Tj T* ET
+BT 1 0 0 1 492.992 740 Tm (Balance \(INR\)) Tj T* ET
+BT /F1 8 Tf 9.6 TL ET
+BT 1 0 0 1 40 724 Tm (12-08-26) Tj T* ET
+BT 1 0 0 1 100 724 Tm (INTEREST CREDITED SAVINGS ACCOUNT) Tj T* ET
+BT 1 0 0 1 372 724 Tm (CR) Tj T* ET
+BT 1 0 0 1 425.536 724 Tm (312.50) Tj T* ET
+BT 1 0 0 1 502.744 724 Tm (1,11,534.25) Tj T* ET
+BT 1 0 0 1 40 710 Tm (10-08-26) Tj T* ET
+BT 1 0 0 1 100 710 Tm (UPI/424242424203/ZOMATO/zomato@demobank/Dinn) Tj T* ET
+BT 1 0 0 1 372 710 Tm (DR) Tj T* ET
+BT 1 0 0 1 425.536 710 Tm (899.50) Tj T* ET
+BT 1 0 0 1 502.744 710 Tm (1,11,221.75) Tj T* ET
+BT 1 0 0 1 100 700 Tm (er) Tj T* ET
+BT 1 0 0 1 40 686 Tm (09-08-26) Tj T* ET
+BT 1 0 0 1 100 686 Tm (IMPS/P2P/RAHUL VERMA/rent share) Tj T* ET
+BT 1 0 0 1 372 686 Tm (DR) Tj T* ET
+BT 1 0 0 1 414.416 686 Tm (12,000.00) Tj T* ET
+BT 1 0 0 1 502.744 686 Tm (1,12,121.25) Tj T* ET
+BT 1 0 0 1 40 672 Tm (07-08-26) Tj T* ET
+BT 1 0 0 1 100 672 Tm (POS 4147XXXXXXXX1234 AMAZON SELLER SERVICES) Tj T* ET
+BT 1 0 0 1 372 672 Tm (DR) Tj T* ET
+BT 1 0 0 1 418.864 672 Tm (3,499.00) Tj T* ET
+BT 1 0 0 1 502.744 672 Tm (1,24,121.25) Tj T* ET
+BT 1 0 0 1 100 662 Tm (BENGALURU) Tj T* ET
+BT 1 0 0 1 40 648 Tm (05-08-26) Tj T* ET
+BT 1 0 0 1 100 648 Tm (ACH D- NETFLIX ENTERTAINMENT SERVICES INDIA) Tj T* ET
+BT 1 0 0 1 372 648 Tm (DR) Tj T* ET
+BT 1 0 0 1 425.536 648 Tm (649.00) Tj T* ET
+BT 1 0 0 1 502.744 648 Tm (1,27,620.25) Tj T* ET
+BT 1 0 0 1 100 638 Tm (LLP MANDATE) Tj T* ET
+BT 1 0 0 1 40 624 Tm (04-08-26) Tj T* ET
+BT 1 0 0 1 100 624 Tm (UPI/424242424202/BIGBASKET/bigbasket@demoban) Tj T* ET
+BT 1 0 0 1 372 624 Tm (DR) Tj T* ET
+BT 1 0 0 1 418.864 624 Tm (1,280.75) Tj T* ET
+BT 1 0 0 1 502.744 624 Tm (1,28,269.25) Tj T* ET
+BT 1 0 0 1 100 614 Tm (k/Groceries weekly order) Tj T* ET
+BT 1 0 0 1 40 600 Tm (03-08-26) Tj T* ET
+BT 1 0 0 1 100 600 Tm (ATM CASH WDL MAIN ROAD BRANCH SECTOR 5) Tj T* ET
+BT 1 0 0 1 372 600 Tm (DR) Tj T* ET
+BT 1 0 0 1 418.864 600 Tm (5,000.00) Tj T* ET
+BT 1 0 0 1 502.744 600 Tm (1,29,550.00) Tj T* ET
+BT 1 0 0 1 40 586 Tm (02-08-26) Tj T* ET
+BT 1 0 0 1 100 586 Tm (UPI/424242424201/SWIGGY/swiggy@demobank/Food) Tj T* ET
+BT 1 0 0 1 372 586 Tm (DR) Tj T* ET
+BT 1 0 0 1 425.536 586 Tm (450.00) Tj T* ET
+BT 1 0 0 1 502.744 586 Tm (1,34,550.00) Tj T* ET
+BT 1 0 0 1 100 576 Tm (order) Tj T* ET
+BT 1 0 0 1 40 562 Tm (01-08-26) Tj T* ET
+BT 1 0 0 1 100 562 Tm (NEFT CR ACME TECHNOLOGIES SALARY AUG) Tj T* ET
+BT 1 0 0 1 372 562 Tm (CR) Tj T* ET
+BT 1 0 0 1 414.416 562 Tm (85,000.00) Tj T* ET
+BT 1 0 0 1 502.744 562 Tm (1,35,000.00) Tj T* ET
+BT 1 0 0 1 40 548 Tm (01-08-26) Tj T* ET
+BT 1 0 0 1 100 548 Tm (Opening Balance) Tj T* ET
+BT 1 0 0 1 509.416 548 Tm (50,000.00) Tj T* ET
+BT /F1 7 Tf 8.4 TL ET
+BT 1 0 0 1 40 40 Tm (This is a computer generated statement and does not require a signature.) Tj T* ET
+BT 1 0 0 1 519.195 40 Tm (Page 2 of 2) Tj T* ET
+ 
+endstream
+endobj
+xref
+0 11
+0000000000 65535 f 
+0000000061 00000 n 
+0000000102 00000 n 
+0000000209 00000 n 
+0000000321 00000 n 
+0000000514 00000 n 
+0000000708 00000 n 
+0000000776 00000 n 
+0000001078 00000 n 
+0000001143 00000 n 
+0000006041 00000 n 
+trailer
+<<
+/ID 
+[<9628de25f355429bc47277c01f6ce09f><9628de25f355429bc47277c01f6ce09f>]
+% ReportLab generated PDF document -- digest (opensource)
+
+/Info 7 0 R
+/Root 6 0 R
+/Size 11
+>>
+startxref
+9521
+%%EOF

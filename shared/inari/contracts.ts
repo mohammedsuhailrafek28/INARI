@@ -110,6 +110,8 @@ export const LedgerTransaction = z.object({
   isRecurring: z.boolean(),
   possibleDuplicateOf: z.string().nullable(),
   balanceAfterPaise: z.number().int().nullable(),
+  /** Additive (optional): for PDF imports, the 1-based page and line the row was read from. Never contains statement text. */
+  evidence: z.object({ page: z.number().int().positive(), line: z.number().int().positive() }).optional(),
   /** Additive (optional): the user's explicit reconciliation decision. The row is never deleted. */
   reconciliation: z.object({
     decision: z.enum(["excluded_duplicate", "excluded_card_double_count", "kept_separate"]),

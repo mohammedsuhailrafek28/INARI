@@ -1,0 +1,197 @@
+{
+  "openingBalancePaise": 5000000,
+  "transactions": [
+    {
+      "postedOn": "2026-08-01",
+      "amountPaise": 8500000,
+      "direction": "credit",
+      "reference": "N2608010001",
+      "balanceAfterPaise": 13500000,
+      "narration": "NEFT CR ACME TECHNOLOGIES SALARY AUG"
+    },
+    {
+      "postedOn": "2026-08-02",
+      "amountPaise": 45000,
+      "direction": "debit",
+      "reference": "424242424201",
+      "balanceAfterPaise": 13455000,
+      "narration": "UPI/424242424201/SWIGGY/swiggy@demobank/Food order"
+    },
+    {
+      "postedOn": "2026-08-03",
+      "amountPaise": 500000,
+      "direction": "debit",
+      "reference": "ATM000031",
+      "balanceAfterPaise": 12955000,
+      "narration": "ATM CASH WDL MAIN ROAD BRANCH SECTOR 5"
+    },
+    {
+      "postedOn": "2026-08-04",
+      "amountPaise": 128075,
+      "direction": "debit",
+      "reference": "424242424202",
+      "balanceAfterPaise": 12826925,
+      "narration": "UPI/424242424202/BIGBASKET/bigbasket@demobank/Groceries weekly order"
+    },
+    {
+      "postedOn": "2026-08-05",
+      "amountPaise": 64900,
+      "direction": "debit",
+      "reference": "ACH0005",
+      "balanceAfterPaise": 12762025,
+      "narration": "ACH D- NETFLIX ENTERTAINMENT SERVICES INDIA LLP MANDATE"
+    },
+    {
+      "postedOn": "2026-08-07",
+      "amountPaise": 349900,
+      "direction": "debit",
+      "reference": "POS777001",
+      "balanceAfterPaise": 12412125,
+      "narration": "POS 4147XXXXXXXX1234 AMAZON SELLER SERVICES BENGALURU"
+    },
+    {
+      "postedOn": "2026-08-09",
+      "amountPaise": 1200000,
+      "direction": "debit",
+      "reference": "IMPS909001",
+      "balanceAfterPaise": 11212125,
+      "narration": "IMPS/P2P/RAHUL VERMA/rent share"
+    },
+    {
+      "postedOn": "2026-08-10",
+      "amountPaise": 89950,
+      "direction": "debit",
+      "reference": "424242424203",
+      "balanceAfterPaise": 11122175,
+      "narration": "UPI/424242424203/ZOMATO/zomato@demobank/Dinner"
+    },
+    {
+      "postedOn": "2026-08-12",
+      "amountPaise": 31250,
+      "direction": "credit",
+      "reference": "INT0812",
+      "balanceAfterPaise": 11153425,
+      "narration": "INTEREST CREDITED SAVINGS ACCOUNT"
+    },
+    {
+      "postedOn": "2026-08-14",
+      "amountPaise": 23400,
+      "direction": "debit",
+      "reference": "424242424204",
+      "balanceAfterPaise": 11130025,
+      "narration": "UPI/424242424204/UBER INDIA/uber@demobank/Ride"
+    },
+    {
+      "postedOn": "2026-08-14",
+      "amountPaise": 23400,
+      "direction": "debit",
+      "reference": "424242424204",
+      "balanceAfterPaise": 11106625,
+      "narration": "UPI/424242424204/UBER INDIA/uber@demobank/Ride"
+    },
+    {
+      "postedOn": "2026-08-16",
+      "amountPaise": 1800000,
+      "direction": "debit",
+      "reference": "N2608160002",
+      "balanceAfterPaise": 9306625,
+      "narration": "NEFT DR LANDLORD A KUMAR HOUSE RENT AUGUST"
+    },
+    {
+      "postedOn": "2026-08-18",
+      "amountPaise": 11900,
+      "direction": "debit",
+      "reference": "424242424205",
+      "balanceAfterPaise": 9294725,
+      "narration": "UPI/424242424205/SPOTIFY/spotify@demobank/Premium"
+    },
+    {
+      "postedOn": "2026-08-19",
+      "amountPaise": 250000,
+      "direction": "credit",
+      "reference": "CHQ000451",
+      "balanceAfterPaise": 9544725,
+      "narration": "CHQ DEP CLEARING 000451"
+    },
+    {
+      "postedOn": "2026-08-21",
+      "amountPaise": 210050,
+      "direction": "debit",
+      "reference": "424242424206",
+      "balanceAfterPaise": 9334675,
+      "narration": "UPI/424242424206/DMART/dmart@demobank/Groceries"
+    },
+    {
+      "postedOn": "2026-08-23",
+      "amountPaise": 1499900,
+      "direction": "debit",
+      "reference": "POS777002",
+      "balanceAfterPaise": 7834775,
+      "narration": "POS 4147XXXXXXXX1234 RELIANCE DIGITAL MUMBAI"
+    },
+    {
+      "postedOn": "2026-08-25",
+      "amountPaise": 45000,
+      "direction": "credit",
+      "reference": "424242424207",
+      "balanceAfterPaise": 7879775,
+      "narration": "UPI/424242424207/FRIEND REFUND/friend@demobank/Dinner split"
+    },
+    {
+      "postedOn": "2026-08-27",
+      "amountPaise": 250000,
+      "direction": "debit",
+      "reference": "ACH0027",
+      "balanceAfterPaise": 7629775,
+      "narration": "ACH D- HDFC LIFE INSURANCE PREMIUM POLICY 77001"
+    },
+    {
+      "postedOn": "2026-08-28",
+      "amountPaise": 76025,
+      "direction": "debit",
+      "reference": "424242424208",
+      "balanceAfterPaise": 7553750,
+      "narration": "UPI/424242424208/PHARMEASY/pharmeasy@demobank/Medicines"
+    },
+    {
+      "postedOn": "2026-08-30",
+      "amountPaise": 184300,
+      "direction": "debit",
+      "reference": "BPAY0830",
+      "balanceAfterPaise": 7369450,
+      "narration": "BIL/BPAY/ELECTRICITY BOARD/AUG BILL"
+    },
+    {
+      "postedOn": "2026-08-31",
+      "amountPaise": 120000,
+      "direction": "credit",
+      "reference": "N2608310003",
+      "balanceAfterPaise": 7489450,
+      "narration": "NEFT CR ACME TECHNOLOGIES REIMBURSEMENT"
+    },
+    {
+      "postedOn": "2026-09-01",
+      "amountPaise": 8500000,
+      "direction": "credit",
+      "reference": "N2609010004",
+      "balanceAfterPaise": 15989450,
+      "narration": "NEFT CR ACME TECHNOLOGIES SALARY SEP"
+    },
+    {
+      "postedOn": "2026-09-02",
+      "amountPaise": 135500,
+      "direction": "debit",
+      "reference": "424242424209",
+      "balanceAfterPaise": 15853950,
+      "narration": "UPI/424242424209/IRCTC/irctc@demobank/Train ticket booking"
+    },
+    {
+      "postedOn": "2026-09-03",
+      "amountPaise": 300000,
+      "direction": "debit",
+      "reference": "ATM000032",
+      "balanceAfterPaise": 15553950,
+      "narration": "ATM CASH WDL STATION ROAD"
+    }
+  ]
+}

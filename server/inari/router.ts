@@ -110,7 +110,7 @@ export const inariRouter = router({
       storage,
       limits: LIMITS,
       features: {
-        ledger: true, csv: true, sms: true, pdf: false, categorization: true, subscriptions: true,
+        ledger: true, csv: true, sms: true, pdf: true, categorization: true, subscriptions: true,
         simulations: true, reports: true, guardrails: true, voiceIntent: true, llm: false,
       },
       procedures: PROCEDURE_STATUS,

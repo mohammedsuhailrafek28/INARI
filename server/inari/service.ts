@@ -7,6 +7,7 @@ import { CARD_REPAYMENT, classify, merchantKey } from "./categorize";
 import { InariError } from "./errors";
 import { parseCsvStatement, type Candidate } from "./ingestion/csvImport";
 import { parseSmsImport } from "./ingestion/sms";
+import { parsePdfStatement } from "./ingestion/pdfImport";
 import { detectSubscriptions, isActiveSubscription } from "./recurring";
 import { getLedgerRepository } from "./ledger";
 import type { CorrectionAudit, StoredBatch, StoredProfile, StoredLearnedRule } from "./ledger/types";
@@ -20,7 +21,7 @@ type PreviewRow = { candidate: Candidate; status: "accepted" | "duplicate" | "po
 type StoredPreview = {
   userKey: string;
   expiresAt: number;
-  source: "csv" | "sms";
+  source: "csv" | "sms" | "pdf";
   filename: string | null;
   rows: PreviewRow[];
   rejectedCount: number;
@@ -44,10 +45,7 @@ function periodOf(dates: string[]) {
 const hasCommitted = async (userKey: string) => (await getLedgerRepository().listBatches(userKey)).some(b => b.status === "committed");
 
 export async function previewImport(userKey: string, input: ImportSourceInput): Promise<ImportPreview> {
-  if (input.kind === "pdf") {
-    throw new InariError("NOT_IMPLEMENTED", "PDF import is not available yet. Use a CSV statement or paste SMS alerts.");
-  }
-  const source: "csv" | "sms" = input.kind;
+  const source: "csv" | "sms" | "pdf" = input.kind;
   if (input.kind === "csv" && Buffer.byteLength(input.content, "utf8") > IMPORT_LIMITS.maxCsvBytes) {
     throw new InariError("FILE_TOO_LARGE", "The file is larger than 5 MB. Split it into smaller files.");
   }
@@ -56,9 +54,11 @@ export async function previewImport(userKey: string, input: ImportSourceInput): 
   const parsed =
     input.kind === "csv"
       ? parseCsvStatement(input.content, { userKey, maxRows: IMPORT_LIMITS.maxRows })
-      : parseSmsImport(input.text, { userKey });
-  if (parsed.candidates.length === 0 && parsed.rejected.length === 0 && (source === "csv" || parsed.ignored.length === 0)) {
-    throw new InariError("PARSE_FAILED", source === "csv" ? "No transactions were found in the file." : "No SMS messages were found in the text.");
+      : input.kind === "pdf"
+        ? await parsePdfStatement(input.contentBase64, { userKey, maxRows: IMPORT_LIMITS.maxRows, password: input.password })
+        : parseSmsImport(input.text, { userKey });
+  if (parsed.candidates.length === 0 && parsed.rejected.length === 0 && (source !== "sms" || parsed.ignored.length === 0)) {
+    throw new InariError("PARSE_FAILED", source === "sms" ? "No SMS messages were found in the text." : "No transactions were found in the file.");
   }
 
   const existing = await repo.listTransactions(userKey);
@@ -90,7 +90,7 @@ export async function previewImport(userKey: string, input: ImportSourceInput): 
   // keep the preview payload bounded: problems first, then accepted rows
   const shown: ImportPreview["rows"] = [];
   for (const rej of parsed.rejected) if (shown.length < 100) shown.push({ rowNumber: rej.rowNumber, status: "rejected", reason: rej.reason, transaction: null });
-  if (source === "sms") {
+  if (source === "sms" || source === "pdf") {
     for (const ign of parsed.ignored) if (shown.length < 100) shown.push({ rowNumber: ign.rowNumber, status: "ignored", reason: ign.reason, transaction: null });
   }
   for (const r of rows) {
@@ -126,7 +126,7 @@ export async function previewImport(userKey: string, input: ImportSourceInput): 
     userKey,
     expiresAt: Date.now() + PREVIEW_TTL_MS,
     source,
-    filename: input.kind === "csv" ? input.filename.slice(0, 200) : null,
+    filename: input.kind === "csv" || input.kind === "pdf" ? input.filename.slice(0, 200) : null,
     rows,
     rejectedCount: counts.rejected,
     ignoredCount: counts.ignored,
@@ -176,6 +176,7 @@ function buildTransaction(
     isRecurring: false,
     possibleDuplicateOf,
     balanceAfterPaise: c.balanceAfterPaise,
+    ...(c.evidence ? { evidence: c.evidence } : {}),
   };
 }
 

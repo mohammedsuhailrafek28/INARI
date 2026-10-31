@@ -16,7 +16,9 @@ export type Candidate = {
   reference: string | null;
   isTransfer: boolean;
   /** defaults to "csv" */
-  source?: "csv" | "sms";
+  source?: "csv" | "sms" | "pdf";
+  /** where the row came from inside a PDF (1-based page and line); never contains statement text */
+  evidence?: { page: number; line: number };
   /** fingerprint without occurrence index; the index is added by `assignFingerprints` */
   baseKey: string;
   fingerprint: string;
@@ -44,7 +46,7 @@ type Field = keyof typeof ALIASES;
 
 const norm = (s: string) => s.toLowerCase().replace(/\./g, "").replace(/[_\s]+/g, " ").trim();
 
-function mapHeader(cells: string[]): Partial<Record<Field, number>> {
+export function mapHeader(cells: string[]): Partial<Record<Field, number>> {
   const map: Partial<Record<Field, number>> = {};
   cells.forEach((cell, index) => {
     const n = norm(cell);
@@ -124,7 +126,7 @@ export function extractMerchant(narration: string): string | null {
   return null;
 }
 
-const SELF_TRANSFER = /\b(self transfer|own account|to self|sweep (in|out))\b/i;
+export const SELF_TRANSFER = /\b(self transfer|own account|to self|sweep (in|out))\b/i;
 
 function normNarration(narration: string) {
   return narration.toLowerCase().replace(/\s+/g, " ").replace(/[^a-z0-9 ]/g, "").trim();
