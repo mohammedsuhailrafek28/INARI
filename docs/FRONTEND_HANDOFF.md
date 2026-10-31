@@ -24,7 +24,9 @@ Every `inari.*` response has `implementation: "stub" | "implemented"`. **`stub` 
 | `importPreview` → `importCommit` → `importUndo` | m | **implemented** (CSV only; SMS/PDF return `NOT_IMPLEMENTED`) |
 | `getSnapshot`, `setBalances`, `useDemoData` | q / m | **implemented** |
 | `correctCategory`, `listLearnedRules` (`getLearnedRules`), `deleteLearnedRule`, `getBreakdown` | q / m | **implemented** |
-| `ask`/`askAdvisor`, `getGoals`, `upsertGoal`, `deleteGoal` | | stub |
+| `simulate`, `analyzeIntent`, `listSubscriptions` (`getSubscriptions`), `confirmSubscription`, `monthlyReport` (`getMonthlyReport`), `listReportMonths`, `reconcile` | q / m | **implemented** (see their sections below) |
+| `ask` / `askAdvisor` | m | **implemented**, deterministic (no LLM) |
+| `getGoals`, `upsertGoal`, `deleteGoal` | | stub |
 
 ### Import flow
 1. `importPreview({kind:"csv", filename, content})` – nothing is stored. Returns `previewId`, `counts` (`accepted/duplicate/possibleDuplicate/rejected/ignored`), `detectedFormat`, `period`, `warnings`, up to 200 `rows` (problems first; `rejected` rows carry a `reason`). Previews expire after 30 minutes and are private to the caller.
@@ -149,3 +151,51 @@ The explicit, user-confirmed way to resolve a flagged item. Rows are **never del
 
 ### Frontend requirements
 Handle `status:"insufficient_data"`, `period.partial`, nullable `previousMonth`, `drift.status`, `unknowns`, and excluded rows (`reconciliation`). Never display `totals` when insufficient. Offer the reconcile actions only for flagged rows.
+
+## Advisor: `inari.ask({question, locale, previous?})` (alias `askAdvisor`)
+
+**It is not an LLM.** Every answer is built by deterministic code from the user's imported ledger, the snapshot, the report, the recurring detector and the simulation engine. `mode` is always `"fallback"` and `engine = {kind:"deterministic", llmUsed:false, model:null}`. Never label it "AI-powered" or "LLM"; use `engine` to drive any badge (`meta.features.llm` is `false`). If an LLM is added later, `engine.llmUsed` will be `true` only when a model actually ran.
+
+The advisor **never changes data**. Anything consequential comes back in `proposedActions[]` (`requiresConfirmation: true`, with the `procedure` and a ready `input`). Show a confirm button; only when the user confirms, call that procedure yourself.
+
+### Request
+- `question` string, `locale` (`"en"`), `previous?` = the `context` object echoed from the last response (stateless follow-ups, e.g. "and in August?", "what about 40 percent instead?").
+
+### Response (all new fields are optional, so older clients still work)
+`answer`, `summary`, `keyInsights[]`, `suggestedNextActions[]`, `followUpQuestions[]`, `relatedMetrics[{label,value}]`, `confidenceLevel` (`low|medium|high`), `mode`, `engine`, `disclaimer`, `dataSource`, `dataAsOf`, `guardrail {status: passed|modified|refused, reasons[]}`, `intent` (parsed intent or null), `simulation` (the full `SimulationResult` for what-ifs, else null), `evidence[]` (data-quality notes with `transactionIds`), `assumptions[]`, `limitations[]`, `proposedActions[]`, `context`.
+
+### What it answers
+| Question type | Source | Notes |
+|---|---|---|
+| Spending by category / merchant / month, with follow-ups | ledger | month defaults to the latest complete month; says so |
+| Savings, income, savings rate | snapshot | needs a complete month, otherwise low confidence |
+| Recurring payments, one merchant, "should I cancel X" | recurring detector | cancel = what-if via `simulate` plus a `confirm_subscription` proposal; nothing is cancelled |
+| What-if ("cut dining by 30%", "reduce X by 40 percent instead") | `simulate` | exact baseline/after/delta; incomplete scenarios get a clarifying question |
+| Monthly review / "why did X go up" | monthly report and drift | admits when history is too short |
+| Duplicates, flagged items, card repayments | reconciliation flags | proposes `reconcile` actions with real transaction ids |
+| Emergency fund, investments, balances | snapshot | `null` stays "not provided"; proposes `set_balances` |
+| Recategorise a transaction | none | proposal only (`correct_category`) |
+| Import needed | none | no data: says so and proposes `import_data` |
+
+### Not supported (the advisor says so rather than guessing)
+Goals (backend stub), `change_goal_contribution` scenarios, market or general-knowledge questions, tax advice, specific investment picks, return projections or guarantees (refused, `guardrail.status:"refused"`), amount-only follow-ups, PDF-sourced data.
+
+### UI states you must handle
+1. **No data**: `confidenceLevel:"low"`, `proposedActions` contains `import_data`. Link to the import screen.
+2. **Clarification**: `intent` incomplete, answer is a question, `context` carries what was understood. Send the user's reply with `previous = context`.
+3. **Refusal**: `guardrail.status:"refused"`. Show the answer as-is plus the disclaimer.
+4. **Low confidence / unknown topic**: show `limitations` and the capability list in `followUpQuestions`.
+5. **Proposed actions**: render each as a card with a Confirm button; confirmed -> call `action.procedure` with `action.input`, then refresh snapshot/report.
+6. **Evidence**: show `evidence[]` and `assumptions[]` in an expandable "How this was calculated" panel; link `transactionIds` to the ledger.
+7. **Engine badge**: "Rule-based answer" from `engine.kind`, not a hard-coded "AI".
+
+### Guardrails
+Every text field passes the same check as the monthly report: no guaranteed/risk-free claims, no buy/sell/invest-in recommendations, no return projections, and no rupee amount or percentage that the backend did not compute. A failing text is replaced by a number-free fallback and `guardrail.status` becomes `modified` or `refused`.
+
+## Reconciled rows across modules
+Rows excluded via `inari.reconcile` are treated identically by the snapshot, `getBreakdown`, `simulate`, `monthlyReport`, `ask`, `listSubscriptions` and `dashboard.*`. They stay in `listTransactions` (with `reconciliation`). `undo` restores them everywhere; re-importing an excluded SMS is a plain duplicate and keeps the decision; undoing the import batch and re-importing re-flags it.
+
+## Remaining stubs and gaps
+- Stub (fixture data, show "sample"): `getGoals`, `upsertGoal`, `deleteGoal`.
+- Not implemented: PDF import (`NOT_IMPLEMENTED`), LLM inference, goal-based scenarios.
+- Storage is non-durable and identity is demo-grade (`meta.storage`, `meta.identity`).

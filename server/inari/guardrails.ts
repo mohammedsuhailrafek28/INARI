@@ -32,6 +32,15 @@ export function numbersIn(text: string): { amounts: number[]; percents: number[]
 
 const near = (value: number, facts: number[], tol: number) => facts.some(f => Math.abs(f - value) <= tol);
 
+/** True when a *question* asks for something the advisor must refuse (specific investment advice or guaranteed returns). */
+export function isProhibitedAdviceRequest(question: string): boolean {
+  return (
+    PROHIBITED.some(p => p.re.test(question)) ||
+    /\b(which|what|best)\b[^.?]{0,40}\b(stock|share|mutual fund|etf|crypto|coin)s?\b[^.?]{0,20}\b(buy|invest|pick)\b/i.test(question) ||
+    /\bshould i (?:buy|sell|invest)\b/i.test(question)
+  );
+}
+
 export function checkText(text: string, facts: { amounts: number[]; percents: number[] }): GuardrailVerdict {
   const reasons: string[] = [];
   for (const p of PROHIBITED) if (p.re.test(text)) reasons.push(p.reason);

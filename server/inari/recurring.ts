@@ -23,6 +23,7 @@ const CADENCES = [
   { name: "quarterly" as const, days: 91, tol: 6, perYear: 4, months: 3 },
   { name: "yearly" as const, days: 365, tol: 10, perYear: 1, months: 12 },
 ];
+const SITE_SUFFIX = new Set(["com", "in", "co", "net", "org"]);
 const AMOUNT_STABLE = 0.1; // within 10% of the median
 const AMOUNT_BILL_LIMIT = 0.25; // beyond this, only an explicit "subscription" category qualifies
 
@@ -56,7 +57,8 @@ export function detectSubscriptions(
 
   const groups = new Map<string, LedgerTransaction[]>();
   for (const t of spend) {
-    const key = merchantKey(t.merchant ?? t.narration);
+    // "netflix com" (CSV) and "netflix" (SMS) are the same merchant
+    const key = merchantKey(t.merchant ?? t.narration).split(" ").filter(w => !SITE_SUFFIX.has(w)).join(" ");
     if (!key) continue;
     groups.set(key, [...(groups.get(key) ?? []), t]);
   }

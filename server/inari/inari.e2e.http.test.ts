@@ -187,6 +187,31 @@ describe("HTTP e2e: upload -> preview -> commit -> snapshot -> dashboard, with t
     }
   });
 
+  it("advisor over HTTP: grounded answer, follow-up context, refusal, isolation", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-31T10:00:00Z"));
+    try {
+      const eve = new Browser();
+      const rows = [7, 8, 9].flatMap(m => [
+        `01/0${m}/2026,NEFT ACME SALARY,,100000.00`, `10/0${m}/2026,UPI/3/SWIGGY/sw@bank,${m === 9 ? "9000.00" : "6000.00"},`, `28/0${m}/2026,AMAZON PAY RETAIL,1000.00,`,
+      ]);
+      const p = await eve.call("inari.importPreview", { kind: "csv", filename: "q.csv", content: ["Date,Description,Debit,Credit", ...rows].join("\n") });
+      await eve.call("inari.importCommit", { previewId: p.data.previewId });
+      const a = await eve.call("inari.ask", { question: "How much did I spend on dining last month?", locale: "en" });
+      expect(a.data).toMatchObject({ implementation: "implemented", mode: "fallback", engine: { kind: "deterministic", llmUsed: false, model: null }, guardrail: { status: "passed" } });
+      expect(a.data.answer).toBe("In September 2026 you spent ₹9,000 on dining & delivery. That is ₹3,000 more than August 2026 (₹6,000).");
+      const b = await eve.call("inari.askAdvisor", { question: "and in August?", locale: "en", previous: a.data.context });
+      expect(b.data.answer).toMatch(/^In August 2026 you spent ₹6,000/);
+      const refused = await eve.call("inari.ask", { question: "which stock should I buy", locale: "en" });
+      expect(refused.data.guardrail.status).toBe("refused");
+      const stranger = await bob.call("inari.ask", { question: "How much did I spend on dining last month?", locale: "en" });
+      expect(stranger.data).toMatchObject({ dataSource: "demo", relatedMetrics: [] });
+      expect(JSON.stringify(stranger.body)).not.toContain("9,000");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("correction over HTTP recalculates the breakdown; clearMyData then wipes alice only", async () => {
     const tx = (await alice.call("inari.listTransactions", { month: "2026-09", limit: 50 }, "query")).data.items.find((t: any) => t.narration.includes("UBER"));
     const fix = await alice.call("inari.correctCategory", { transactionId: tx.id, category: "travel", applyToMerchant: true });

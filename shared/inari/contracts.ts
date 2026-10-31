@@ -53,7 +53,7 @@ export const PROCEDURE_STATUS: Record<ProcedureName, ImplementationStatus> = {
   reconcile: "implemented",
   listSubscriptions: "implemented", getSubscriptions: "implemented", confirmSubscription: "implemented",
   simulate: "implemented",
-  ask: "stub", askAdvisor: "stub", analyzeIntent: "implemented",
+  ask: "implemented", askAdvisor: "implemented", analyzeIntent: "implemented",
   monthlyReport: "implemented", getMonthlyReport: "implemented", listReportMonths: "implemented",
   getGoals: "stub", upsertGoal: "stub", deleteGoal: "stub",
 };
@@ -406,7 +406,24 @@ export const AnalyzeIntentInput = z.object({
 });
 
 /* ---------- advisor ---------- */
-export const AskInput = z.object({ question: z.string().trim().min(1).max(1000), locale: z.literal("en").default("en") });
+/** Follow-up memory. The server keeps no conversation state: the client echoes back `context` from the previous response. */
+export const AdvisorContext = z.object({
+  intent: Intent, amount: z.number().nullable(), category: Category.nullable(),
+  month: YearMonth.nullable().optional(), merchant: z.string().nullable().optional(),
+});
+export type AdvisorContext = z.infer<typeof AdvisorContext>;
+export const AskInput = z.object({
+  question: z.string().trim().min(1).max(1000), locale: z.literal("en").default("en"),
+  /** Additive (optional) */
+  previous: AdvisorContext.optional(),
+});
+export const AdvisorProposedAction = z.object({
+  type: z.enum(["correct_category", "reconcile", "confirm_subscription", "import_data", "set_balances"]),
+  title: z.string(), description: z.string(),
+  /** The procedure the client should call after the user confirms, with ready-made input. The advisor never performs it. */
+  procedure: z.string(), input: z.record(z.string(), z.unknown()),
+  requiresConfirmation: z.literal(true),
+});
 export const InariAdvisorResponse = z.object({
   ...impl,
   answer: z.string(), summary: z.string(),
@@ -420,6 +437,15 @@ export const InariAdvisorResponse = z.object({
   guardrail: z.object({ status: z.enum(["passed", "modified", "refused"]), reasons: z.array(z.string()) }),
   intent: IntentAnalysis.nullable(),
   simulation: SimulationResult.nullable(),
+  /* Additive, all optional. */
+  evidence: z.array(DataQualityNote).optional(),
+  assumptions: z.array(z.string()).optional(),
+  limitations: z.array(z.string()).optional(),
+  proposedActions: z.array(AdvisorProposedAction).optional(),
+  /** Echo this back as `previous` on the next question to keep a follow-up conversation going. */
+  context: AdvisorContext.optional(),
+  /** Always states how the answer was produced. llmUsed is true only if a model actually ran. */
+  engine: z.object({ kind: z.enum(["deterministic", "llm"]), llmUsed: z.boolean(), model: z.string().nullable() }).optional(),
 });
 export type InariAdvisorResponse = z.infer<typeof InariAdvisorResponse>;
 

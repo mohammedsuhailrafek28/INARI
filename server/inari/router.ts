@@ -22,6 +22,7 @@ import {
 } from "./service";
 import { loadImportedModel } from "./importedModel";
 import { runSimulation } from "./simulate";
+import { askAdvisorFor } from "./advisor";
 import { monthlyReportFor, reportMonthsFor } from "./report";
 import { analyzeIntentText } from "./nlp/intent";
 
@@ -60,7 +61,9 @@ const CATEGORY_LABELS: Record<Category, { label: string; kind: "income" | "expen
 const stub = <T>(value: T) => value; // marker helper: fixtures already carry implementation:"stub"
 
 // ---------- stub procedures (shared so aliases reuse the same object) ----------
-const askProcedure = ownerProcedure.input(AskInput).output(InariAdvisorResponse).mutation(() => stub(fx.sampleAdvisor));
+const askProcedure = ownerProcedure.input(AskInput).output(InariAdvisorResponse).mutation(({ ctx, input }) =>
+  guarded(() => askAdvisorFor(ctx.ownerKey, { question: input.question, previous: input.previous }))
+);
 const listTransactionsProcedure = ownerProcedure
   .input(ListTransactionsInput)
   .output(ListTransactionsOutput)
