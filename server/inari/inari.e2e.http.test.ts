@@ -166,7 +166,7 @@ describe("HTTP e2e: upload -> preview -> commit -> snapshot -> dashboard, with t
       await dana.call("inari.importCommit", { previewId: p.data.previewId });
       const sms = await dana.call("inari.importPreview", { kind: "sms", text: "Rs.500.00 debited from A/c XX1234 on 10-07-26 to swiggy@ybl (UPI Ref No 900000000001)" });
       expect(sms.data.counts.possibleDuplicate).toBe(1);
-      await dana.call("inari.importCommit", { previewId: sms.data.previewId });
+      await dana.call("inari.importCommit", { previewId: sms.data.previewId, importAllPossibleDuplicates: true });
 
       const months = await dana.call("inari.listReportMonths", undefined, "query");
       expect(months.data.months).toEqual(["2026-07"]);

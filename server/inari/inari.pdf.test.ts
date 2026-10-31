@@ -238,24 +238,15 @@ describe("import pipeline: preview, commit, duplicates, cross-source, isolation"
     expect(await getLedgerRepository().listTransactions(KEY)).toHaveLength(24);
   });
 
-  it("the same statement from another layout is flagged as possible duplicates, never silently dropped", async () => {
+  it("the same statement from another layout is recognised as already imported: ledger stays at 24 (regression: 24 -> 32 -> 56)", async () => {
     const a = await preview("layout_a_debit_credit_columns.pdf");
     await caller().inari.importCommit({ previewId: a.previewId });
-    const b = await preview("layout_b_amount_drcr_suffix.pdf");
-    expect(b.counts.accepted + b.counts.duplicate + b.counts.possibleDuplicate).toBe(24);
-    expect(b.counts.possibleDuplicate).toBeGreaterThan(0);
-    const batch = await caller().inari.importCommit({ previewId: b.previewId });
-    expect(batch.counts.possibleDuplicate).toBeGreaterThan(0);
-    const tx = await getLedgerRepository().listTransactions(KEY);
-    expect(tx.length).toBeGreaterThanOrEqual(24 + 24 - b.counts.duplicate);
-    const flagged = tx.filter(t => t.possibleDuplicateOf);
-    expect(flagged.length).toBeGreaterThan(0);
-    // the user decides through the existing explicit reconciliation workflow; the row is kept, only excluded from totals
-    const r = await caller().inari.reconcile({ transactionIds: [flagged[0].id], decision: "exclude_duplicate" });
-    expect(r.updated).toBe(1);
-    const after = await getLedgerRepository().listTransactions(KEY);
-    expect(after).toHaveLength(tx.length);
-    expect(after.find(t => t.id === flagged[0].id)!.reconciliation?.decision).toBe("excluded_duplicate");
+    for (const f of ["layout_b_amount_drcr_suffix.pdf", "layout_c_type_column_newest_first.pdf"]) {
+      const other = await preview(f);
+      expect(other.counts).toMatchObject({ accepted: 0, duplicate: 24, possibleDuplicate: 0, written: 0 });
+      await expect(caller().inari.importCommit({ previewId: other.previewId })).rejects.toMatchObject({ message: expect.stringMatching(/Nothing new/) });
+    }
+    expect(await getLedgerRepository().listTransactions(KEY)).toHaveLength(24);
   });
 
   it("is isolated per user: another user cannot commit my preview and sees none of my rows", async () => {

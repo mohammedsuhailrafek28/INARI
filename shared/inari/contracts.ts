@@ -136,6 +136,8 @@ export type ImportSourceInput = z.infer<typeof ImportSourceInput>;
 export const ImportCounts = z.object({
   total: z.number().int(), accepted: z.number().int(), duplicate: z.number().int(),
   possibleDuplicate: z.number().int(), rejected: z.number().int(), ignored: z.number().int(),
+  /** Additive. Rows that committing will write (preview, with no possible duplicates included) or did write (batch). */
+  written: z.number().int().optional(),
 });
 export type ImportCounts = z.infer<typeof ImportCounts>;
 

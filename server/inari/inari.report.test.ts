@@ -239,7 +239,7 @@ describe("reconciliation: unresolved warnings and explicit user-confirmed action
   const SMS_DUP = "Rs.500.00 debited from A/c XX1234 on 10-07-26 to swiggy@ybl (UPI Ref No 900000000001)";
   const importSms = async (text: string) => {
     const p = await caller().inari.importPreview({ kind: "sms", text });
-    await caller().inari.importCommit({ previewId: p.previewId });
+    await caller().inari.importCommit({ previewId: p.previewId, importAllPossibleDuplicates: true });
   };
 
   it("a CSV/SMS possible duplicate and a card repayment are flagged in the report as unresolved, with ids and a pointer to reconcile", async () => {

@@ -234,7 +234,7 @@ describe("simulate: arithmetic against hand-computed values", () => {
     const none = await caller().inari.simulate({ scenarios: [{ type: "reduce_category", category: "dining", percent: 30 }] });
     expect(none).toMatchObject({ status: "insufficient_data", metrics: [] });
     const p = await caller().inari.importPreview({ kind: "csv", filename: "h.csv", content: "Date,Description,Debit,Credit\n01/09/2026,NEFT SALARY,,100000.00\n05/09/2026,UPI/1/SWIGGY/x@y,300.00," });
-    await caller().inari.importCommit({ previewId: p.previewId });
+    await caller().inari.importCommit({ previewId: p.previewId, importAllPossibleDuplicates: true });
     const partial = await caller().inari.simulate({ scenarios: [{ type: "reduce_category", category: "dining", percent: 30 }] });
     expect(partial.status).toBe("insufficient_data");
     expect(partial.warnings.join(" ")).toMatch(/full calendar month/);
@@ -323,7 +323,7 @@ describe("suspected duplicates are flagged but still counted", () => {
     const reworded = CSV.replace(/UPI\/333\/SWIGGY\/sw@bank/g, "SWIGGY ORDER 7741");
     const p = await caller().inari.importPreview({ kind: "csv", filename: "again.csv", content: reworded });
     expect(p.counts.possibleDuplicate).toBe(3);
-    await caller().inari.importCommit({ previewId: p.previewId });
+    await caller().inari.importCommit({ previewId: p.previewId, importAllPossibleDuplicates: true });
     const snap = await caller().inari.getSnapshot();
     const note = snap.dataQuality.find(n => n.code === "possible_duplicates")!;
     expect(note.severity).toBe("warning");

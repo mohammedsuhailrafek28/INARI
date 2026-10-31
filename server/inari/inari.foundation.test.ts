@@ -125,7 +125,7 @@ describe("inari router: stub honesty", () => {
       await c.inari.importCommit({ previewId: p.previewId });
       const again = TINY_CSV.replace("UPI/123/SWIGGY/x@y", "SWIGGY ORDER 99");
       const p2 = await c.inari.importPreview({ kind: "csv", filename: "b.csv", content: again });
-      await c.inari.importCommit({ previewId: p2.previewId });
+      await c.inari.importCommit({ previewId: p2.previewId, importAllPossibleDuplicates: true });
       const dup = (await c.inari.listTransactions()).items.find(t => t.possibleDuplicateOf)!;
       return c.inari.reconcile({ transactionIds: [dup.id], decision: "keep_separate" });
     },

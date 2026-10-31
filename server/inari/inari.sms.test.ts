@@ -31,7 +31,7 @@ beforeEach(() => {
 
 const importSms = async (text: string, key = KEY) => {
   const p = await caller(key).inari.importPreview({ kind: "sms", text });
-  const c = p.counts.accepted + p.counts.possibleDuplicate > 0 ? await caller(key).inari.importCommit({ previewId: p.previewId }) : null;
+  const c = p.counts.accepted + p.counts.possibleDuplicate > 0 ? await caller(key).inari.importCommit({ previewId: p.previewId, importAllPossibleDuplicates: true }) : null;
   return { p, c };
 };
 
@@ -202,7 +202,7 @@ describe("SMS import: same ledger, same snapshot", () => {
   it("an SMS that matches an existing CSV row is flagged as a possible duplicate, kept, and never deletes the CSV row", async () => {
     const csv = ["Date,Description,Debit,Credit", "10/07/2026,UPI/333/SWIGGY/sw@bank,500.00,", "01/07/2026,NEFT-ACME SALARY,,90000.00"].join("\n");
     const cp = await caller().inari.importPreview({ kind: "csv", filename: "a.csv", content: csv });
-    await caller().inari.importCommit({ previewId: cp.previewId });
+    await caller().inari.importCommit({ previewId: cp.previewId, importAllPossibleDuplicates: true });
     const { p } = await importSms("Rs.500.00 debited from A/c XX1234 on 10-07-26 to swiggy@ybl (UPI Ref No 900000000001)");
     expect(p.counts).toMatchObject({ accepted: 0, possibleDuplicate: 1 });
     const all = (await caller().inari.listTransactions({ limit: 10 })).items;

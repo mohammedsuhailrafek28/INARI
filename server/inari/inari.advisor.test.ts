@@ -225,7 +225,7 @@ describe("cross-module consistency of reconciled transactions", () => {
   const SMS_NETFLIX = "Rs.649.00 debited from A/c XX1234 on 05-07-26 to netflix@icici (UPI Ref No 900000000002)";
   const sms = async (text: string) => {
     const p = await caller().inari.importPreview({ kind: "sms", text });
-    return caller().inari.importCommit({ previewId: p.previewId });
+    return caller().inari.importCommit({ previewId: p.previewId, importAllPossibleDuplicates: true });
   };
 
   /** Every module's view of July expenses / dining, read through the public API. */

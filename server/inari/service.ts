@@ -17,7 +17,7 @@ export const IMPORT_LIMITS = { maxCsvBytes: 5_000_000, maxRows: 20_000 } as cons
 const PREVIEW_TTL_MS = 30 * 60 * 1000;
 const MAX_PREVIEWS_PER_USER = 5;
 
-type PreviewRow = { candidate: Candidate; status: "accepted" | "duplicate" | "possible_duplicate"; possibleDuplicateOf: string | null };
+type PreviewRow = { candidate: Candidate; status: "accepted" | "duplicate" | "possible_duplicate"; possibleDuplicateOf: string | null; reason: string | null };
 type StoredPreview = {
   userKey: string;
   expiresAt: number;
@@ -42,6 +42,50 @@ function periodOf(dates: string[]) {
   return { from: sorted[0], to: sorted[sorted.length - 1] };
 }
 
+
+/** Letters and digits only: PDF text wrapping can split a word ("swig gy") differently in each statement layout. */
+const squash = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+/**
+ * Decides, against the CURRENT ledger, what each parsed row is.
+ *  - duplicate: the same fingerprint, or the same date, amount, direction and description (ignoring spacing/punctuation),
+ *    or the same date, amount, direction and a bank reference that appears in an existing description. Each existing
+ *    transaction can absorb only one row, so two genuinely separate identical payments are never merged into one.
+ *  - possible_duplicate: same date, amount and direction as an existing transaction but a different description. Never
+ *    written unless the user explicitly includes it.
+ *  - accepted: no existing transaction with that date, amount and direction.
+ */
+function classifyRows(candidates: Candidate[], existing: LedgerTransaction[]): PreviewRow[] {
+  const byFingerprint = new Map(existing.map(t => [t.fingerprint, t] as const));
+  const byShape = new Map<string, LedgerTransaction[]>();
+  for (const t of existing) {
+    const k = `${t.postedOn}|${t.amountPaise}|${t.direction}`;
+    byShape.set(k, [...(byShape.get(k) ?? []), t]);
+  }
+  const used = new Set<string>();
+  return candidates.map((candidate): PreviewRow => {
+    const same = byFingerprint.get(candidate.fingerprint);
+    if (same) {
+      used.add(same.id);
+      return { candidate, status: "duplicate", possibleDuplicateOf: null, reason: "already imported" };
+    }
+    const shape = byShape.get(`${candidate.postedOn}|${candidate.amountPaise}|${candidate.direction}`) ?? [];
+    const free = shape.filter(t => !used.has(t.id));
+    const text = squash(candidate.narration);
+    const equivalent =
+      free.find(t => squash(t.narration) === text) ??
+      (candidate.reference && squash(candidate.reference).length >= 6 ? free.find(t => squash(t.narration).includes(squash(candidate.reference!))) : undefined);
+    if (equivalent) {
+      used.add(equivalent.id);
+      return { candidate, status: "duplicate", possibleDuplicateOf: null, reason: "same transaction as one already imported (same date, amount, direction and description)" };
+    }
+    if (free.length > 0) {
+      return { candidate, status: "possible_duplicate", possibleDuplicateOf: free[0].id, reason: `same date, amount and direction as an existing transaction ("${free[0].narration.slice(0, 60)}") but a different description; review it` };
+    }
+    return { candidate, status: "accepted", possibleDuplicateOf: null, reason: null };
+  });
+}
+
 const hasCommitted = async (userKey: string) => (await getLedgerRepository().listBatches(userKey)).some(b => b.status === "committed");
 
 export async function previewImport(userKey: string, input: ImportSourceInput): Promise<ImportPreview> {
@@ -61,17 +105,7 @@ export async function previewImport(userKey: string, input: ImportSourceInput): 
     throw new InariError("PARSE_FAILED", source === "sms" ? "No SMS messages were found in the text." : "No transactions were found in the file.");
   }
 
-  const existing = await repo.listTransactions(userKey);
-  const known = new Set(existing.map(t => t.fingerprint));
-  const byShape = new Map<string, LedgerTransaction>();
-  for (const t of existing) byShape.set(`${t.postedOn}|${t.amountPaise}|${t.direction}`, t);
-
-  const rows: PreviewRow[] = parsed.candidates.map(candidate => {
-    if (known.has(candidate.fingerprint)) return { candidate, status: "duplicate", possibleDuplicateOf: null };
-    const similar = byShape.get(`${candidate.postedOn}|${candidate.amountPaise}|${candidate.direction}`);
-    if (similar) return { candidate, status: "possible_duplicate", possibleDuplicateOf: similar.id };
-    return { candidate, status: "accepted", possibleDuplicateOf: null };
-  });
+  const rows: PreviewRow[] = classifyRows(parsed.candidates, await repo.listTransactions(userKey));
 
   const counts: ImportCounts = {
     total: parsed.candidates.length + parsed.rejected.length + parsed.ignored.length,
@@ -80,9 +114,9 @@ export async function previewImport(userKey: string, input: ImportSourceInput): 
     possibleDuplicate: rows.filter(r => r.status === "possible_duplicate").length,
     rejected: parsed.rejected.length,
     ignored: parsed.ignored.length,
+    written: rows.filter(r => r.status === "accepted").length,
   };
-  const importable = rows.filter(r => r.status !== "duplicate");
-  const period = periodOf(importable.map(r => r.candidate.postedOn));
+  const period = periodOf(rows.filter(r => r.status === "accepted").map(r => r.candidate.postedOn));
 
   const learned = learnedMap(await repo.listRules(userKey));
   const toTx = (r: PreviewRow) => buildTransaction(r.candidate, r.possibleDuplicateOf, learned, "preview", null);
@@ -100,7 +134,7 @@ export async function previewImport(userKey: string, input: ImportSourceInput): 
     shown.push({
       rowNumber: r.candidate.rowNumber,
       status: r.status,
-      reason: r.status === "duplicate" ? "already imported" : "same date, amount and direction as an existing transaction",
+      reason: r.reason,
       transaction: tx,
     });
   }
@@ -112,8 +146,8 @@ export async function previewImport(userKey: string, input: ImportSourceInput): 
   }
 
   const warnings = [...parsed.warnings];
-  if (counts.duplicate > 0) warnings.push(`${counts.duplicate} row(s) were already imported and will be skipped.`);
-  if (counts.possibleDuplicate > 0) warnings.push(`${counts.possibleDuplicate} row(s) look like existing transactions with different wording; they will be imported and flagged for review.`);
+  if (counts.duplicate > 0) warnings.push(`${counts.duplicate} row(s) match transactions you already imported and will be skipped.`);
+  if (counts.possibleDuplicate > 0) warnings.push(`${counts.possibleDuplicate} row(s) have the same date, amount and direction as an existing transaction but different wording. They will NOT be imported unless you review them and include the ones that are separate payments.`);
   if (counts.rejected > 0) warnings.push(`${counts.rejected} row(s) could not be read and will be skipped (see reasons).`);
   if (shown.length >= 200 && counts.total > 200) warnings.push("Only the first 200 rows are listed here; counts cover the whole file.");
 
@@ -182,7 +216,10 @@ function buildTransaction(
 
 const toBatchOutput = (b: StoredBatch): ImportBatch => ({ implementation: "implemented", ...b, importedAt: new Date(b.importedAt) });
 
-export async function commitImport(userKey: string, args: { previewId: string; accountLabel?: string }): Promise<ImportBatch> {
+export async function commitImport(
+  userKey: string,
+  args: { previewId: string; accountLabel?: string; importPossibleDuplicateRows?: number[]; importAllPossibleDuplicates?: boolean }
+): Promise<ImportBatch> {
   gcPreviews();
   const preview = previews.get(args.previewId);
   if (!preview || preview.userKey !== userKey) {
@@ -190,24 +227,35 @@ export async function commitImport(userKey: string, args: { previewId: string; a
     throw new InariError("PREVIEW_EXPIRED", "This import preview has expired or does not exist. Upload the file again.");
   }
   const repo = getLedgerRepository();
-  const known = await repo.existingFingerprints(userKey); // re-checked at commit time, not trusted from preview
   const learned = learnedMap(await repo.listRules(userKey));
   const batchId = `batch_${randomUUID()}`;
   const label = args.accountLabel?.trim() || null;
 
-  const fresh = preview.rows.filter(r => r.status !== "duplicate" && !known.has(r.candidate.fingerprint));
+  // classified again against the ledger as it is NOW, not as it was at preview time
+  const rows = classifyRows(preview.rows.map(r => r.candidate), await repo.listTransactions(userKey));
+  const include = new Set(args.importPossibleDuplicateRows ?? []);
+  const fresh = rows.filter(
+    r => r.status === "accepted" || (r.status === "possible_duplicate" && (args.importAllPossibleDuplicates === true || include.has(r.candidate.rowNumber)))
+  );
+  const held = rows.filter(r => r.status === "possible_duplicate").length - fresh.filter(r => r.status === "possible_duplicate").length;
   const transactions = fresh.map(r => buildTransaction(r.candidate, r.possibleDuplicateOf, learned, batchId, label));
   if (transactions.length === 0) {
     previews.delete(args.previewId);
-    throw new InariError("NO_DATA", "Nothing new to import: every row was already imported or invalid.");
+    throw new InariError(
+      "NO_DATA",
+      held > 0
+        ? `Nothing was imported: ${held} row(s) look like transactions you already have and need your review. Include the ones that are separate payments, or skip them.`
+        : "Nothing new to import: every row was already imported or invalid."
+    );
   }
   const counts: ImportCounts = {
     total: preview.rows.length + preview.rejectedCount + preview.ignoredCount,
     accepted: fresh.filter(r => r.status === "accepted").length,
-    duplicate: preview.rows.length - fresh.length,
-    possibleDuplicate: fresh.filter(r => r.status === "possible_duplicate").length,
+    duplicate: rows.filter(r => r.status === "duplicate").length,
+    possibleDuplicate: rows.filter(r => r.status === "possible_duplicate").length,
     rejected: preview.rejectedCount,
     ignored: preview.ignoredCount,
+    written: transactions.length,
   };
   const batch: StoredBatch = {
     batchId,

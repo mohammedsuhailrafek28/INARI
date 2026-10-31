@@ -157,7 +157,12 @@ export const inariRouter = router({
 
   importPreview: ownerProcedure.input(ImportSourceInput).output(ImportPreview).mutation(({ ctx, input }) => guarded(() => previewImport(ctx.ownerKey, input))),
   importCommit: ownerProcedure
-    .input(z.object({ previewId: z.string(), accountLabel: z.string().max(60).optional() }))
+    .input(z.object({
+      previewId: z.string(), accountLabel: z.string().max(60).optional(),
+      /** Additive. Possible duplicates are NOT written unless listed here (by rowNumber) or `importAllPossibleDuplicates` is true. */
+      importPossibleDuplicateRows: z.array(z.number().int()).max(20_000).optional(),
+      importAllPossibleDuplicates: z.boolean().optional(),
+    }))
     .output(ImportBatch)
     .mutation(({ ctx, input }) => guarded(() => commitImport(ctx.ownerKey, input))),
   importUndo: ownerProcedure
