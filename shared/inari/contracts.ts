@@ -21,6 +21,7 @@ export const PROCEDURE_NAMES = [
   "importPreview", "importCommit", "importUndo", "importHistory",
   "listTransactions", "getTransactions",
   "getCategories", "correctCategory", "listLearnedRules", "getLearnedRules", "deleteLearnedRule", "getBreakdown",
+  "reconcile",
   "listSubscriptions", "getSubscriptions", "confirmSubscription",
   "simulate",
   "ask", "askAdvisor", "analyzeIntent",
@@ -49,10 +50,11 @@ export const PROCEDURE_STATUS: Record<ProcedureName, ImplementationStatus> = {
   listTransactions: "implemented", getTransactions: "implemented",
   getCategories: "implemented", correctCategory: "implemented", listLearnedRules: "implemented", getLearnedRules: "implemented",
   deleteLearnedRule: "implemented", getBreakdown: "implemented",
+  reconcile: "implemented",
   listSubscriptions: "implemented", getSubscriptions: "implemented", confirmSubscription: "implemented",
   simulate: "implemented",
   ask: "stub", askAdvisor: "stub", analyzeIntent: "implemented",
-  monthlyReport: "stub", getMonthlyReport: "stub", listReportMonths: "stub",
+  monthlyReport: "implemented", getMonthlyReport: "implemented", listReportMonths: "implemented",
   getGoals: "stub", upsertGoal: "stub", deleteGoal: "stub",
 };
 
@@ -108,6 +110,11 @@ export const LedgerTransaction = z.object({
   isRecurring: z.boolean(),
   possibleDuplicateOf: z.string().nullable(),
   balanceAfterPaise: z.number().int().nullable(),
+  /** Additive (optional): the user's explicit reconciliation decision. The row is never deleted. */
+  reconciliation: z.object({
+    decision: z.enum(["excluded_duplicate", "excluded_card_double_count", "kept_separate"]),
+    decidedAt: z.string(),
+  }).optional(),
 });
 export type LedgerTransaction = z.infer<typeof LedgerTransaction>;
 
@@ -334,8 +341,32 @@ export const MonthlyReport = z.object({
   narrative: z.object({ headline: z.string(), body: z.string(), mode: z.enum(["llm", "fallback"]) }),
   dataQuality: z.array(DataQualityNote),
   disclaimer: z.string(),
+  /* Additive, all optional (older clients may ignore them). When status is "insufficient_data", `totals` are zeros and must not be shown. */
+  period: z.object({
+    from: IsoDate, to: IsoDate, daysInMonth: z.number().int(), daysElapsed: z.number().int(),
+    partial: z.boolean(), reason: z.string().nullable(),
+  }).optional(),
+  drift: z.object({
+    status: z.enum(["ok", "insufficient_history"]),
+    baselineMonths: z.array(YearMonth),
+    items: z.array(z.object({
+      category: Category, amount: z.number(), baselineAverage: z.number(), changePercent: z.number().nullable(),
+      direction: z.enum(["up", "down"]), provisional: z.boolean(), evidenceTransactionIds: z.array(z.string()),
+    })),
+  }).optional(),
+  obligations: z.array(z.object({
+    label: z.string(), kind: z.enum(["subscription", "rent", "emi"]), monthlyAmount: z.number(), evidenceTransactionIds: z.array(z.string()),
+  })).optional(),
+  /** Things the report could not use because the user never provided them (never guessed). */
+  unknowns: z.array(z.string()).optional(),
+  guardrails: z.object({ status: z.enum(["passed", "modified", "refused"]), reasons: z.array(z.string()) }).optional(),
 });
 export type MonthlyReport = z.infer<typeof MonthlyReport>;
+export const ReconcileInput = z.object({
+  transactionIds: z.array(z.string()).min(1).max(50),
+  decision: z.enum(["exclude_duplicate", "exclude_card_double_count", "keep_separate", "undo"]),
+});
+export const ReconcileOutput = z.object({ ...impl, updated: z.number().int() });
 export const ReportMonthsOutput = z.object({ ...impl, months: z.array(YearMonth) });
 
 /* ---------- NLP / voice-dictated text ---------- */

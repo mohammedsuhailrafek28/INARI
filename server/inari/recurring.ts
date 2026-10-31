@@ -5,8 +5,8 @@
  * with the ledger. Only the user's confirm/dismiss decisions are persisted (in the profile).
  *
  * What counts: repeated expense debits to the same merchant with a regular gap (weekly / monthly / quarterly /
- * yearly) and a steady amount. Rent, EMI, transfers, investments, savings and cash are NOT subscriptions.
- * Variable bills (utilities with changing amounts) are excluded unless categorised as subscriptions.
+ * yearly) and a steady amount, in a subscription-like category (subscription, entertainment, insurance, education,
+ * health, fees, other). Rent, EMI, groceries, dining, transport, shopping, utilities and transfers are NOT subscriptions.
  */
 import { createHash } from "node:crypto";
 import type { Category, LedgerTransaction, Subscription } from "../../shared/inari/contracts";
@@ -15,7 +15,8 @@ import { merchantKey } from "./categorize";
 export type SubscriptionDecision = "confirmed" | "dismissed";
 export type DetectedSubscription = Subscription & { category: Category; monthlyEquivalentPaise: number };
 
-const EXCLUDED: ReadonlySet<Category> = new Set<Category>(["rent", "emi", "transfer", "investment", "savings", "cash", "salary", "other_income"]);
+/** Only these categories can hold subscriptions. Groceries, dining, transport, shopping, utilities etc. recur but are not subscriptions. */
+const ELIGIBLE: ReadonlySet<Category> = new Set<Category>(["subscription", "entertainment", "insurance", "education", "health", "fees_tax", "other"]);
 const CADENCES = [
   { name: "weekly" as const, days: 7, tol: 1, perYear: 52, months: 0 },
   { name: "monthly" as const, days: 30, tol: 4, perYear: 12, months: 1 },
@@ -49,7 +50,7 @@ export function detectSubscriptions(
   transactions: LedgerTransaction[],
   decisions: Readonly<Record<string, SubscriptionDecision>> = {}
 ): DetectedSubscription[] {
-  const spend = transactions.filter(t => t.direction === "debit" && !t.isTransfer && !EXCLUDED.has(t.category));
+  const spend = transactions.filter(t => t.direction === "debit" && !t.isTransfer && ELIGIBLE.has(t.category));
   if (spend.length === 0) return [];
   const asOf = transactions.reduce((max, t) => (t.postedOn > max ? t.postedOn : max), "0000-00-00");
 

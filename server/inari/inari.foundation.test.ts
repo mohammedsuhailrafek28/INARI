@@ -120,6 +120,15 @@ describe("inari router: stub honesty", () => {
       return c.inari.deleteLearnedRule({ ruleId: (await c.inari.listLearnedRules()).items[0].ruleId });
     },
     getBreakdown: c => c.inari.getBreakdown({ month: "2026-09" }),
+    reconcile: async c => {
+      const p = await c.inari.importPreview({ kind: "csv", filename: "a.csv", content: TINY_CSV });
+      await c.inari.importCommit({ previewId: p.previewId });
+      const again = TINY_CSV.replace("UPI/123/SWIGGY/x@y", "SWIGGY ORDER 99");
+      const p2 = await c.inari.importPreview({ kind: "csv", filename: "b.csv", content: again });
+      await c.inari.importCommit({ previewId: p2.previewId });
+      const dup = (await c.inari.listTransactions()).items.find(t => t.possibleDuplicateOf)!;
+      return c.inari.reconcile({ transactionIds: [dup.id], decision: "keep_separate" });
+    },
     listSubscriptions: c => c.inari.listSubscriptions(),
     getSubscriptions: c => c.inari.getSubscriptions(),
     confirmSubscription: async c => {

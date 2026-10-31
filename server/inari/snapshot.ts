@@ -31,6 +31,9 @@ const monthEnd = (ym: string) => {
 };
 const toYm = (iso: string) => iso.slice(0, 7);
 
+/** True when the user explicitly excluded this row from totals (the row itself stays in the ledger as evidence). */
+export const isExcluded = (t: LedgerTransaction) => t.reconciliation?.decision === "excluded_duplicate" || t.reconciliation?.decision === "excluded_card_double_count";
+
 export type MonthTotals = {
   month: string;
   complete: boolean;
@@ -62,6 +65,7 @@ export function computeMonthTotals(transactions: LedgerTransaction[], batches: S
   const coverage = mergeCoverage(batches);
   const months = new Map<string, MonthTotals>();
   for (const t of transactions) {
+    if (isExcluded(t)) continue;
     const ym = toYm(t.postedOn);
     let m = months.get(ym);
     if (!m) {
@@ -100,7 +104,9 @@ export function deriveFinancialSnapshot(args: {
   batches: StoredBatch[];
   profile: StoredProfile | null;
 }): Snapshot {
-  const { transactions, batches, profile } = args;
+  const { batches, profile } = args;
+  const excludedRows = args.transactions.filter(isExcluded);
+  const transactions = args.transactions.filter(t => !isExcluded(t));
   const dates = transactions.map(t => t.postedOn).sort();
   const firstDate = dates[0] ?? null;
   const lastDate = dates[dates.length - 1] ?? null;
@@ -158,7 +164,7 @@ export function deriveFinancialSnapshot(args: {
   if (interiorGaps.length > 0) {
     dataQuality.push({ code: "gap_months", severity: "warning", message: `No transactions in: ${interiorGaps.join(", ")}.` });
   }
-  const dups = transactions.filter(t => t.possibleDuplicateOf);
+  const dups = transactions.filter(t => t.possibleDuplicateOf && !t.reconciliation);
   if (dups.length > 0) {
     dataQuality.push({
       code: "possible_duplicates",
@@ -174,6 +180,14 @@ export function deriveFinancialSnapshot(args: {
       severity: "info",
       message: `${unclassified.length} transaction(s) could not be categorised automatically.`,
       transactionIds: unclassified.slice(0, 50).map(t => t.id),
+    });
+  }
+  if (excludedRows.length > 0) {
+    dataQuality.push({
+      code: "reconciliation_applied",
+      severity: "info",
+      message: `${excludedRows.length} transaction(s) were excluded from totals by your decision. They remain in your ledger as evidence and can be restored.`,
+      transactionIds: excludedRows.slice(0, 50).map(t => t.id),
     });
   }
   dataQuality.push(...reconciliationNotes(transactions));

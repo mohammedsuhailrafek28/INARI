@@ -22,7 +22,7 @@ export function reconciliationNotes(transactions: LedgerTransaction[]): Note[] {
   const notes: Note[] = [];
 
   // 1. Credit-card repayments: counted as expenses (card spend is invisible to us), flagged, never auto-netted.
-  const repayments = transactions.filter(t => t.direction === "debit" && !t.isTransfer && CARD_REPAYMENT.test(t.narration));
+  const repayments = transactions.filter(t => t.direction === "debit" && !t.isTransfer && !t.reconciliation && CARD_REPAYMENT.test(t.narration));
   if (repayments.length > 0) {
     const total = repayments.reduce((s, t) => s + t.amountPaise, 0);
     notes.push({

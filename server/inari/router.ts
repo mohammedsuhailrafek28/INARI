@@ -10,7 +10,7 @@ import {
   ClearMyDataOutput, ConfirmSubscriptionInput, CONTRACT_VERSION, CorrectionInput, CorrectionResult, GoalIdOutput,
   GoalInput, GoalsOutput, ImportBatch, ImportHistoryOutput, ImportPreview, ImportSourceInput, InariAdvisorResponse,
   IntentAnalysis, LearnedRulesOutput, ListTransactionsInput, ListTransactionsOutput, MetaOutput, MonthlyReport,
-  PROCEDURE_STATUS, ReportMonthsOutput, SimulateInput, SimulationResult, Snapshot, SubscriptionsOutput,
+  PROCEDURE_STATUS, ReconcileInput, ReconcileOutput, ReportMonthsOutput, SimulateInput, SimulationResult, Snapshot, SubscriptionsOutput,
   SuccessOutput, YearMonth, DataSource, type Category,
 } from "../../shared/inari/contracts";
 import * as fx from "../../shared/inari/fixtures";
@@ -18,10 +18,11 @@ import { guarded } from "./errors";
 import { getLedgerRepository } from "./ledger";
 import {
   commitImport, correctCategory, deleteLearnedRule, getBreakdown, getSnapshotFor, previewImport, setBalances,
-  setUseDemo, undoImport, isImportedMode, listSubscriptionsFor, decideSubscription,
+  setUseDemo, undoImport, isImportedMode, listSubscriptionsFor, decideSubscription, reconcileTransactions,
 } from "./service";
 import { loadImportedModel } from "./importedModel";
 import { runSimulation } from "./simulate";
+import { monthlyReportFor, reportMonthsFor } from "./report";
 import { analyzeIntentText } from "./nlp/intent";
 
 const LIMITS = { maxCsvBytes: 5_000_000, maxSmsChars: 500_000, maxPdfBytes: 6_000_000 } as const;
@@ -86,7 +87,7 @@ const listSubscriptionsProcedure = ownerProcedure.output(SubscriptionsOutput).qu
 const monthlyReportProcedure = ownerProcedure
   .input(z.object({ month: YearMonth }))
   .output(MonthlyReport)
-  .query(() => fx.sampleReport);
+  .query(({ ctx, input }) => guarded(() => monthlyReportFor(ctx.ownerKey, input.month)));
 
 export const inariRouter = router({
   // ---------- implemented ----------
@@ -106,7 +107,7 @@ export const inariRouter = router({
       limits: LIMITS,
       features: {
         ledger: true, csv: true, sms: true, pdf: false, categorization: true, subscriptions: true,
-        simulations: true, reports: false, guardrails: false, voiceIntent: true, llm: false,
+        simulations: true, reports: true, guardrails: true, voiceIntent: true, llm: false,
       },
       procedures: PROCEDURE_STATUS,
     };
@@ -174,6 +175,8 @@ export const inariRouter = router({
     .output(BreakdownOutput)
     .query(async ({ ctx, input }) => ({ implementation: "implemented" as const, month: input.month, items: await getBreakdown(ctx.ownerKey, input.month) })),
 
+  reconcile: ownerProcedure.input(ReconcileInput).output(ReconcileOutput).mutation(({ ctx, input }) => guarded(() => reconcileTransactions(ctx.ownerKey, input))),
+
   listSubscriptions: listSubscriptionsProcedure,
   getSubscriptions: listSubscriptionsProcedure, // alias
   confirmSubscription: ownerProcedure
@@ -191,7 +194,7 @@ export const inariRouter = router({
 
   monthlyReport: monthlyReportProcedure,
   getMonthlyReport: monthlyReportProcedure, // alias
-  listReportMonths: ownerProcedure.output(ReportMonthsOutput).query(() => ({ implementation: "stub" as const, months: ["2026-09"] })),
+  listReportMonths: ownerProcedure.output(ReportMonthsOutput).query(async ({ ctx }) => ({ implementation: "implemented" as const, months: await reportMonthsFor(ctx.ownerKey) })),
 
   getGoals: ownerProcedure.output(GoalsOutput).query(() => ({ implementation: "stub" as const, items: fx.sampleGoals, dataSource: "imported" as const })),
   upsertGoal: ownerProcedure.input(GoalInput).output(GoalIdOutput).mutation(() => ({ implementation: "stub" as const, id: "fx-goal-1" })),

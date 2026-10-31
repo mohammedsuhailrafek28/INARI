@@ -4,7 +4,7 @@
  */
 import type { AddressInfo } from "node:net";
 import type { Server } from "node:http";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 let server: Server;
 let base = "";
@@ -154,6 +154,37 @@ describe("HTTP e2e: upload -> preview -> commit -> snapshot -> dashboard, with t
     expect((await bob.call("inari.listTransactions", {}, "query")).data.items).toHaveLength(0);
     const again = await carol.call("inari.importPreview", { kind: "sms", text });
     expect(again.data.counts).toMatchObject({ accepted: 0, duplicate: 2 });
+  });
+
+  it("monthly report and explicit reconciliation over HTTP, isolated per browser", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-31T10:00:00Z"));
+    try {
+      const dana = new Browser();
+      const csv = ["Date,Description,Debit,Credit", "01/07/2026,NEFT ACME SALARY,,100000.00", "10/07/2026,UPI/3/SWIGGY/sw@bank,500.00,", "28/07/2026,AMAZON PAY RETAIL,1000.00,"].join("\n");
+      const p = await dana.call("inari.importPreview", { kind: "csv", filename: "j.csv", content: csv });
+      await dana.call("inari.importCommit", { previewId: p.data.previewId });
+      const sms = await dana.call("inari.importPreview", { kind: "sms", text: "Rs.500.00 debited from A/c XX1234 on 10-07-26 to swiggy@ybl (UPI Ref No 900000000001)" });
+      expect(sms.data.counts.possibleDuplicate).toBe(1);
+      await dana.call("inari.importCommit", { previewId: sms.data.previewId });
+
+      const months = await dana.call("inari.listReportMonths", undefined, "query");
+      expect(months.data.months).toEqual(["2026-07"]);
+      const before = await dana.call("inari.monthlyReport", { month: "2026-07" }, "query");
+      expect(before.data).toMatchObject({ status: "ok", totals: { income: 100000, expenses: 2000 } });
+      expect(before.data.dataQuality.map((n: any) => n.code)).toContain("possible_duplicates");
+      const dup = (await dana.call("inari.listTransactions", {}, "query")).data.items.find((t: any) => t.possibleDuplicateOf);
+
+      expect((await bob.call("inari.reconcile", { transactionIds: [dup.id], decision: "exclude_duplicate" })).error.data.inari.code).toBe("NOT_FOUND");
+      const done = await dana.call("inari.reconcile", { transactionIds: [dup.id], decision: "exclude_duplicate" });
+      expect(done.data).toMatchObject({ implementation: "implemented", updated: 1 });
+      const after = await dana.call("inari.getMonthlyReport", { month: "2026-07" }, "query");
+      expect(after.data.totals.expenses).toBe(1500);
+      expect((await dana.call("inari.listTransactions", {}, "query")).data.items).toHaveLength(4);
+      expect((await bob.call("inari.monthlyReport", { month: "2026-07" }, "query")).data.status).toBe("insufficient_data");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("correction over HTTP recalculates the breakdown; clearMyData then wipes alice only", async () => {

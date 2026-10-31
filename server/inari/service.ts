@@ -3,14 +3,14 @@ import type {
   BalancesInput, Category, CategoryBreakdownItem, ImportBatch, ImportCounts, ImportPreview, ImportSourceInput,
   LedgerTransaction, Snapshot,
 } from "../../shared/inari/contracts";
-import { classify, merchantKey } from "./categorize";
+import { CARD_REPAYMENT, classify, merchantKey } from "./categorize";
 import { InariError } from "./errors";
 import { parseCsvStatement, type Candidate } from "./ingestion/csvImport";
 import { parseSmsImport } from "./ingestion/sms";
 import { detectSubscriptions, isActiveSubscription } from "./recurring";
 import { getLedgerRepository } from "./ledger";
 import type { CorrectionAudit, StoredBatch, StoredProfile, StoredLearnedRule } from "./ledger/types";
-import { isExpenseCategory, computeMonthTotals, deriveFinancialSnapshot, emptySnapshot } from "./snapshot";
+import { isExcluded, isExpenseCategory, computeMonthTotals, deriveFinancialSnapshot, emptySnapshot } from "./snapshot";
 
 export const IMPORT_LIMITS = { maxCsvBytes: 5_000_000, maxRows: 20_000 } as const;
 const PREVIEW_TTL_MS = 30 * 60 * 1000;
@@ -257,7 +257,7 @@ export async function setBalances(userKey: string, input: BalancesInput): Promis
 export async function listSubscriptionsFor(userKey: string) {
   const repo = getLedgerRepository();
   const [transactions, profile] = await Promise.all([repo.listTransactions(userKey), repo.getProfile(userKey)]);
-  const items = detectSubscriptions(transactions, profile?.subscriptionDecisions).map(({ category: _c, monthlyEquivalentPaise: _m, ...s }) => s);
+  const items = detectSubscriptions(transactions.filter(t => !isExcluded(t)), profile?.subscriptionDecisions).map(({ category: _c, monthlyEquivalentPaise: _m, ...s }) => s);
   const active = items.filter(isActiveSubscription);
   return {
     implementation: "implemented" as const,
@@ -270,12 +270,53 @@ export async function listSubscriptionsFor(userKey: string) {
 export async function decideSubscription(userKey: string, subscriptionId: string, decision: "confirm" | "dismiss") {
   const repo = getLedgerRepository();
   const [transactions, current] = await Promise.all([repo.listTransactions(userKey), repo.getProfile(userKey)]);
-  if (!detectSubscriptions(transactions).some(s => s.id === subscriptionId)) throw new InariError("NOT_FOUND", "Subscription not found.");
+  if (!detectSubscriptions(transactions.filter(t => !isExcluded(t))).some(s => s.id === subscriptionId)) throw new InariError("NOT_FOUND", "Subscription not found.");
   await repo.setProfile(userKey, {
     emergencyFund: null, investments: null, creditCardDebt: null, useDemo: false, ...current,
     subscriptionDecisions: { ...current?.subscriptionDecisions, [subscriptionId]: decision === "confirm" ? "confirmed" : "dismissed" },
   });
   return { implementation: "implemented" as const, success: true as const };
+}
+
+export type ReconcileDecision = "exclude_duplicate" | "exclude_card_double_count" | "keep_separate" | "undo";
+
+/**
+ * Explicit, user-confirmed reconciliation. Rows are never deleted: an exclusion only removes the row from totals,
+ * and `undo` restores it. A flagged pair can never be excluded on both sides.
+ */
+export async function reconcileTransactions(userKey: string, input: { transactionIds: string[]; decision: ReconcileDecision }) {
+  const repo = getLedgerRepository();
+  const all = await repo.listTransactions(userKey);
+  const byId = new Map(all.map(t => [t.id, t]));
+  const ids = Array.from(new Set(input.transactionIds));
+  const rows = ids.map(id => byId.get(id));
+  if (rows.some(r => !r)) throw new InariError("NOT_FOUND", "One or more transactions were not found.");
+  const picked = rows as LedgerTransaction[];
+  const chosen = new Set(ids);
+
+  for (const t of picked) {
+    if (input.decision === "exclude_duplicate" || input.decision === "keep_separate") {
+      if (!t.possibleDuplicateOf) throw new InariError("INVALID_INPUT", "Only transactions flagged as possible duplicates can be handled this way.");
+    }
+    if (input.decision === "exclude_duplicate") {
+      const original = byId.get(t.possibleDuplicateOf!);
+      if (chosen.has(t.possibleDuplicateOf!) || (original && isExcluded(original))) {
+        throw new InariError("INVALID_INPUT", "Keep at least one transaction of each possible-duplicate pair; the original is already excluded or selected.");
+      }
+    }
+    if (input.decision === "exclude_card_double_count" && !(t.direction === "debit" && !t.isTransfer && CARD_REPAYMENT.test(t.narration))) {
+      throw new InariError("INVALID_INPUT", "Only credit-card repayment debits can be handled this way.");
+    }
+    if (input.decision === "undo" && !t.reconciliation) throw new InariError("INVALID_INPUT", "That transaction has no reconciliation decision to undo.");
+  }
+  const at = new Date().toISOString();
+  const decision =
+    input.decision === "exclude_duplicate" ? "excluded_duplicate" : input.decision === "exclude_card_double_count" ? "excluded_card_double_count" : "kept_separate";
+  const updated = await repo.updateTransactions(
+    userKey,
+    picked.map(t => ({ id: t.id, patch: { reconciliation: input.decision === "undo" ? undefined : { decision, decidedAt: at } } }))
+  );
+  return { implementation: "implemented" as const, updated };
 }
 
 export async function setUseDemo(userKey: string, enabled: boolean) {

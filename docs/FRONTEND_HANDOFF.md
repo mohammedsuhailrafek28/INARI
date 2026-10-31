@@ -24,7 +24,7 @@ Every `inari.*` response has `implementation: "stub" | "implemented"`. **`stub` 
 | `importPreview` → `importCommit` → `importUndo` | m | **implemented** (CSV only; SMS/PDF return `NOT_IMPLEMENTED`) |
 | `getSnapshot`, `setBalances`, `useDemoData` | q / m | **implemented** |
 | `correctCategory`, `listLearnedRules` (`getLearnedRules`), `deleteLearnedRule`, `getBreakdown` | q / m | **implemented** |
-| `ask`/`askAdvisor`, `monthlyReport`/`getMonthlyReport`, `listReportMonths`, `getGoals`, `upsertGoal`, `deleteGoal` | | stub |
+| `ask`/`askAdvisor`, `getGoals`, `upsertGoal`, `deleteGoal` | | stub |
 
 ### Import flow
 1. `importPreview({kind:"csv", filename, content})` – nothing is stored. Returns `previewId`, `counts` (`accepted/duplicate/possibleDuplicate/rejected/ignored`), `detectedFormat`, `period`, `warnings`, up to 200 `rows` (problems first; `rejected` rows carry a `reason`). Previews expire after 30 minutes and are private to the caller.
@@ -114,3 +114,38 @@ Snapshot change: the `possible_duplicates` note now carries `transactionIds` and
 - Ids are stable (`sub_...`, derived from the merchant). An unknown id returns `NOT_FOUND`.
 - `simulate` now supports `cancel_subscriptions` with these ids (unknown id -> `INVALID_SCENARIO`; dismissed/inactive -> warning, no saving). `change_goal_contribution` is still unavailable.
 - Not detected yet: charges whose amount changes by more than 25%, merchants that vary in name between statements, and subscriptions seen only once.
+
+## Monthly review, drift, guardrails, reconciliation (implemented, backend branch)
+
+### `inari.monthlyReport({month})` (alias `getMonthlyReport`) and `inari.listReportMonths()`
+Built only from the user's imported transactions (CSV and SMS). `listReportMonths` returns months that have data, newest first.
+
+- `status: "insufficient_data"` (no data for that month, a future month, or demo/no import): `totals` are zeros and **must not be shown**; show `dataQuality[0].message`. Nothing is invented.
+- **Existing fields, now real:** `totals`, `previousMonth` (null unless the earlier month is fully covered), `categories` (previous-month change nulled the same way), `topMerchants`, `unusualTransactionIds`, `subscriptions`, `actions` (max 3), `narrative` (`mode:"fallback"` = template text, no LLM), `dataQuality`.
+- **New optional fields (backward compatible):**
+  - `period {from,to,daysInMonth,daysElapsed,partial,reason}`: `partial` is true for the current calendar month or when the imports do not cover the whole month. Show `reason` as a banner. A partial month's headline says "so far".
+  - `drift {status, baselineMonths, items[]}`: a category is flagged when this month is at least 25% **and** at least ₹500 above its average over up to 3 earlier complete months. Needs 2 such months; otherwise `status:"insufficient_history"` with an explanatory `dataQuality` note. In a partial month items are `provisional` and falls are not reported.
+  - `obligations[]`: active subscriptions plus rent and EMI paid that month.
+  - `unknowns[]`: things never provided, e.g. `goals`, `emergencyFund`, `investments`, `creditCardDebt`. Render them as "not provided", never as 0.
+  - `guardrails {status, reasons}`.
+- Every `actions[]` entry carries `evidenceTransactionIds` that exist in the user's ledger, and `expectedImpactInr` (a computed number, or null). A "Confirm flagged transactions" action appears whenever unresolved duplicate/card-repayment/transfer flags touch the month.
+- Guardrails: all text is checked so that it contains no guaranteed-return/risk-free claims, no buy/sell/invest-in recommendations, no return projections, and no rupee amount or percentage that the backend did not compute. A failing text is replaced by a number-free fallback and `guardrails.status` becomes `"modified"` or `"refused"`.
+
+### `inari.reconcile({transactionIds, decision})` (new procedure)
+The explicit, user-confirmed way to resolve a flagged item. Rows are **never deleted**.
+
+| decision | allowed on | effect |
+|---|---|---|
+| `exclude_duplicate` | rows flagged `possibleDuplicateOf` | row leaves all totals; original stays. Refused if the original is selected or already excluded |
+| `exclude_card_double_count` | card-repayment debits | row leaves all totals |
+| `keep_separate` | rows flagged `possibleDuplicateOf` | both rows stay counted; the warning is cleared |
+| `undo` | any row with a decision | restores it |
+
+`LedgerTransaction.reconciliation?: {decision, decidedAt}` is a new optional field. Excluded rows still appear in `listTransactions`; show them dimmed with a "Restore" button. The snapshot and report add an info note `reconciliation_applied` listing them, so exclusions are always visible. `coverage.transactionCount` counts only rows that are not excluded.
+
+### Other behaviour changes
+- Subscription detection is now limited to subscription-like categories (subscription, entertainment, insurance, education, health, fees, other). Steady groceries, transport, shopping and utilities are no longer reported as subscriptions.
+- `possible_duplicates` / `card_repayment_counted` notes now point to `inari.reconcile`.
+
+### Frontend requirements
+Handle `status:"insufficient_data"`, `period.partial`, nullable `previousMonth`, `drift.status`, `unknowns`, and excluded rows (`reconciliation`). Never display `totals` when insufficient. Offer the reconcile actions only for flagged rows.

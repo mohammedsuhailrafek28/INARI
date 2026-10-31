@@ -9,7 +9,7 @@ import type { WealthContextDraft, WealthOpportunity, WealthTransaction } from ".
 import type { LedgerTransaction, Snapshot } from "../../shared/inari/contracts";
 import { getLedgerRepository } from "./ledger";
 import type { StoredBatch, StoredProfile } from "./ledger/types";
-import { computeMonthTotals, deriveFinancialSnapshot, isExpenseCategory, MAX_AVERAGING_MONTHS, type MonthTotals } from "./snapshot";
+import { computeMonthTotals, deriveFinancialSnapshot, isExcluded, isExpenseCategory, MAX_AVERAGING_MONTHS, type MonthTotals } from "./snapshot";
 import { isImportedMode } from "./service";
 
 export type ImportedModel = {
@@ -43,8 +43,9 @@ export async function loadImportedModel(ownerKey: string): Promise<ImportedModel
   return buildImportedModel(transactions, batches, profile);
 }
 
-export function buildImportedModel(transactions: LedgerTransaction[], batches: StoredBatch[], profile: StoredProfile | null): ImportedModel {
-  const snapshot = deriveFinancialSnapshot({ transactions, batches, profile });
+export function buildImportedModel(allTransactions: LedgerTransaction[], batches: StoredBatch[], profile: StoredProfile | null): ImportedModel {
+  const snapshot = deriveFinancialSnapshot({ transactions: allTransactions, batches, profile });
+  const transactions = allTransactions.filter(t => !isExcluded(t));
   const months = computeMonthTotals(transactions, batches);
   const used = months.filter(m => m.complete).slice(-MAX_AVERAGING_MONTHS);
   const basis = used.length > 0 ? used : months.slice(-1);

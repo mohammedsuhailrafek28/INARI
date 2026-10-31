@@ -57,6 +57,14 @@ describe("recurring detection", () => {
     expect((await caller().inari.listSubscriptions()).items).toEqual([]);
   });
 
+  it("steady monthly grocery, transport, shopping and utility payments are not subscriptions", async () => {
+    await load(months.flatMap(m => [
+      row(`05/${p2(m)}/2026`, "UPI/2/BIGBASKET/bb@bank", 12000), row(`12/${p2(m)}/2026`, "BESCOM Electricity Bill", 4000),
+      row(`20/${p2(m)}/2026`, "UBER TRIP", 3000), row(`28/${p2(m)}/2026`, "AMAZON PAY RETAIL", 5000),
+    ]));
+    expect((await caller().inari.listSubscriptions()).items).toEqual([]);
+  });
+
   it("variable monthly bills (electricity) are not subscriptions", async () => {
     await load(months.map((m, i) => row(`12/${p2(m)}/2026`, "BESCOM Electricity Bill", 1500 + i * 700)));
     expect((await caller().inari.listSubscriptions()).items).toEqual([]);
@@ -65,7 +73,7 @@ describe("recurring detection", () => {
   it("detects weekly and yearly cadences and computes monthly equivalents", async () => {
     await load([
       row("05/01/2026", "GYM FIT CLUB", 3600), row("05/01/2027", "GYM FIT CLUB", 3600),
-      ...[1, 8, 15, 22, 29].map(d => row(`${p2(d)}/09/2026`, "CHAI SUBSCRIPTION WEEKLY", 100)),
+      ...[1, 8, 15, 22, 29].map(d => row(`${p2(d)}/09/2026`, "PRESS DIGEST SUBSCRIPTION", 100)),
     ]);
     const items = (await caller().inari.listSubscriptions()).items;
     const weekly = items.find(i => i.cadence === "weekly")!;
