@@ -1542,3 +1542,12 @@ input[type="file"]::file-selector-button { background: #123C32; color: #F3EFE4; 
 
 .landing-model .model-visual, .landing-model .model-visual * { color: #123C32; }
 .landing-model .model-visual small, .landing-model .model-visual .model-visual-title span { color: #3D5C50; }
+
+/* ---- Landing: scroll-driven living thread (scoped to the landing page) ---- */
+.font-archivo { font-family: "Archivo", -apple-system, sans-serif; }
+.inari-living .font-mono { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+.tracking-tightest { letter-spacing: -0.06em; }
+.hero-thread-path { transition: stroke-dashoffset 0.05s linear; }
+@media (prefers-reduced-motion: reduce) {
+  .hero-thread-path, .thread-path, [data-living-thread] path { stroke-dashoffset: 0 !important; transition: none !important; animation: none !important; }
+}
