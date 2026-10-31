@@ -1,4 +1,4 @@
-/** Integrity + safety screening of the third-party SMS corpus. The SMS parser itself is not implemented yet. */
+/** Integrity and safety screening of the attributed synthetic SMS corpus. */
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import path from "node:path";
@@ -8,9 +8,35 @@ const SMS = path.resolve(__dirname, "../../data/parser-tests/sms");
 const raw = readFileSync(path.join(SMS, "indian-payment-sms-dataset.json"));
 const corpus = JSON.parse(raw.toString("utf8"));
 
+// The attributed upstream SHA-256 was recorded over CRLF bytes. The committed
+// fixture uses LF. Normalize only newline representation for the comparison;
+// do not trim, reserialize JSON, change the expected digest, or rewrite the file.
+const UPSTREAM_SHA256 = "7a2a912b94c135c366154076985a6b4139971c5be61869f552fad81bd5762360";
+const upstreamBytes = (bytes: Buffer) => Buffer.from(bytes.toString("utf8").replace(/\r?\n/g, "\r\n"), "utf8");
+const upstreamDigest = (bytes: Buffer) => createHash("sha256").update(upstreamBytes(bytes)).digest("hex");
+
+describe("upstream fixture checksum newline portability", () => {
+  it("preserves the original expected upstream hash for LF, CRLF and mixed newlines", () => {
+    const lf = Buffer.from(raw.toString("utf8").replace(/\r\n/g, "\n"));
+    const crlf = Buffer.from(lf.toString("utf8").replace(/\n/g, "\r\n"));
+    const mixed = Buffer.from(lf.toString("utf8").replace("\n", "\r\n"));
+    for (const bytes of [lf, crlf, mixed]) expect(upstreamDigest(bytes)).toBe(UPSTREAM_SHA256);
+  });
+
+  it("does not hide content edits, whitespace changes, a BOM or a missing final newline", () => {
+    const text = raw.toString("utf8").replace(/\r\n/g, "\n");
+    expect(upstreamDigest(Buffer.from(text.replace('"synthetic_redacted"', '"tampered"')))).not.toBe(UPSTREAM_SHA256);
+    expect(upstreamDigest(Buffer.from(text.replace('  "dataset_name"', ' "dataset_name"')))).not.toBe(UPSTREAM_SHA256);
+    expect(upstreamDigest(Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), raw]))).not.toBe(UPSTREAM_SHA256);
+    expect(text.endsWith("\n")).toBe(true);
+    expect(upstreamDigest(Buffer.from(text.slice(0, -1)))).not.toBe(UPSTREAM_SHA256);
+  });
+});
+
+
 describe("SMS corpus (CC BY 4.0) integrity", () => {
-  it("is the verbatim, attributed upstream file", () => {
-    expect(createHash("sha256").update(raw).digest("hex")).toBe("7a2a912b94c135c366154076985a6b4139971c5be61869f552fad81bd5762360");
+  it("matches the attributed upstream file modulo LF/CRLF representation", () => {
+    expect(upstreamDigest(raw)).toBe(UPSTREAM_SHA256);
     expect(readFileSync(path.join(SMS, "LICENSE"), "utf8")).toMatch(/CC BY 4\.0/);
     expect(readFileSync(path.join(SMS, "ATTRIBUTION.md"), "utf8")).toMatch(/SplitEasy/);
     expect(corpus.data_status).toBe("synthetic_redacted");
