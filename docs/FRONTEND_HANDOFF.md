@@ -92,3 +92,13 @@ pnpm test && pnpm run check && pnpm build
 - Unknown balances are never invented: emergency-fund cover is omitted and a warning explains why.
 
 Snapshot change: the `possible_duplicates` note now carries `transactionIds` and says those rows are included in totals. Dashboard change: `ProfileHero` now receives `undefined` (shows "Review") instead of `0` when the health score is unknown.
+
+## SMS import (implemented, backend branch)
+
+`inari.importPreview({kind:"sms", text})` then `inari.importCommit` use the same flow as CSV. Paste any number of alerts separated by a blank line (or one per line). No contract change: `source` is `"sms"`, and the preview lists skipped messages as rows with `status: "ignored"` (OTPs, balance alerts, promotions, pending, failed, upcoming, card bills, card/wallet-side credits) or `"rejected"` (e.g. no date in the message). Reasons are fixed phrases and never quote the message.
+
+- Completed debits and bank-account credits (salary, UPI, refunds, reversals) become ledger rows. Card-side and wallet-side credits are not booked.
+- OTP content is never stored, returned or logged. The raw SMS body is never saved: a row keeps amount (paise), date, merchant, last-4, reference and a rebuilt narration (`SMS upi debit: SWIGGY (A/c ..1234) ref ...`).
+- Balances quoted in SMS are not used; balances stay `null` until the user provides them.
+- A message with the same date, amount and direction as an existing CSV row is imported and flagged `possible_duplicate` (counted in totals until the user undoes the SMS batch with `importUndo`). Nothing is deleted automatically.
+- Not supported: messages without a date, regional-language SMS, exported-inbox formats with timestamps/senders, multi-transaction summary SMS, PDF.

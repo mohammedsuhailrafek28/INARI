@@ -6,6 +6,7 @@ import type {
 import { classify, merchantKey } from "./categorize";
 import { InariError } from "./errors";
 import { parseCsvStatement, type Candidate } from "./ingestion/csvImport";
+import { parseSmsImport } from "./ingestion/sms";
 import { getLedgerRepository } from "./ledger";
 import type { CorrectionAudit, StoredBatch, StoredProfile, StoredLearnedRule } from "./ledger/types";
 import { isExpenseCategory, computeMonthTotals, deriveFinancialSnapshot, emptySnapshot } from "./snapshot";
@@ -18,7 +19,7 @@ type PreviewRow = { candidate: Candidate; status: "accepted" | "duplicate" | "po
 type StoredPreview = {
   userKey: string;
   expiresAt: number;
-  source: "csv";
+  source: "csv" | "sms";
   filename: string | null;
   rows: PreviewRow[];
   rejectedCount: number;
@@ -42,17 +43,21 @@ function periodOf(dates: string[]) {
 const hasCommitted = async (userKey: string) => (await getLedgerRepository().listBatches(userKey)).some(b => b.status === "committed");
 
 export async function previewImport(userKey: string, input: ImportSourceInput): Promise<ImportPreview> {
-  if (input.kind !== "csv") {
-    throw new InariError("NOT_IMPLEMENTED", `${input.kind.toUpperCase()} import is not available yet. Use a CSV statement.`);
+  if (input.kind === "pdf") {
+    throw new InariError("NOT_IMPLEMENTED", "PDF import is not available yet. Use a CSV statement or paste SMS alerts.");
   }
-  if (Buffer.byteLength(input.content, "utf8") > IMPORT_LIMITS.maxCsvBytes) {
+  const source: "csv" | "sms" = input.kind;
+  if (input.kind === "csv" && Buffer.byteLength(input.content, "utf8") > IMPORT_LIMITS.maxCsvBytes) {
     throw new InariError("FILE_TOO_LARGE", "The file is larger than 5 MB. Split it into smaller files.");
   }
   gcPreviews();
   const repo = getLedgerRepository();
-  const parsed = parseCsvStatement(input.content, { userKey, maxRows: IMPORT_LIMITS.maxRows });
-  if (parsed.candidates.length === 0 && parsed.rejected.length === 0) {
-    throw new InariError("PARSE_FAILED", "No transactions were found in the file.");
+  const parsed =
+    input.kind === "csv"
+      ? parseCsvStatement(input.content, { userKey, maxRows: IMPORT_LIMITS.maxRows })
+      : parseSmsImport(input.text, { userKey });
+  if (parsed.candidates.length === 0 && parsed.rejected.length === 0 && (source === "csv" || parsed.ignored.length === 0)) {
+    throw new InariError("PARSE_FAILED", source === "csv" ? "No transactions were found in the file." : "No SMS messages were found in the text.");
   }
 
   const existing = await repo.listTransactions(userKey);
@@ -84,6 +89,9 @@ export async function previewImport(userKey: string, input: ImportSourceInput): 
   // keep the preview payload bounded: problems first, then accepted rows
   const shown: ImportPreview["rows"] = [];
   for (const rej of parsed.rejected) if (shown.length < 100) shown.push({ rowNumber: rej.rowNumber, status: "rejected", reason: rej.reason, transaction: null });
+  if (source === "sms") {
+    for (const ign of parsed.ignored) if (shown.length < 100) shown.push({ rowNumber: ign.rowNumber, status: "ignored", reason: ign.reason, transaction: null });
+  }
   for (const r of rows) {
     if (shown.length >= 200) break;
     if (r.status === "accepted") continue;
@@ -116,8 +124,8 @@ export async function previewImport(userKey: string, input: ImportSourceInput): 
   previews.set(previewId, {
     userKey,
     expiresAt: Date.now() + PREVIEW_TTL_MS,
-    source: "csv",
-    filename: input.filename.slice(0, 200),
+    source,
+    filename: input.kind === "csv" ? input.filename.slice(0, 200) : null,
     rows,
     rejectedCount: counts.rejected,
     ignoredCount: counts.ignored,
@@ -126,7 +134,7 @@ export async function previewImport(userKey: string, input: ImportSourceInput): 
   return {
     implementation: "implemented",
     previewId,
-    source: "csv",
+    source,
     detectedFormat: parsed.format,
     counts,
     period,
@@ -150,7 +158,7 @@ function buildTransaction(
     id: `txn_${c.fingerprint.slice(0, 24)}`,
     fingerprint: c.fingerprint,
     batchId,
-    source: "csv",
+    source: c.source ?? "csv",
     postedOn: c.postedOn,
     amountPaise: c.amountPaise,
     amount: c.amountPaise / 100,
@@ -201,7 +209,7 @@ export async function commitImport(userKey: string, args: { previewId: string; a
   };
   const batch: StoredBatch = {
     batchId,
-    source: "csv",
+    source: preview.source,
     filename: preview.filename,
     importedAt: new Date().toISOString(),
     counts,

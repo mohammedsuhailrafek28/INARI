@@ -210,8 +210,8 @@ describe("dedupe, overlap, malformed rows", () => {
     await expect(as(A).inari.importPreview({ kind: "csv", filename: "x.csv", content: "   " })).rejects.toThrow(/empty/);
   });
 
-  it("refuses unavailable sources honestly (SMS/PDF not implemented)", async () => {
-    await expect(as(A).inari.importPreview({ kind: "sms", text: "hello" })).rejects.toThrow(/not available/);
+  it("refuses unavailable sources honestly (PDF not implemented; SMS has its own tests)", async () => {
+    await expect(as(A).inari.importPreview({ kind: "pdf", filename: "a.pdf", contentBase64: "AAAA" })).rejects.toThrow(/not available/);
   });
 
   it("undo removes a batch's rows and its coverage from the snapshot", async () => {

@@ -136,6 +136,26 @@ describe("HTTP e2e: upload -> preview -> commit -> snapshot -> dashboard, with t
     expect(bad.error.data.inari.code).toBe("INVALID_SCENARIO");
   });
 
+  it("pasted SMS alerts import over HTTP into the same ledger; OTP text is dropped and another browser sees nothing", async () => {
+    const carol = new Browser();
+    const text = [
+      "Rs.100000.00 credited to A/c XX1234 on 01-07-26 by NEFT Ref N100000000001 (ACME CORP SALARY)",
+      "Rs.6000.00 debited from A/c XX1234 on 10-07-26 to swiggy@ybl (UPI Ref No 222000000001)",
+      "551234 is your OTP for login. Do not share.",
+    ].join("\n\n");
+    const preview = await carol.call("inari.importPreview", { kind: "sms", text });
+    expect(preview.data.counts).toMatchObject({ accepted: 2, ignored: 1 });
+    expect(JSON.stringify(preview.body)).not.toContain("551234");
+    const commit = await carol.call("inari.importCommit", { previewId: preview.data.previewId });
+    expect(commit.data).toMatchObject({ status: "committed", source: "sms" });
+    const items = (await carol.call("inari.listTransactions", {}, "query")).data.items;
+    expect(items).toHaveLength(2);
+    expect(JSON.stringify(items)).not.toContain("551234");
+    expect((await bob.call("inari.listTransactions", {}, "query")).data.items).toHaveLength(0);
+    const again = await carol.call("inari.importPreview", { kind: "sms", text });
+    expect(again.data.counts).toMatchObject({ accepted: 0, duplicate: 2 });
+  });
+
   it("correction over HTTP recalculates the breakdown; clearMyData then wipes alice only", async () => {
     const tx = (await alice.call("inari.listTransactions", { month: "2026-09", limit: 50 }, "query")).data.items.find((t: any) => t.narration.includes("UBER"));
     const fix = await alice.call("inari.correctCategory", { transactionId: tx.id, category: "travel", applyToMerchant: true });

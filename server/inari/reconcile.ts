@@ -28,7 +28,7 @@ export function reconciliationNotes(transactions: LedgerTransaction[]): Note[] {
     notes.push({
       code: "card_repayment_counted",
       severity: "warning",
-      message: `${repayments.length} credit-card repayment(s) totalling ${rupees(total)} are counted as expenses because the card's own spending is not imported. If you import the card statement, count one side only. Recategorise as Transfer to exclude them.`,
+      message: `${repayments.length} credit-card repayment(s) totalling ${rupees(total)} are counted as expenses because the card's own spending is not imported. If you import the card statement, count one side only. Recategorise as Transfer to exclude them.${transactions.some(t => t.source === "sms" && t.instrument === "card") ? " Card spending from SMS alerts is also imported, so these repayments may be double-counted with it." : ""}`,
       transactionIds: ids(repayments),
     });
   }

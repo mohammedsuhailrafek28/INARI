@@ -15,6 +15,8 @@ export type Candidate = {
   balanceAfterPaise: number | null;
   reference: string | null;
   isTransfer: boolean;
+  /** defaults to "csv" */
+  source?: "csv" | "sms";
   /** fingerprint without occurrence index; the index is added by `assignFingerprints` */
   baseKey: string;
   fingerprint: string;
