@@ -455,11 +455,12 @@ function parseAdvisorJson(content: string, fallback: AdvisorResponse): AdvisorRe
 
 export async function answerWealthAdvisorQuestion(
   question: string,
-  input: WealthContext | AdvisorSessionContext
+  input: WealthContext | AdvisorSessionContext,
+  options: { allowExternalLlm?: boolean } = {}
 ): Promise<AdvisorResponse> {
   const session = toAdvisorSession(input);
   const fallback = buildFallbackAdvisorResponse(question, session);
-  if (!ENV.forgeApiKey) return fallback;
+  if (!ENV.forgeApiKey || options.allowExternalLlm === false) return fallback;
 
   try {
     const response = await invokeLLM({

@@ -521,7 +521,8 @@ export const appRouter = router({
           }
 
           const advisorSession = await buildAdvisorSessionContext(ctx.user.id, wealthContext);
-          const response = await answerWealthAdvisorQuestion(input.question, advisorSession);
+          // Imported statements never leave the server: with imported data active, the external LLM is not called.
+          const response = await answerWealthAdvisorQuestion(input.question, advisorSession, { allowExternalLlm: !(await isImportedMode(ownerKeyOf(ctx))) });
           await publishEventSafely(createAdvisorAnswerGeneratedEvent(ctx.user.id, response));
           await rememberAdvisorExchange(
             ctx.user.id,
@@ -568,7 +569,8 @@ export const appRouter = router({
           }
 
           const advisorSession = await buildAdvisorSessionContext(ctx.user.id, wealthContext);
-          const response = await answerWealthAdvisorQuestion(input.question, advisorSession);
+          // Imported statements never leave the server: with imported data active, the external LLM is not called.
+          const response = await answerWealthAdvisorQuestion(input.question, advisorSession, { allowExternalLlm: !(await isImportedMode(ownerKeyOf(ctx))) });
           await publishEventSafely(createAdvisorAnswerGeneratedEvent(ctx.user.id, response));
           await rememberAdvisorExchange(
             ctx.user.id,

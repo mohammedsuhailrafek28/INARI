@@ -14,6 +14,9 @@ export default defineConfig({
   },
   test: {
     environment: "node",
+    // Cold transform caches make the HTTP e2e setup (dynamic imports) slow; the default 10s hook timeout skipped that whole file.
+    hookTimeout: 60_000,
+    testTimeout: 30_000,
     include: ["server/**/*.test.ts", "server/**/*.spec.ts"],
   },
 });
