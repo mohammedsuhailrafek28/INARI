@@ -226,7 +226,7 @@ export async function getProfile(userKey: string): Promise<StoredProfile | null>
 export async function getSnapshotFor(userKey: string): Promise<Snapshot> {
   const repo = getLedgerRepository();
   const [transactions, batches, profile] = await Promise.all([repo.listTransactions(userKey), repo.listBatches(userKey), repo.getProfile(userKey)]);
-  if (!batches.some(b => b.status === "committed")) return emptySnapshot(profile?.useDemo ? "demo" : "imported", profile);
+  if (!batches.some(b => b.status === "committed")) return emptySnapshot("demo", profile); // no imported dataset active: every figure unknown, never persona values
   return deriveFinancialSnapshot({ transactions, batches, profile });
 }
 
