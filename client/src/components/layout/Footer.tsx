@@ -1,3 +1,4 @@
+import { BrandFull } from "@/components/brand/BrandMark";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 
@@ -41,10 +42,7 @@ export function Footer({
             className="inline-flex items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-wv-primary-dark"
             aria-label={`${brandName} home`}
           >
-            {logoSrc ? (
-              <img src={logoSrc} alt="Official INARI logo" className="h-11 w-auto rounded-md" />
-            ) : null}
-            <span className="font-display text-lg font-bold">{brandName}</span>
+            <BrandFull width={132} />
           </a>
           <p className="mt-4 max-w-sm text-sm leading-6 text-white/70">
             {description}

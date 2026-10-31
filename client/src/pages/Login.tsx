@@ -1,5 +1,5 @@
 import heroBankingSecurity from "@/assets/wealthverse/hero-banking-security.png";
-import inariLogo from "@/assets/inari/inari-logo.svg";
+import { INARI_EMBLEM as inariLogo } from "@/lib/brand";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { OAuthLoginButton } from "@/components/auth/OAuthLoginButton";
 import { Button } from "@/components/ui/button";

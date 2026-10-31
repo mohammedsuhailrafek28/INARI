@@ -1,3 +1,4 @@
+import { BrandFull } from "@/components/brand/BrandMark";
 import { useState } from "react";
 import {
   ArrowRight,
@@ -230,8 +231,8 @@ export default function Home() {
         </section>
       </main>
       <footer className="landing-footer">
-        <a href="/" className="brand-wordmark">
-          INARI<span>●</span>
+        <a href="/" aria-label="INARI home">
+          <BrandFull width={104} />
         </a>
         <nav aria-label="Footer navigation">
           <a href="/import">Import</a>

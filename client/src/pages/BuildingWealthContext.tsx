@@ -1,4 +1,4 @@
-import inariLogo from "@/assets/inari/inari-logo.svg";
+import { INARI_EMBLEM as inariLogo } from "@/lib/brand";
 import {
   ContextBuildingChecklist,
   type ContextChecklistItem,
@@ -145,7 +145,7 @@ export default function BuildingWealthContext() {
 
   if (hasError) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#202522] px-4 py-10 text-white">
+      <main className="flex min-h-screen items-center justify-center bg-[#123C32] px-4 py-10 text-white">
         <div className="w-full max-w-xl">
           <ErrorState
             title="We could not build your financial context"
@@ -155,7 +155,7 @@ export default function BuildingWealthContext() {
           <div className="mt-5 text-center">
             <Button
               type="button"
-              className="bg-[#96e4ca] text-[#17211f] hover:bg-[#b7f0dd]"
+              className="bg-[#D9B56B] text-[#17211f] hover:bg-[#b7f0dd]"
               onClick={() => setLocation("/choose-profile")}
             >
               Return to choose profile
@@ -167,7 +167,7 @@ export default function BuildingWealthContext() {
   }
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#202522] px-4 py-10 text-white">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#123C32] px-4 py-10 text-white">
       <div
         className="absolute inset-0 opacity-[0.14]"
         style={{
@@ -179,7 +179,7 @@ export default function BuildingWealthContext() {
       />
       <div className="absolute inset-x-0 top-0 h-64 bg-[radial-gradient(circle_at_top,rgba(150,228,202,0.18),transparent_58%)]" />
       <div
-        className="absolute left-1/2 top-1/2 size-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#96e4ca]/10 opacity-60 motion-safe:animate-pulse"
+        className="absolute left-1/2 top-1/2 size-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#D9B56B]/10 opacity-60 motion-safe:animate-pulse"
         aria-hidden="true"
       />
 
@@ -190,7 +190,7 @@ export default function BuildingWealthContext() {
           className={cn(
             "mx-auto size-20 rounded-2xl object-contain shadow-[0_0_50px_rgba(150,228,202,0.18)]",
             !isComplete && "motion-safe:animate-pulse",
-            isComplete && "ring-2 ring-[#96e4ca]/40"
+            isComplete && "ring-2 ring-[#D9B56B]/40"
           )}
         />
         <p className="mt-7 text-[10px] font-bold uppercase tracking-[0.22em] text-white/38">
@@ -206,7 +206,7 @@ export default function BuildingWealthContext() {
         <div
           className={cn(
             "mx-auto mt-8 rounded-[28px] border bg-white/[0.035] p-7 text-left shadow-[0_30px_90px_-55px_rgba(0,0,0,0.9)] backdrop-blur transition-all duration-500",
-            isComplete ? "border-[#96e4ca]/24 bg-[#96e4ca]/[0.055]" : "border-white/7"
+            isComplete ? "border-[#D9B56B]/24 bg-[#D9B56B]/[0.055]" : "border-white/7"
           )}
         >
           <ContextBuildingChecklist items={checklistItems} />

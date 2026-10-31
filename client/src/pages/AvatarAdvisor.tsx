@@ -1,4 +1,4 @@
-import inariLogo from "@/assets/inari/inari-logo.svg";
+import { INARI_EMBLEM as inariLogo } from "@/lib/brand";
 import { AdvisorContextPanel } from "@/components/advisor/AdvisorContextPanel";
 import { AdvisorIdentity } from "@/components/advisor/AdvisorIdentity";
 import {
@@ -522,7 +522,7 @@ export default function AvatarAdvisor() {
                   value={question}
                   onChange={(event) => setQuestion(event.target.value)}
                   placeholder="What should I focus on this month?"
-                  className="min-h-24 flex-1 rounded-[var(--wv-radius-form)] border border-wv-border bg-white px-4 py-3 text-sm text-wv-text outline-none focus-visible:ring-2 focus-visible:ring-wv-primary focus-visible:ring-offset-2"
+                  className="min-h-24 flex-1 rounded-[var(--wv-radius-form)] border border-wv-border bg-wv-surface px-4 py-3 text-sm text-wv-text outline-none focus-visible:ring-2 focus-visible:ring-wv-primary focus-visible:ring-offset-2"
                   disabled={isAsking}
                   onKeyDown={(event) => {
                     if (event.key === "Enter" && !event.shiftKey) {

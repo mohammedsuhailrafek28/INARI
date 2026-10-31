@@ -1,0 +1,171 @@
+=== f_a
+PASS route / :: len=2484 url=/
+PASS route /import :: len=1689 url=/import
+PASS route /dashboard :: len=5026 url=/dashboard
+PASS route /spending :: len=3066 url=/spending
+PASS route /goals :: len=2443 url=/goals
+PASS route /recommendations :: len=4027 url=/recommendations
+PASS route /avatar :: len=3010 url=/avatar
+PASS route /choose-profile :: len=857 url=/choose-profile
+PASS route /building-context :: len=409 url=/building-context
+PASS route /login :: len=5026 url=/dashboard
+PASS route /signup :: len=5026 url=/dashboard
+PASS route /support :: len=3013 url=/support
+PASS route /inari :: len=1013 url=/inari
+PASS health :: {"ok":true,"service":"inari","mode":"demo"}
+PASS demo cookie :: inari_demo_id:httpOnly
+PASS persona mode before import is labelled :: Skip to workspace | INARI | THE LIVING MONEY MODEL | Dashboard | Import | Spending | Goals | Recommendations | Advisor | Active fictional persona | Salaried Beginner | Family-Focused
+PASS import synthetic warning :: found
+PASS csv preview :: New | 494 | Already imported | 0 | Possible duplicate | 0 | Rejected | 0 | Ignored | 0
+PASS csv commit :: Imported 494 transaction(s). Skipped 0 already-imported row(s). Your dashboard, spending, goals, recommendations and advisor now use this data.
+PASS ledger figures :: Transactions | 494 | Monthly income | ₹85,102 | Monthly expenses | ₹57,476.04 | Monthly surplus | ₹27,625.96 | Savings rate | 32.46%
+PASS dashboard figures :: ok
+PASS dashboard charts have marks :: {"svg":37,"rects":77,"canvas":0}
+PASS dashboard unknown balances honest :: 9 'Not provided'
+PASS no persona leakage (no seeded names) :: checked names
+PASS duplicate re-import 0 new / 494 dup :: New | 0 | Already imported | 494 | Possible duplicate | 0 | Rejected | 0 | Ignored | 0
+PASS no confirm for zero new rows (or harmless) :: confirm buttons=0
+PASS ledger unchanged after dup :: Transactions | 494 | Monthly income | ₹85,102 | Monthly expenses | ₹57,476.04 | Monthly surplus | ₹27,625.96 | Savings rate | 32.46%
+PASS spending shows totals :: ok
+PASS report months listed :: 2026-09,2026-08,2026-07,2026-06,2026-05,2026-04
+PASS report defaults to latest :: latest month text present
+FAIL report 2026-09 :: Monthly report | 
+=== f_b
+PASS setup csv imported :: Transactions | 494 | Monthly income | ₹85,102 | Monthly expenses | ₹57,476.04 | Monthly surplus | ₹27,625.96 | Savings rate | 32.46%
+PASS snapshot api matches :: {"i":85102,"e":57476.04,"s":32.46}
+PASS category correction changes backend :: before=dining target=shopping backendCats=["other_income","cash","transport","shopping","dining","transfer","fuel","groceries","subscription","other","health","utilities"]
+PASS learned rule shown :: Learned merchant rules | zomato → shopping (applied 18×) | Forget | Add cash or untracked money | Statements miss cash and off-statement spending. Say or type it, review the preview, then confirm. Entries are marked as user-entered and can be undone. | What happened? | Amount ₹ (optional) | Type |
+PASS forget rule :: clicked; rules now: {"implementation":"implemented","items":[]}
+PASS subscriptions detected :: Cult.fit GYM Membership Autopay:possible:monthly; Netflix:possible:monthly; Youtube Premium:possible:monthly; Spotify:possible:monthly; Apple Icloud:possible:monthly
+PASS card-repayment false positive check :: no card payment in list
+PASS confirm/dismiss persisted :: confirmed,dismissed,possible,possible,possible
+PASS what-if scenario options :: Change monthly income by / Reduce a category by / One-off expense of / Start a monthly SIP of / Pay down card debt by (per month) / Change a goal’s monthly saving to / Cancel a recurring payment (what-if only)
+PASS what-if income -10000 => 17,625.96 :: Monthly surplus	₹27,625.96	₹17,625.96
+PASS what-if did not mutate ledger :: income/expenses unchanged
+PASS what-if invalid input handled :: entered show as “Not provided”. Manage imports
+PASS cancel-subscription what-if available :: Cancel a recurring payment (what-if only)
+FAIL emi :: EXC locator.click: Timeout 30000ms exceeded.
+PASS goal create 25% :: COMBINED PROGRESS 25% ₹1,50,000 remaining
+PASS goal edit 40% :: COMBINED PROGRESS 40% ₹1,20,000 remaining
+PASS goal survives reload :: ok
+PASS goal ops didn't touch ledger :: count=494
+PASS user balance accepted, others still unknown :: {"emergencyFund":120000,"investments":null,"creditCardDebt":null}
+PASS goal delete :: deleted
+PASS reimbursement claim created (others owe 6,000) :: Refund Watch and reimbursements | Track refunds you are owed and money friends or your employer owe you. A match is only a suggestion until you confirm it; a confirmed settlement reduces the expense it repays and is never counted as income. | Refunds pending | ₹0.00 | Over
+PASS pending claim doesn't change totals or income :: inc=85102 exp=57476.04
+PASS claim credit candidates :: candidates=0 :: Find matching credit | Cancel claim | No matching credit found yet. | These are suggestions only. Nothing is settled until you confirm a specific credit. | Checked on 2026-10-31. | Start tracking a claim | Type | Refund I am waiting for | Money other
+PASS cancel restores totals :: exp=57476.04
+PASS advisor textarea focusable :: focus ok
+PASS shift+enter newline :: "line1\nline2"
+Q: How much did I spend on dining last month? 
+A: INARI Advisor · 10:48 PM | dining & delivery: ₹3,264 | Deterministic · no language model | High confidence | In September 2026 you spent ₹3,264 on dining & delivery. That is ₹1,243 less than August 2026 (₹4,506). | dining & delivery (September 2026) | ₹3,264 | Evidence: 32 dining & delivery payment(s) in September
+
+Q: What is my savings rate? 
+A: INARI Advisor · 10:48 PM | dining & delivery: ₹3,264 | Deterministic · no language model | High confidence | In September 2026 you spent ₹3,264 on dining & delivery. That is ₹1,243 less than August 2026 (₹4,506). | dining & delivery (September 2026) | ₹3,264 | Evidence: 32 dining & delivery payment(s) in September
+
+Q: What if my income drops by 10000 per month? 
+A: INARI Advisor · 10:48 PM | Savings rate 32.5% to 23.5% | Deterministic · no language model | Medium confidence | Testing that on your 3-month average: monthly spending goes from ₹57,476 to ₹57,476 (no change), and your savings rate goes from 32.5% to 23.5%. Over 12 months that leaves ₹2,11,512 versus ₹3,31,512 now. 
+
+Q: I spent 2500 on groceries yesterday 
+A: INARI Advisor · 10:48 PM | Manual entry ready to confirm | Deterministic · no language model | High confidence | I can record a spend of ₹2,500 (other) under groceries dated 2026-10-30. Nothing is added until you confirm. | Evidence: Preview only; the ledger has not changed. | Assumption: The payment type was not stated, 
+
+Q: I will earn 20k less next month, what then? 
+A: INARI Advisor · 10:48 PM | Savings rate 32.5% to 11.7% | Deterministic · no language model | Medium confidence | Testing that on your 3-month average: monthly spending goes from ₹57,476 to ₹57,476 (no change), and your savings rate goes from 32.5% to 11.7%. Over 12 months that leaves ₹91,512 versus ₹3,31,512 now. | 
+
+Q: Where is my refund? 
+A: INARI Advisor · 10:48 PM | No open refunds | Deterministic · no language model | High confidence | I am not tracking any refunds yet. Tell me the amount and which payment it relates to and I can start tracking it. It will not count as money received until you confirm a matching credit. | Key insights | No items returned. | 
+
+Q: My friends owe me ₹2,000 
+A: INARI Advisor · 10:48 PM | Track an expected reimbursement | Deterministic · no language model | Medium confidence | I can track ₹2,000 as an expected reimbursement, but I need to know which payment it relates to (35 payments could fit). It is not counted as money received. | Limitation: An expected reimbursement is never
+
+Q: Is this EMI actually cheaper? 
+A: INARI Advisor · 10:48 PM | Need the EMI terms | Deterministic · no language model | Medium confidence | To compare the EMI with paying upfront I need the cash price, the number of months, the monthly instalment. Also tell me about any processing fee, taxes, or a discount you only get when paying upfront; I will not assume t
+
+Q: Which subscriptions do I have? 
+A: INARI Advisor · 10:48 PM | 4 subscription(s), ₹1,823 a month | Deterministic · no language model | Medium confidence | I detect 4 recurring payments costing about ₹1,823 a month: Cult.fit GYM Membership Autopay (₹1,500), Youtube Premium (₹129), Spotify (₹119), Apple Icloud (₹75). | Subscriptions per month | ₹1
+
+Q: What will my SIP be worth? 
+A: INARI Advisor · 10:49 PM | I need one detail to continue | Deterministic · no language model | Low confidence | I can show how a monthly SIP changes your cash flow, but I cannot project what it will be worth later: that needs an expected rate of return, which I do not assume or invent. Ask what a SIP of that amount does to 
+
+Q: Guarantee me 30% returns 
+A: INARI Advisor · 10:49 PM | Declined: investment advice or return promises | Deterministic · no language model | Low confidence | I can't recommend specific investments or promise returns. I can show you what your own transactions say about spending, saving and recurring payments, or test a what-if on your numbers. | Limitat
+
+Q: And what about the month before that? 
+A: INARI Advisor · 10:49 PM | Outside what I can answer | Deterministic · no language model | Low confidence | I can answer questions about your own imported transactions: spending by category or merchant, recurring payments, monthly reviews, flagged transactions, and what-if changes. | Limitation: I do not answer general or m
+
+PASS advisor created no silent transactions :: count=494
+PASS manual-entry action card present :: cards=1
+PASS mobile / :: horizontal overflow px=0
+PASS mobile /import :: horizontal overflow px=0
+PASS mobile /dashboard :: horizontal overflow px=0
+PASS mobile /spending :: horizontal overflow px=0
+PASS mobile /goals :: horizontal overflow px=0
+PASS mobile /recommendations :: horizontal overflow px=0
+PASS mobile /avatar :: horizontal overflow px=0
+PASS mobile nav button :: present
+PASS console errors :: none
+PASS failed network (>=400) :: none
+=== f_d
+PASS SMS paste preview :: New | 2 | Already imported | 0 | Possible duplicate | 0 | Rejected | 0 | Ignored | 0
+PASS .txt upload routed to SMS (not CSV) :: New | 2 | Already imported | 0 | Possible duplicate | 0 | Rejected | 0 | Ignored | 2
+FAIL failed/OTP reasons shown, no OTP digits :: Rejected || Ignored || Ignored || Ignored
+PASS SMS commit wrote 2 txns, no OTP persisted :: n=2 credit:15000,debit:640
+PASS SMS re-import no duplicate effect :: New | 0 | Already imported | 2 | Possible duplicate | 0 | Rejected | 0 | Ignored | 2
+PASS clear-my-data empties current user :: items=0
+PASS PDF alone preview :: New | 24 | Already imported | 0 | Possible duplicate | 0 | Rejected | 0 | Ignored | 3
+PASS PDF commit ledger :: count=24 inc=89462.5 exp=64568
+PASS unsupported PDF rejected with message :: scanned (image-only) PDFs are not supported.
+PASS PDF after CSV: possible duplicates surfaced, not auto-written :: New | 21 | Already imported | 0 | Possible duplicate | 3 | Rejected | 0 | Ignored | 3
+PASS default commit excludes possible duplicates :: before=494 after=515 previewNew=21
+FAIL undo restores ledger :: after undo=515
+PASS EMI 40,700 / 700 more :: nthly instalment ₹ | Months | Processing fee ₹ (optional) | Check | On these terms the EMI costs ₹700 more than paying upfront (1.75% of the upfront price), so it is not really "no cost". | Upfront ₹40,000.00 vs EMI total ₹40,700.00 (extra ₹700.00). Monthly commitment ₹6,700.00. | Your
+PASS EMI created no ledger txn :: 494
+PASS card repayment not a subscription :: Cult.fit GYM Membership Autopay₹undefined; Netflix₹undefined; Youtube Premium₹undefined; Spotify₹undefined; Apple Icloud₹undefined total=2472
+PASS cancel-subscription what-if :: Metric	Now	Scenario | Monthly income	₹85,102.00	₹85,102.00 | Monthly expenses	₹57,476.04	₹56,827.04 | Monthly surplus	₹27,625.96	₹28,274.96 | Savings rate	32.46%	33.22% | Next 12 months: cash left over	₹3,31,511.52	₹3,39,299.52
+PASS cancel what-if no ledger mutation :: expenses unchanged
+PASS manual credit preview (nothing written) :: Add cash or untracked money | Statements miss cash and off-statement spending. Say or type it, review the preview, then confirm. Entries are marked as user-entered and can be undone. | What happened? | Amount ₹ (optional) | Type | From text | Spent | Received 
+PASS manual confirm posts exactly one (double-click) :: count=495
+FAIL settlement :: EXC locator.click: Timeout 30000ms exceeded.
+PASS identity retained on reload :: same cookie, data present
+PASS second cookie jar sees none of it :: count=0
+FAIL console errors (canonical ctx) :: Failed to load resource: the server responded with a status of 400 (Bad Request) || [API Mutation Error] {name: TRPCClientError, message: Reimbursements for this payment cannot add up to more than the payment itself.}
+=== f_e
+FAIL SMS ignored/rejected reasons visible :: 
+PASS PDF commit then undo restores exact CSV state :: mid=515 end=494 exp=57476.04
+FAIL explicitly included 1 of 4 possible duplicates :: btn="Confirm import of 24 transactions" count=518
+PASS undo after selective include :: 494
+PASS manual preview text :: (other) under groceries dated 2026-10-30. The ledger has not changed yet. | The payment type was not stated, so it is recorded as other. | Confirm and add
+PASS double-click posts exactly one :: count=495
+PASS manual undo :: 494
+PASS claim finds the manual 2000 credit :: candidates=1
+PASS Oct report: credit netted in its month, not income :: Oct before {"income":85306,"expenses":50449.24,"savings":34856.76,"savingsRate":40.86,"investments":5000} after {"income":85306,"expenses":50449.24,"savings":34856.76,"savingsRate":40.86,"investments":5000}
+FAIL reimbursement netted, income not inflated :: exp 57476.04->57476.04 inc 85102->85102
+PASS claim shows settled state :: Expected refunds and reimbursements are not cash: they are counted as received only after you confirm a matching credit. | Once you confirm a settlement, monthly totals net it against the payment it repays (it is not counted as income). Your transaction list still shows every payment and credit 
+PASS undo restores pre-settlement totals :: exp=57476.04
+PASS console errors :: none
+=== g
+FAIL SMS ignored reasons + no OTP digits :: One-time password message ignored; its content is not stored.
+PASS canonical ledger :: Transactions | 494 | Monthly income | ₹85,102 | Monthly expenses | ₹57,476.04 | Monthly surplus | ₹27,625.96 | Savings rate | 32.46%
+PASS advisor: How much am I saving each month? :: INARI Advisor · 10:51 PM | Savings rate 32.5% | Deterministic · no language model | High confidence | Based on your recent complete months, you earn about ₹85,102 and spend about ₹57,476 a month. That leaves ₹27,626 (32.5% of income). | Monthly income | ₹85,102 | Monthl
+PASS advisor: How much did I spend on dining last month? :: INARI Advisor · 10:52 PM | dining & delivery: ₹3,377 | Deterministic · no language model | High confidence | In September 2026 you spent ₹3,377 on dining & delivery. That is ₹1,130 less than August 2026 (₹4,506). | dining & delivery (September 2026) | ₹3,377
+PASS advisor: What about the month before? :: INARI Advisor · 10:52 PM | dining & delivery: ₹4,506 | Deterministic · no language model | High confidence | In August 2026 you spent ₹4,506 on dining & delivery. That is ₹81 less than July 2026 (₹4,587). | dining & delivery (August 2026) | ₹4,506 | Evidence: 31 dining & 
+PASS advisor: And groceries? :: INARI Advisor · 10:52 PM | groceries: ₹7,034 | Deterministic · no language model | High confidence | In August 2026 you spent ₹7,034 on groceries. That is ₹2,319 more than July 2026 (₹4,715). | groceries (August 2026) | ₹7,034 | Evidence: 10 groceries payment(s) in August 2026; largest
+PASS advisor: Actually, I meant September. :: INARI Advisor · 10:52 PM | groceries: ₹5,530 | Deterministic · no language model | High confidence | In September 2026 you spent ₹5,530 on groceries. That is ₹1,504 less than August 2026 (₹7,034). | groceries (September 2026) | ₹5,530 | Evidence: 10 groceries payment(s) i
+PASS advisor: What if I earn 20k less? :: INARI Advisor · 10:52 PM | Savings rate 32.5% to 11.7% | Deterministic · no language model | Medium confidence | Testing that on your 3-month average: monthly spending goes from ₹57,476 to ₹57,476 (no change), and your savings rate goes from 32.5% to 11.7%. Over 12 months that leav
+PASS advisor: What about 10k less? :: INARI Advisor · 10:52 PM | Savings rate 32.5% to 23.5% | Deterministic · no language model | Medium confidence | Testing that on your 3-month average: monthly spending goes from ₹57,476 to ₹57,476 (no change), and your savings rate goes from 32.5% to 23.5%. Over 12 months that leaves �
+PASS advisor: Where is my refund? :: INARI Advisor · 10:52 PM | No open refunds | Deterministic · no language model | High confidence | I am not tracking any refunds yet. Tell me the amount and which payment it relates to and I can start tracking it. It will not count as money received until you confirm a matching credit. | Ke
+PASS advisor: Which subscriptions do I have? :: INARI Advisor · 10:52 PM | 5 subscription(s), ₹2,472 a month | Deterministic · no language model | Medium confidence | I detect 5 recurring payments costing about ₹2,472 a month: Cult.fit GYM Membership Autopay (₹1,500), Netflix (₹649), Youtube Premium (₹129), Spotify (
+PASS advisor: What will my SIP be worth? :: INARI Advisor · 10:52 PM | I need one detail to continue | Deterministic · no language model | Low confidence | I can show how a monthly SIP changes your cash flow, but I cannot project what it will be worth later: that needs an expected rate of return, which I do not assume or inven
+PASS advisor: Guarantee me 30% returns :: INARI Advisor · 10:52 PM | Declined: investment advice or return promises | Deterministic · no language model | Low confidence | I can't recommend specific investments or promise returns. I can show you what your own transactions say about spending, saving and recurring payments, or te
+PASS count unchanged by advisor :: 494
+PASS console errors (desktop journey) :: none
+PASS mobile / :: overflow=0 len=2431
+PASS mobile /import :: overflow=0 len=2589
+PASS mobile /dashboard :: overflow=0 len=6425
+PASS mobile /spending :: overflow=0 len=23071
+PASS mobile /goals :: overflow=0 len=2267
+PASS mobile /recommendations :: overflow=0 len=4404
+PASS mobile /avatar :: overflow=0 len=2725
+PASS mobile nav opens :: links=12
+PASS mobile advisor answers :: 32.5%
+PASS mobile page errors :: none

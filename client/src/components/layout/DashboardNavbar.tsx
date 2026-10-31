@@ -1,3 +1,4 @@
+import { BrandLockup } from "@/components/brand/BrandMark";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -121,14 +122,7 @@ export function DashboardNavbar({
       </a>
       <header className={cn("app-navigation", className)}>
         <div className="navigation-brand">
-          <a
-            className="brand-wordmark"
-            href="/dashboard"
-            aria-label={`${brandName} dashboard`}
-          >
-            {brandName}
-            <span>●</span>
-          </a>
+          <BrandLockup href="/dashboard" label={`${brandName} dashboard`} />
           <span className="navigation-caption">THE LIVING MONEY MODEL</span>
         </div>
         <div className="navigation-mobile-title">

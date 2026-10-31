@@ -1,3 +1,4 @@
+import { BrandEmblem } from "@/components/brand/BrandMark";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Menu, ShieldCheck } from "lucide-react";
@@ -51,10 +52,8 @@ export function PublicNavbar({
           className="inline-flex items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wv-primary focus-visible:ring-offset-2"
           aria-label={`${brandName} home`}
         >
-          <span className="brand-wordmark">
-            {brandName}
-            <span>●</span>
-          </span>
+          <BrandEmblem size={44} />
+          <span className="brand-wordmark">INARI</span>
         </a>
 
         <nav

@@ -1,4 +1,4 @@
-import inariLogo from "@/assets/inari/inari-logo.svg";
+import { INARI_EMBLEM as inariLogo } from "@/lib/brand";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { DashboardNavbar } from "@/components/layout/DashboardNavbar";
 import { useEffect, useState, type ReactNode } from "react";

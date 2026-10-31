@@ -1,5 +1,5 @@
 import { PageSections } from "@/components/inari/LedgerOverview";
-import inariLogo from "@/assets/inari/inari-logo.svg";
+import { INARI_EMBLEM as inariLogo } from "@/lib/brand";
 import { DashboardNavbar, type DashboardNavLink } from "@/components/layout/DashboardNavbar";
 import { SavingsOpportunityCard } from "@/components/spending/SavingsOpportunityCard";
 import { SpendingBreakdownChart, type SpendingCategoryDatum } from "@/components/spending/SpendingBreakdownChart";

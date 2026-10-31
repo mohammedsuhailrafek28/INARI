@@ -1,4 +1,4 @@
-import inariLogo from "@/assets/inari/inari-logo.svg";
+import { INARI_EMBLEM as inariLogo } from "@/lib/brand";
 import { PersonaCard } from "@/components/onboarding/PersonaCard";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/wealth/EmptyState";
@@ -131,8 +131,8 @@ export default function PersonaSelection() {
   };
 
   return (
-    <main className="min-h-screen bg-[#fbfcfb] text-wv-text">
-      <header className="border-b border-wv-border/70 bg-white/92 backdrop-blur">
+    <main className="min-h-screen bg-wv-background text-wv-text">
+      <header className="border-b border-wv-border/70 bg-wv-surface/95 backdrop-blur">
         <div className="mx-auto flex min-h-14 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <a
             href="/"
@@ -231,7 +231,7 @@ export default function PersonaSelection() {
         )}
 
         {!isAuthenticated && !authLoading ? (
-          <div className="mx-auto mt-8 max-w-xl rounded-[var(--wv-radius-card)] border border-wv-border bg-white p-5 text-center shadow-wv-low">
+          <div className="mx-auto mt-8 max-w-xl rounded-[var(--wv-radius-card)] border border-wv-border bg-wv-surface p-5 text-center shadow-wv-low">
             <p className="text-sm leading-6 text-wv-text-secondary">
               Demo mode is needed to activate a persona. If OAuth is configured,
               sign in first; in local demo mode, this route activates automatically.
@@ -243,7 +243,7 @@ export default function PersonaSelection() {
         ) : null}
       </section>
 
-      <footer className="border-t border-wv-border bg-white px-4 py-6 text-xs text-wv-muted sm:px-6 lg:px-8">
+      <footer className="border-t border-wv-border bg-wv-surface px-4 py-6 text-xs text-wv-muted sm:px-6 lg:px-8">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <span className="font-semibold text-wv-text">INARI</span>
           <span>© 2026 INARI. Financial insights for a calmer future.</span>

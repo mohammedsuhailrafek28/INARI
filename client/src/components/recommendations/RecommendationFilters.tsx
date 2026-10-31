@@ -46,7 +46,7 @@ export function RecommendationFilters({
           <select
             value={sort}
             onChange={(event) => onSortChange(event.target.value as RecommendationSort)}
-            className="mt-2 min-h-11 w-full rounded-[var(--wv-radius-form)] border border-wv-border bg-white px-3 text-sm font-semibold text-wv-text outline-none focus-visible:ring-2 focus-visible:ring-wv-primary focus-visible:ring-offset-2"
+            className="mt-2 min-h-11 w-full rounded-[var(--wv-radius-form)] border border-wv-border bg-wv-surface px-3 text-sm font-semibold text-wv-text outline-none focus-visible:ring-2 focus-visible:ring-wv-primary focus-visible:ring-offset-2"
           >
             <option value="priority">Priority</option>
             <option value="confidenceHigh">Highest confidence</option>
@@ -84,7 +84,7 @@ function FilterSelect({
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-2 min-h-11 w-full rounded-[var(--wv-radius-form)] border border-wv-border bg-white px-3 text-sm font-semibold text-wv-text outline-none focus-visible:ring-2 focus-visible:ring-wv-primary focus-visible:ring-offset-2"
+        className="mt-2 min-h-11 w-full rounded-[var(--wv-radius-form)] border border-wv-border bg-wv-surface px-3 text-sm font-semibold text-wv-text outline-none focus-visible:ring-2 focus-visible:ring-wv-primary focus-visible:ring-offset-2"
       >
         {options.map((option) => (
           <option key={option} value={option}>

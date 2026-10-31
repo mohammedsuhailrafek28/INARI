@@ -1,4 +1,4 @@
-import inariLogo from "@/assets/inari/inari-logo.svg";
+import { INARI_EMBLEM as inariLogo } from "@/lib/brand";
 import { Footer } from "@/components/layout/Footer";
 import { SupportCategoryCard } from "@/components/support/SupportCategoryCard";
 import { SupportNotice } from "@/components/support/SupportNotice";
@@ -97,7 +97,7 @@ export default function Support() {
       />
 
       <main>
-        <section className="bg-gradient-to-br from-wv-primary-dark via-wv-primary to-[#13a693] px-4 py-16 text-white sm:px-6 lg:px-8">
+        <section className="bg-gradient-to-br from-wv-primary-dark via-wv-primary to-[#1C4D41] px-4 py-16 text-white sm:px-6 lg:px-8">
           <div className="mx-auto max-w-[var(--wv-content-width)]">
             <div className="max-w-3xl">
               <p className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/12 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.16em]">
@@ -113,7 +113,7 @@ export default function Support() {
               </p>
             </div>
 
-            <div className="mt-8 max-w-2xl rounded-[var(--wv-radius-card)] border border-white/20 bg-white p-3 shadow-wv-card">
+            <div className="mt-8 max-w-2xl rounded-[var(--wv-radius-card)] border border-white/20 bg-wv-surface p-3 shadow-wv-card">
               <label htmlFor="support-search" className="sr-only">
                 Search help topics
               </label>
@@ -170,7 +170,7 @@ export default function Support() {
           </div>
         </section>
 
-        <section ref={faqSectionRef} className="bg-white py-14 sm:py-16">
+        <section ref={faqSectionRef} className="bg-wv-surface py-14 sm:py-16">
           <div className="mx-auto max-w-[var(--wv-content-width)] px-4 sm:px-6 lg:px-8">
             <SectionHeader
               eyebrow="Frequently asked questions"

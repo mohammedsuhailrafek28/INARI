@@ -44,7 +44,7 @@ export function PersonaCard({
   return (
     <article
       className={cn(
-        "group relative flex h-full flex-col rounded-[22px] border bg-white p-5 text-left shadow-[0_24px_70px_-44px_rgba(12,133,119,0.34)] transition-all duration-300",
+        "group relative flex h-full flex-col rounded-[22px] border bg-wv-surface p-5 text-left shadow-[0_24px_70px_-44px_rgba(12,133,119,0.34)] transition-all duration-300",
         selected
           ? "border-wv-primary shadow-[0_32px_90px_-48px_rgba(0,105,92,0.62)] ring-2 ring-wv-primary/22"
           : "border-wv-border hover:-translate-y-1 hover:border-wv-primary/40 hover:shadow-[0_32px_90px_-50px_rgba(12,133,119,0.48)]",
@@ -138,7 +138,7 @@ export function PersonaCard({
             "relative z-10 mt-7 min-h-11 w-full rounded-full shadow-none transition-all duration-200",
             selected
               ? "bg-wv-primary text-white hover:bg-wv-primary-dark hover:shadow-[0_16px_34px_-22px_rgba(0,105,92,0.9)]"
-              : "border-wv-border bg-white text-wv-primary hover:border-wv-primary/35 hover:bg-wv-background"
+              : "border-wv-border bg-wv-surface text-wv-primary hover:border-wv-primary/35 hover:bg-wv-background"
           )}
           variant={selected ? "default" : "outline"}
           onClick={() => onContinue(id)}
