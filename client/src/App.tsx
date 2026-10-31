@@ -16,6 +16,7 @@ const SpendingInsights = lazy(() => import("./pages/SpendingInsights"));
 const GoalPlanner = lazy(() => import("./pages/GoalPlanner"));
 const Recommendations = lazy(() => import("./pages/Recommendations"));
 const AvatarAdvisor = lazy(() => import("./pages/AvatarAdvisor"));
+const InariStudio = lazy(() => import("./pages/InariStudio"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 let historyEventsPatched = false;
@@ -70,6 +71,7 @@ function Router() {
   if (location === "/goals") return <GoalPlanner />;
   if (location === "/recommendations") return <Recommendations />;
   if (location === "/avatar") return <AvatarAdvisor />;
+  if (location === "/inari") return <InariStudio />;
   return <NotFound />;
 }
 
