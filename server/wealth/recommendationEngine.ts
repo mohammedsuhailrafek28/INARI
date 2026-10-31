@@ -1,3 +1,4 @@
+import { isKnown } from "./known";
 import type { FinancialMetrics, Recommendation as LegacyRecommendation } from "../financialEngine";
 import {
   EDUCATIONAL_DISCLAIMER,
@@ -35,7 +36,7 @@ export function generateWealthRecommendations(
   const recommendations: WealthRecommendation[] = [];
   const emergencyMonths = metrics.emergencyFundBalance / Math.max(metrics.monthlyExpenses, 1);
 
-  if (metrics.emergencyFundBalance < metrics.monthlyExpenses * 3) {
+  if (isKnown(metrics, "emergencyFund") && metrics.emergencyFundBalance < metrics.monthlyExpenses * 3) {
     recommendations.push(
       makeRecommendation({
         id: "emergency-fund-priority",
@@ -103,7 +104,7 @@ export function generateWealthRecommendations(
     );
   }
 
-  if (metrics.creditCardDebt > metrics.monthlyIncome * 0.5) {
+  if (isKnown(metrics, "creditCardDebt") && metrics.creditCardDebt > metrics.monthlyIncome * 0.5) {
     const payoffTarget = Math.round(metrics.creditCardDebt * 0.3);
     recommendations.push(
       makeRecommendation({
@@ -137,7 +138,7 @@ export function generateWealthRecommendations(
     );
   }
 
-  if (metrics.creditCardDebt > 0) {
+  if (isKnown(metrics, "creditCardDebt") && metrics.creditCardDebt > 0) {
     recommendations.push(
       makeRecommendation({
         id: "debt-before-new-risk",
@@ -171,7 +172,7 @@ export function generateWealthRecommendations(
     );
   }
 
-  if (metrics.investmentBalance < metrics.monthlyIncome * 6) {
+  if (isKnown(metrics, "investments") && metrics.investmentBalance < metrics.monthlyIncome * 6) {
     recommendations.push(
       makeRecommendation({
         id: "starter-diversified-investing",
@@ -204,7 +205,7 @@ export function generateWealthRecommendations(
     );
   }
 
-  if (metrics.savingsRate >= 20 && metrics.creditCardDebt <= metrics.monthlyIncome * 0.5) {
+  if (metrics.savingsRate >= 20 && isKnown(metrics, "creditCardDebt") && metrics.creditCardDebt <= metrics.monthlyIncome * 0.5) {
     const starterSip = Math.round(Math.max(0, context.monthlySurplus) * 0.25);
     recommendations.push(
       makeRecommendation({

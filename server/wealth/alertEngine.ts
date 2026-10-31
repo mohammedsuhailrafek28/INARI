@@ -1,3 +1,4 @@
+import { isKnown } from "./known";
 import type { WealthAlert, WealthContextDraft } from "./types";
 
 const currency = (value: number) => `₹${Math.round(value).toLocaleString("en-IN")}`;
@@ -23,7 +24,7 @@ export function generateWealthAlerts(context: WealthContextDraft): WealthAlert[]
     });
   }
 
-  if (emergencyMonths < 3) {
+  if (isKnown(context.metrics, "emergencyFund") && emergencyMonths < 3) {
     alerts.push({
       id: "alert-emergency-fund",
       type: "emergencyFund",

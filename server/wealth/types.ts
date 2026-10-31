@@ -120,6 +120,11 @@ export type WealthContext = {
   riskProfile: WealthRiskProfile;
   insights: WealthInsight[];
   metrics: FinancialMetrics;
+  /** "imported" = derived from the user's ledger; absent/"demo" = seeded persona. */
+  dataSource?: "imported" | "demo";
+  dataAsOf?: string | null;
+  /** user-supplied fields that are still unknown (only set in imported mode) */
+  unknownFields?: string[];
 };
 
 export type AdvisorResponse = {

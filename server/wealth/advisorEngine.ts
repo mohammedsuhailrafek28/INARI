@@ -1,4 +1,5 @@
 import { ENV } from "../_core/env";
+import { isKnown } from "./known";
 import { invokeLLM } from "../_core/llm";
 import { logger } from "../_core/logger";
 import {
@@ -21,6 +22,9 @@ const topSpending = (context: WealthContext) =>
 
 const emergencyMonths = (context: WealthContext) =>
   context.metrics.emergencyFundBalance / Math.max(context.monthlyExpenses, 1);
+
+const emergencyLabel = (context: WealthContext) =>
+  isKnown(context.metrics, "emergencyFund") ? `${emergencyMonths(context).toFixed(1)} months` : "not provided yet";
 
 export function classifyAdvisorIntent(question: string): AdvisorIntent {
   return analyzeQuestion(question).intent;
@@ -104,7 +108,7 @@ function relatedMetricsForIntent(intent: AdvisorIntent, context: WealthContext) 
 
   if (intent === "investmentReadiness") {
     return [
-      { label: "Emergency fund", value: `${emergencyMonths(context).toFixed(1)} months` },
+      { label: "Emergency fund", value: emergencyLabel(context) },
       { label: "Risk profile", value: context.riskProfile.profile },
       { label: "Unusual expenses", value: `${context.unusualExpenses.length}` },
     ];
@@ -120,7 +124,7 @@ function relatedMetricsForIntent(intent: AdvisorIntent, context: WealthContext) 
     return [
       { label: "Risk capacity", value: `${context.riskProfile.profile} (${context.riskProfile.score}/100)` },
       { label: "Open alerts", value: `${context.alerts.length}` },
-      { label: "Emergency fund", value: `${emergencyMonths(context).toFixed(1)} months` },
+      { label: "Emergency fund", value: emergencyLabel(context) },
     ];
   }
   return base;
@@ -353,11 +357,23 @@ function answerForIntent(
           "I can use event history to explain recent advisor, prediction, recommendation, alert, and profile activity. In this demo response, focus on the latest visible insights and alerts before making changes.",
       };
     case "emergencyFund":
+      if (!isKnown(context.metrics, "emergencyFund")) {
+        return {
+          summary: "Emergency fund balance has not been provided.",
+          answer: `I cannot tell how many months your emergency fund covers because you have not told me the balance yet. Add it and I will compare it with your average monthly spending of ${currency(context.monthlyExpenses)}.`,
+        };
+      }
       return {
         summary: `Emergency fund covers ${months.toFixed(1)} months.`,
         answer: `${previousInvestmentQuestion ? "Following up on your investing question: " : ""}Your emergency fund covers about ${months.toFixed(1)} months of expenses. A practical target is at least ${currency(context.monthlyExpenses * 3)} before adding more investment risk.`,
       };
     case "debt":
+      if (!isKnown(context.metrics, "creditCardDebt")) {
+        return {
+          summary: "Credit card debt has not been provided.",
+          answer: "I do not know your credit card balance yet, so I cannot say whether debt should come before investing. Tell me the outstanding amount and I will factor it in.",
+        };
+      }
       return {
         summary: `Credit card debt is ${currency(context.metrics.creditCardDebt)}.`,
         answer:

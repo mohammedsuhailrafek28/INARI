@@ -291,7 +291,7 @@ export default function Dashboard() {
           riskProfile={wealth.riskProfile.profile ?? profile.riskProfile}
           summary={`Your monthly surplus is ${formatCurrencyINR(wealth.monthlySurplus)} with a ${formatPercentage(data.savingsRate)} savings rate.`}
           insight={topInsight?.title ?? nextBestAction}
-          healthScore={data.financialHealth.overallScore}
+          healthScore={data.financialHealth?.overallScore ?? 0}
           biggestRisk={topAlert?.title ?? wealth.riskProfile.constraints?.[0] ?? "No high-priority risk"}
           aiRecommendation={nextBestAction}
           onAskAdvisor={() => setLocation("/avatar")}
@@ -301,8 +301,8 @@ export default function Dashboard() {
 
         <section className="grid gap-4 lg:grid-cols-[1.35fr_0.65fr]">
           <HealthScoreCard
-            score={data.financialHealth.overallScore}
-            category={data.financialHealth.category}
+            score={data.financialHealth?.overallScore ?? 0}
+            category={data.financialHealth?.category ?? "poor"}
             description="Educational score based on savings, investments, debt, and emergency-fund readiness. It is not a regulated credit score."
             projection={
               predictions
@@ -312,22 +312,22 @@ export default function Dashboard() {
             breakdown={[
               {
                 label: "Savings",
-                score: data.financialHealth.savingsScore,
+                score: data.financialHealth?.savingsScore ?? 0,
                 description: "Reflects current savings rate and surplus capacity.",
               },
               {
                 label: "Investments",
-                score: data.financialHealth.investmentScore,
+                score: data.financialHealth?.investmentScore ?? 0,
                 description: "Reflects investment balance and readiness signals.",
               },
               {
                 label: "Debt",
-                score: data.financialHealth.debtScore,
+                score: data.financialHealth?.debtScore ?? 0,
                 description: "Reflects credit-card debt pressure.",
               },
               {
                 label: "Emergency fund",
-                score: data.financialHealth.emergencyFundScore,
+                score: data.financialHealth?.emergencyFundScore ?? 0,
                 description: "Reflects available emergency-fund coverage.",
               },
             ]}
@@ -416,10 +416,10 @@ export default function Dashboard() {
             />
             <FinancialMetricCard
               title="Credit-card debt"
-              value={formatCurrencyINR(data.creditCardDebt)}
+              value={data.creditCardDebt === null ? "Not provided" : formatCurrencyINR(data.creditCardDebt)}
               subtitle="Debt to monitor before increasing risk"
               trend="Liability"
-              trendDirection={data.creditCardDebt > 0 ? "down" : "flat"}
+              trendDirection={(data.creditCardDebt ?? 0) > 0 ? "down" : "flat"}
               icon={<TrendingDown className="size-5" aria-hidden="true" />}
             />
           </div>

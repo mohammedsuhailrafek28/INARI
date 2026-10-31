@@ -18,6 +18,7 @@ import { generateWealthAlerts } from "./alertEngine";
 import { generateInsights } from "./insightEngine";
 import { generateWealthRecommendations } from "./recommendationEngine";
 import { profileWealthRisk } from "./riskProfiler";
+import { loadImportedModel, toWealthDraft } from "../inari/importedModel";
 import type {
   WealthAlert,
   WealthContext,
@@ -88,7 +89,18 @@ function normalizeStoredAlert(alert: any): WealthAlert {
   };
 }
 
-export async function buildWealthContextForUser(userId: number): Promise<WealthContext | null> {
+/**
+ * `ownerKey` (ledger owner) switches the context to the user's imported data. When that owner has imported data but
+ * income/expenses are not derivable yet (no complete month), this returns null rather than falling back to the persona.
+ */
+export async function buildWealthContextForUser(userId: number, ownerKey?: string): Promise<WealthContext | null> {
+  if (ownerKey) {
+    const model = await loadImportedModel(ownerKey);
+    if (model !== undefined) {
+      const draft = toWealthDraft(model);
+      return draft ? completeContext(draft, []) : null;
+    }
+  }
   const demoProfileId = await getOrCreateActiveDemoProfileId(userId);
   if (!demoProfileId) return null;
 
@@ -115,6 +127,7 @@ export async function buildWealthContextForUser(userId: number): Promise<WealthC
   ]);
 
   const draft: WealthContextDraft = {
+    dataSource: "demo",
     activeProfile: {
       id: profile.id,
       name: profile.name,
@@ -135,6 +148,10 @@ export async function buildWealthContextForUser(userId: number): Promise<WealthC
     metrics,
   };
 
+  return completeContext(draft, storedAlerts.map(normalizeStoredAlert));
+}
+
+function completeContext(draft: WealthContextDraft, storedAlerts: WealthAlert[]): WealthContext {
   const recommendations = generateWealthRecommendations(draft);
   const riskProfile = profileWealthRisk({ ...draft, recommendations });
   const insights = generateInsights({ ...draft, recommendations, riskProfile });
@@ -144,7 +161,7 @@ export async function buildWealthContextForUser(userId: number): Promise<WealthC
     riskProfile,
     insights,
   });
-  const alerts = [...storedAlerts.map(normalizeStoredAlert), ...generatedAlerts];
+  const alerts = [...storedAlerts, ...generatedAlerts];
 
   return {
     ...draft,

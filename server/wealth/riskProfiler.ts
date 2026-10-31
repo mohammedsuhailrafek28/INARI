@@ -1,3 +1,4 @@
+import { isKnown } from "./known";
 import type { WealthContextDraft, WealthRiskProfile } from "./types";
 
 export function calculateGoalPressure(context: Pick<WealthContextDraft, "goals" | "monthlySurplus">) {
@@ -29,7 +30,7 @@ export function profileWealthRisk(context: WealthContextDraft): WealthRiskProfil
   if (context.monthlySurplus <= 0) constraints.push("Monthly surplus is limited or negative.");
   if (goalPressure > 50) constraints.push("Goal contributions may consume a large share of surplus.");
   if (volatility > 10) constraints.push("Recent unusual expenses increase short-term uncertainty.");
-  if (context.metrics.emergencyFundBalance < context.monthlyExpenses * 3) {
+  if (isKnown(context.metrics, "emergencyFund") && context.metrics.emergencyFundBalance < context.monthlyExpenses * 3) {
     constraints.push("Emergency fund is below three months of expenses.");
   }
 

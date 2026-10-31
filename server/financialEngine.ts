@@ -1,4 +1,5 @@
 import { getDemoProfileById, getTransactionsByProfile } from "./db";
+import { isKnown, type KnownFlags } from "./wealth/known";
 import { generateLegacyRecommendationsFromMetrics } from "./wealth/recommendationEngine";
 
 export interface FinancialMetrics {
@@ -9,6 +10,11 @@ export interface FinancialMetrics {
   emergencyFundBalance: number;
   creditCardDebt: number;
   riskProfile: "conservative" | "moderate" | "aggressive";
+  /**
+   * Which user-supplied balances are actually known. Omitted = all known (legacy demo profiles).
+   * When a flag is false the matching numeric field is a placeholder 0 and MUST NOT be reasoned about.
+   */
+  known?: KnownFlags;
 }
 
 export interface HealthScore {
@@ -18,6 +24,9 @@ export interface HealthScore {
   debtScore: number;
   emergencyFundScore: number;
   category: "poor" | "fair" | "good" | "excellent";
+  /** true when some components were unknown and the score only reflects the known ones */
+  partial?: boolean;
+  unknownComponents?: Array<"investment" | "debt" | "emergencyFund">;
 }
 
 export interface Recommendation {
@@ -38,9 +47,21 @@ export function calculateHealthScore(metrics: FinancialMetrics): HealthScore {
   const monthsOfExpenses = metrics.emergencyFundBalance / Math.max(1, metrics.monthlyExpenses);
   const emergencyFundScore = Math.min(25, Math.max(0, monthsOfExpenses * 4.17));
 
-  const overallScore = Math.round(
-    savingsScore + investmentScore + debtScore + emergencyFundScore
-  );
+  const unknownComponents: NonNullable<HealthScore["unknownComponents"]> = [];
+  if (!isKnown(metrics, "investments")) unknownComponents.push("investment");
+  if (!isKnown(metrics, "creditCardDebt")) unknownComponents.push("debt");
+  if (!isKnown(metrics, "emergencyFund")) unknownComponents.push("emergencyFund");
+  const parts = [
+    savingsScore,
+    ...(isKnown(metrics, "investments") ? [investmentScore] : []),
+    ...(isKnown(metrics, "creditCardDebt") ? [debtScore] : []),
+    ...(isKnown(metrics, "emergencyFund") ? [emergencyFundScore] : []),
+  ];
+  // Unknown components are excluded and the rest rescaled to 0-100, instead of being scored as zero.
+  const overallScore =
+    unknownComponents.length === 0
+      ? Math.round(savingsScore + investmentScore + debtScore + emergencyFundScore)
+      : Math.round((parts.reduce((a, b) => a + b, 0) / (parts.length * 25)) * 100);
 
   let category: HealthScore["category"];
   if (overallScore >= 80) category = "excellent";
@@ -55,6 +76,7 @@ export function calculateHealthScore(metrics: FinancialMetrics): HealthScore {
     debtScore: Math.round(debtScore),
     emergencyFundScore: Math.round(emergencyFundScore),
     category,
+    ...(unknownComponents.length ? { partial: true, unknownComponents } : {}),
   };
 }
 

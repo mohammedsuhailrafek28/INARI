@@ -315,13 +315,13 @@ export default function AvatarAdvisor() {
   const dashboard = dashboardQuery.data;
   const wealthContext = wealthContextQuery.data;
   const healthScore =
-    dashboard?.financialHealth.overallScore ?? wealthContext?.financialHealthScore.overallScore;
+    dashboard?.financialHealth?.overallScore ?? wealthContext?.financialHealthScore.overallScore;
   const savingsRate = dashboard?.savingsRate ?? wealthContext?.savingsRate;
   const monthlySurplus = wealthContext?.monthlySurplus;
   const activeGoals = wealthContext?.goals?.length ?? 0;
   const riskProfile = wealthContext?.riskProfile?.profile ?? dashboard?.profile.riskProfile;
   const emergencyCoverageMonths =
-    dashboard && dashboard.monthlyExpenses > 0
+    dashboard && dashboard.monthlyExpenses && dashboard.monthlyExpenses > 0 && dashboard.emergencyFundBalance !== null
       ? Math.round((dashboard.emergencyFundBalance / dashboard.monthlyExpenses) * 10) / 10
       : null;
   const firstName = (profileLabel ?? dashboard?.profile.name ?? "there").split(" ")[0];

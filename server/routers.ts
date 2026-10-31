@@ -1,4 +1,7 @@
 import { z } from "zod";
+import { ownerKeyOf } from "./inari/owner";
+import { importedAlertRows, importedDashboardSummary, importedMonthSummary, importedRecentTransactions, loadImportedModel } from "./inari/importedModel";
+import { isImportedMode } from "./inari/service";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
@@ -139,6 +142,11 @@ export const appRouter = router({
   // ============ Dashboard ============
   dashboard: router({
     getSummary: protectedProcedure.query(async ({ ctx }) => {
+      const imported = await loadImportedModel(ownerKeyOf(ctx));
+      if (imported) {
+        const recs = imported.metrics ? generateRecommendations(imported.metrics) : [];
+        return importedDashboardSummary(imported, recs);
+      }
       const demoProfileId = await getOrCreateActiveDemoProfileId(ctx.user.id);
       if (!demoProfileId) return null;
       const profile = await getDemoProfileById(demoProfileId);
@@ -192,6 +200,8 @@ export const appRouter = router({
   // ============ Spending Insights ============
   spending: router({
     getBreakdown: protectedProcedure.query(async ({ ctx }) => {
+      const imported = await loadImportedModel(ownerKeyOf(ctx));
+      if (imported) return imported.spendingBreakdown;
       const demoProfileId = await getOrCreateActiveDemoProfileId(ctx.user.id);
       if (!demoProfileId) return {};
 
@@ -200,6 +210,10 @@ export const appRouter = router({
     }),
 
     getUnusual: protectedProcedure.query(async ({ ctx }) => {
+      const imported = await loadImportedModel(ownerKeyOf(ctx));
+      if (imported) {
+        return imported.unusualExpenses.map((u) => ({ date: u.date, category: u.category, amount: u.amount, description: u.description }));
+      }
       const demoProfileId = await getOrCreateActiveDemoProfileId(ctx.user.id);
       if (!demoProfileId) return [];
 
@@ -213,6 +227,8 @@ export const appRouter = router({
     }),
 
     getOpportunities: protectedProcedure.query(async ({ ctx }) => {
+      const imported = await loadImportedModel(ownerKeyOf(ctx));
+      if (imported) return imported.opportunities;
       const demoProfileId = await getOrCreateActiveDemoProfileId(ctx.user.id);
       if (!demoProfileId) return [];
 
@@ -223,6 +239,8 @@ export const appRouter = router({
   // ============ Goals ============
   goals: router({
     list: protectedProcedure.query(async ({ ctx }) => {
+      // Imported mode has no persona goals; user-defined goals arrive with inari.getGoals.
+      if (await isImportedMode(ownerKeyOf(ctx))) return [];
       const demoProfileId = await getOrCreateActiveDemoProfileId(ctx.user.id);
       if (!demoProfileId) return [];
 
@@ -244,10 +262,11 @@ export const appRouter = router({
   // ============ Recommendations ============
   recommendations: router({
     list: protectedProcedure.query(async ({ ctx }) => {
-      const demoProfileId = await getOrCreateActiveDemoProfileId(ctx.user.id);
-      if (!demoProfileId) return [];
+      const imported = await loadImportedModel(ownerKeyOf(ctx));
+      const demoProfileId = imported ? null : await getOrCreateActiveDemoProfileId(ctx.user.id);
+      if (!imported && !demoProfileId) return [];
 
-      const metrics = await getProfileMetrics(demoProfileId);
+      const metrics = imported ? imported.metrics : await getProfileMetrics(demoProfileId!);
       if (!metrics) return [];
 
       const recs = generateRecommendations(metrics);
@@ -265,7 +284,7 @@ export const appRouter = router({
   // ============ Wealth Intelligence Layer ============
   wealth: router({
     getContext: protectedProcedure.query(async ({ ctx }) => {
-      const wealthContext = await buildWealthContextForUser(ctx.user.id);
+      const wealthContext = await buildWealthContextForUser(ctx.user.id, ownerKeyOf(ctx));
       if (wealthContext) {
         await publishWealthContextEvents(ctx.user.id, wealthContext);
       }
@@ -273,12 +292,12 @@ export const appRouter = router({
     }),
 
     getInsights: protectedProcedure.query(async ({ ctx }) => {
-      const wealthContext = await buildWealthContextForUser(ctx.user.id);
+      const wealthContext = await buildWealthContextForUser(ctx.user.id, ownerKeyOf(ctx));
       return wealthContext?.insights ?? [];
     }),
 
     getRiskProfile: protectedProcedure.query(async ({ ctx }) => {
-      const wealthContext = await buildWealthContextForUser(ctx.user.id);
+      const wealthContext = await buildWealthContextForUser(ctx.user.id, ownerKeyOf(ctx));
       return wealthContext?.riskProfile ?? null;
     }),
 
@@ -346,7 +365,7 @@ export const appRouter = router({
     analyzeQuestion: protectedProcedure
       .input(z.object({ question: z.string().trim().min(1).max(600) }))
       .query(async ({ input, ctx }) => {
-        const wealthContext = await buildWealthContextForUser(ctx.user.id);
+        const wealthContext = await buildWealthContextForUser(ctx.user.id, ownerKeyOf(ctx));
         const advisorSession = wealthContext
           ? await buildAdvisorSessionContext(ctx.user.id, wealthContext)
           : undefined;
@@ -355,7 +374,7 @@ export const appRouter = router({
 
     getPredictions: protectedProcedure.query(async ({ ctx }) => {
       return measureAsync("wealth.getPredictions", "route", ctx.user.id, async () => {
-        const wealthContext = await buildWealthContextForUser(ctx.user.id);
+        const wealthContext = await buildWealthContextForUser(ctx.user.id, ownerKeyOf(ctx));
         if (!wealthContext) return null;
         const advisorSession = await buildAdvisorSessionContext(ctx.user.id, wealthContext);
         const bundle = buildPredictionBundle(wealthContext, advisorSession);
@@ -366,7 +385,7 @@ export const appRouter = router({
 
     getMonthlyOutlook: protectedProcedure.query(async ({ ctx }) => {
       return measureAsync("wealth.getMonthlyOutlook", "route", ctx.user.id, async () => {
-        const wealthContext = await buildWealthContextForUser(ctx.user.id);
+        const wealthContext = await buildWealthContextForUser(ctx.user.id, ownerKeyOf(ctx));
         if (!wealthContext) return null;
         const advisorSession = await buildAdvisorSessionContext(ctx.user.id, wealthContext);
         const bundle = buildPredictionBundle(wealthContext, advisorSession);
@@ -484,14 +503,14 @@ export const appRouter = router({
       .mutation(async ({ input, ctx }) => {
         return measureAsync("wealth.askAdvisor", "advisor", ctx.user.id, async () => {
           await publishEventSafely(createAdvisorQuestionAskedEvent(ctx.user.id, input.question, "avatar"));
-          const wealthContext = await buildWealthContextForUser(ctx.user.id);
+          const wealthContext = await buildWealthContextForUser(ctx.user.id, ownerKeyOf(ctx));
           if (!wealthContext) {
             return {
               answer:
-                "I cannot answer yet because no active demo profile is available. Select or seed a demo profile first.",
-              summary: "No active WealthContext is available.",
-              keyInsights: ["No active WealthContext was found."],
-              suggestedNextActions: ["Select a demo profile and try the question again."],
+                "I cannot answer with numbers yet: there is no financial data to work from. Import a bank statement that covers at least one full month, or switch to the demo data.",
+              summary: "No financial context is available yet.",
+              keyInsights: ["No complete month of imported data was found."],
+              suggestedNextActions: ["Import a statement covering a full month, then ask again."],
               followUpQuestions: ["How can I improve my score?"],
               relatedMetrics: [],
               confidenceLevel: "low" as const,
@@ -531,14 +550,14 @@ export const appRouter = router({
       .mutation(async ({ input, ctx }) => {
         return measureAsync("advisor.ask", "advisor", ctx.user.id, async () => {
           await publishEventSafely(createAdvisorQuestionAskedEvent(ctx.user.id, input.question, "avatar"));
-          const wealthContext = await buildWealthContextForUser(ctx.user.id);
+          const wealthContext = await buildWealthContextForUser(ctx.user.id, ownerKeyOf(ctx));
           if (!wealthContext) {
             return {
               answer:
-                "I cannot answer yet because no active demo profile is available. Select or seed a demo profile first.",
-              summary: "No active WealthContext is available.",
-              keyInsights: ["No active WealthContext was found."],
-              suggestedNextActions: ["Select a demo profile and try the question again."],
+                "I cannot answer with numbers yet: there is no financial data to work from. Import a bank statement that covers at least one full month, or switch to the demo data.",
+              summary: "No financial context is available yet.",
+              keyInsights: ["No complete month of imported data was found."],
+              suggestedNextActions: ["Import a statement covering a full month, then ask again."],
               followUpQuestions: ["How can I improve my score?"],
               relatedMetrics: [],
               confidenceLevel: "low" as const,
@@ -565,6 +584,10 @@ export const appRouter = router({
   // ============ Alerts ============
   alerts: router({
     list: protectedProcedure.query(async ({ ctx }) => {
+      if (await isImportedMode(ownerKeyOf(ctx))) {
+        const context = await buildWealthContextForUser(ctx.user.id, ownerKeyOf(ctx));
+        return importedAlertRows(context?.alerts ?? []);
+      }
       const demoProfileId = await getOrCreateActiveDemoProfileId(ctx.user.id);
       if (!demoProfileId) return [];
 
@@ -584,6 +607,8 @@ export const appRouter = router({
   // ============ Transactions ============
   transactions: router({
     recent: protectedProcedure.query(async ({ ctx }) => {
+      const imported = await loadImportedModel(ownerKeyOf(ctx));
+      if (imported) return importedRecentTransactions(imported, 50);
       const demoProfileId = await getOrCreateActiveDemoProfileId(ctx.user.id);
       if (!demoProfileId) return [];
 
@@ -599,6 +624,8 @@ export const appRouter = router({
     }),
 
     summary: protectedProcedure.query(async ({ ctx }) => {
+      const imported = await loadImportedModel(ownerKeyOf(ctx));
+      if (imported) return importedMonthSummary(imported);
       const demoProfileId = await getOrCreateActiveDemoProfileId(ctx.user.id);
       if (!demoProfileId) return { income: 0, expenses: 0, investments: 0 };
 
