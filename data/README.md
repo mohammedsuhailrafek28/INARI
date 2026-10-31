@@ -12,6 +12,8 @@ Everything here is **synthetic or redacted**. No real personal banking data, cre
 ## `demo/` — fictional salaried profile (seed `20261031`)
 
 Regenerate: `python -I data/generator/generate_synthetic_profile.py --out data/demo`
+
+Identifiers: merchant UPI IDs are fictional. Numeric ones use the prefix `demoqr` (for example `demoqr7123498765@paytm`) so no value is shaped like a real mobile number; a test (`inari.dataset.test.ts`) enforces this. Changing the prefix does not change any amount, date, category or count.
 Check reproducibility: `python -I data/generator/check_determinism.py` (regenerates twice, compares to `MANIFEST.sha256`).
 
 - 494 transactions, 1 Apr – 28 Sep 2026, one fictional account. Fixed monthly salary (₹85,000), rent (₹18,000), 5 subscriptions, SIP (₹5,000, investment), RD instalment (₹3,000, savings goal), utilities, insurance, a monthly credit-card repayment, and ~26–32 UPI micro-payments a month. Scripted events: one large purchase (₹18,000, Jul), one refund (Aug), two self-transfers, quarterly interest.

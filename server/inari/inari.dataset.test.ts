@@ -46,3 +46,23 @@ describe("synthetic SMS matching examples", () => {
     expect(examples.find((e: any) => e.expected === "possible_match_needs_review")).toBeTruthy();
   });
 });
+
+describe("synthetic demo data is not shaped like real people's identifiers", () => {
+  const demoDir = path.resolve(__dirname, "../../data/demo");
+  const files = ["fixture_bank_statement.csv", "fixture_debit_credit.csv", "fixture_signed_amount.csv", "labels.csv", "expected.json", "sms_matching_examples.json"];
+
+  it("contains no standalone 10-digit mobile-shaped numbers, and no 12-digit Aadhaar-shaped groups", () => {
+    for (const f of files) {
+      const text = readFileSync(path.join(demoDir, f), "utf8");
+      expect(text.match(/(?<![0-9A-Za-z])[6-9][0-9]{9}(?![0-9])/g) ?? [], f).toEqual([]);
+      expect(text.match(/\b[0-9]{4} [0-9]{4} [0-9]{4}\b/g) ?? [], f).toEqual([]);
+    }
+  });
+
+  it("numeric-looking merchant IDs carry the clearly synthetic prefix", () => {
+    const text = readFileSync(path.join(demoDir, "labels.csv"), "utf8");
+    const ids = text.match(/[A-Za-z0-9]+@paytm/g) ?? [];
+    expect(ids.length).toBeGreaterThan(100);
+    for (const id of ids.filter(i => /[0-9]{6}/.test(i))) expect(id.startsWith("demoqr")).toBe(true);
+  });
+});
