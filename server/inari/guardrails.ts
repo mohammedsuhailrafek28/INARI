@@ -16,7 +16,8 @@ const PROHIBITED: Array<{ re: RegExp; reason: string }> = [
     re: /\b(?:buy|sell|invest(?:ing)? in|put (?:your )?money (?:in|into)|switch to|start investing in|go for)\b[^.]{0,50}\b(?:stocks?|shares?|mutual funds?|index funds?|etfs?|crypto(?:currency)?|bitcoin|ipo|nifty|sensex|gold|fds?|fixed deposits?|bonds?|ulips?|nps|ppf|elss|sip in)\b/i,
     reason: "Specific investment recommendations are not allowed.",
   },
-  { re: /\b(?:will|would|can|could|should) (?:earn|return|yield|grow to|make you|give you)\b[^.]{0,40}(?:\d|₹|rs\b)/i, reason: "Return projections are not allowed." },
+  // third-person/product projections only: "I will earn 20k less" is the user describing their own income
+  { re: /(?<!\b(?:i|we|my salary|my income) )\b(?:will|would|can|could|should) (?:earn|return|yield|grow to|make you|give you)\b[^.]{0,40}(?:\d|₹|rs\b)/i, reason: "Return projections are not allowed." },
   { re: /\b\d+(?:\.\d+)?\s*%\s*(?:returns?|p\.?a\.?|per annum|annual(?:ly)?|interest|yield|cagr|growth)\b/i, reason: "Return or interest-rate figures are not allowed." },
 ];
 

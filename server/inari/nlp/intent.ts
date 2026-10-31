@@ -19,7 +19,7 @@ const UNITS: Record<string, number> = {
 const MULT: Record<string, number> = { hundred: 100, thousand: 1e3, lakh: 1e5, lakhs: 1e5, lac: 1e5, lacs: 1e5, crore: 1e7, crores: 1e7, k: 1e3 };
 const NUM_WORD = new RegExp(`\\b(?:(?:${[...Object.keys(UNITS), ...Object.keys(MULT).filter(k => k !== "k")].join("|")})(?:[\\s-]+(?:and[\\s-]+)?)?)+\\b`, "g");
 
-function wordsToDigits(text: string): string {
+export function wordsToDigits(text: string): string {
   return text.replace(NUM_WORD, (match, offset: number, whole: string) => {
     const words = match.split(/[\s-]+/).filter(w => w && w !== "and");
     // "1.5 lakh": a bare multiplier right after a digit is the unit of that number, not a number word
@@ -109,7 +109,7 @@ const MERCHANTS = ["swiggy", "zomato", "amazon", "flipkart", "netflix", "spotify
 const cap = (s: string) => s[0].toUpperCase() + s.slice(1);
 
 const UNSAFE = /\b(guarantee[ds]?|guaranteed returns?|sure shot|insider|which stocks? (?:should|to) (?:i )?buy|best stocks?|stock tips?|crypto tips?|double my money|get rich quick|evade tax|avoid tax illegally|launder|hack|bypass|fake (?:statement|payslip)|send money|transfer money|pay (?:my|the) (?:bill|rent)|place (?:an )?order)\b/;
-const WHAT_IF = /\b(what if|what would happen|what happens if|suppose|supposing|how much (?:would|could|can) i save|if i (?:cut|reduce|stop|cancel|skip|lower|trim|limit|get|start|pay|buy|lose|spend|invest|earn)|if my (?:salary|income)|can i afford)\b/;
+const WHAT_IF = /\b(what if|what would happen|what happens if|suppose|supposing|how much (?:would|could|can) i save|if i (?:cut|reduce|stop|cancel|skip|lower|trim|limit|get|start|pay|buy|lose|spend|invest|earn)|if my (?:salary|income)|can i afford|i(?:'ll| will| would) (?:earn|make|get|lose)\b[^.?]*\b(?:less|more)|(?:earn|make)s? [\d.,]+ ?k? (?:less|more))\b/;
 const CORRECTION = /\b(recategori[sz]e|re-categori[sz]e|that(?:'s| is| was) (?:not|actually|wrong)|this(?:'s| is| was) (?:not|actually|wrong)|move (?:it|this|that) to|mark (?:it|this|that) as|should be (?:under|in|a)?|wrongly categori[sz]ed|wrong category)\b/;
 const SUBS = /\b(subscriptions?|recurring|autopay|auto-pay|mandates?|renewals?)\b/;
 const REVIEW = /\b(monthly (?:review|report|summary)|month in review|how (?:was|did) (?:last|this) month|review (?:my )?(?:last |this )?month)\b/;
@@ -117,6 +117,10 @@ const GOAL = /\b(goals?|saving for|on track|target)\b/;
 const SPEND_Q = /\b(how much (?:did|have|do) i (?:spend|spent)|what did i spend|spent on|biggest expenses?|top spending|where (?:does|did) my money go|total spend)\b/;
 const EXPLAIN = /\b(why (?:is|are|did|was)|what(?:'s| is) (?:in|behind)|explain)\b/;
 const FOLLOWUP = /^(?:and |what about |how about |make it |same for |and for |instead |no )/;
+
+const SIP_VALUE_MSG =
+  "I can show how a monthly SIP changes your cash flow, but I cannot project what it will be worth later: that needs an expected rate of return, which I do not assume or invent. Ask what a SIP of that amount does to your monthly surplus, or use a calculator with a rate you choose.";
+const SIP_VALUE_Q = /\b(\d+ years?|years?|decades?|corpus|worth|grow|growth|returns?|future value|maturity|mature|end up with|will i have|be valued)\b/;
 
 const MONTHS = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
 
@@ -214,6 +218,10 @@ export function analyzeIntentText(rawText: string, previous?: Previous): IntentA
       : done("category_correction", 0.5, { needsClarification: true, clarificationQuestion: "Which category should it be moved to?", requiresConfirmation: true });
   }
 
+  // "what will my SIP be worth": a return projection needs a rate the user has not given; never invent one or report "no change"
+  if (/\b(sip|mutual funds?)\b/.test(t) && SIP_VALUE_Q.test(t) && !/\b(cash ?flow|surplus|afford)\b/.test(t))
+    return done("what_if", 0.7, { needsClarification: true, clarificationQuestion: SIP_VALUE_MSG });
+
   if (WHAT_IF.test(t)) return whatIf(t, { done, category, amount, percent, quantities, found, ambiguities });
 
   if (REVIEW.test(t)) return done("monthly_review", 0.85);
@@ -266,6 +274,9 @@ function whatIf(t: string, a: WhatIfArgs): IntentAnalysis {
 
   // SIP / investing
   if (/\b(sip|invest(?:ing)?|mutual funds?)\b/.test(t) && /\b(start|begin|put|invest|sip)\b/.test(t)) {
+    if (/\b(\d+ years?|years?|decades?|corpus|worth|grow|growth|returns?|future value|maturity|mature|end up with|will i have|be valued)\b/.test(t) && !/\b(cash ?flow|surplus|afford)\b/.test(t)) {
+      return ask(SIP_VALUE_MSG);
+    }
     if (amount === null) return ask("How much per month would you invest?");
     return done("what_if", 0.85, { scenario: { type: "start_sip", amountPerMonth: amount } });
   }

@@ -72,7 +72,7 @@ export function buildMonthlyReport(input: ReportInput): MonthlyReport {
   const nowYm = now.toISOString().slice(0, 7);
   if (month > nowYm) return emptyReport(month, now, "imported", { code: "future_month", message: "This month has not started yet." });
 
-  const monthsAll = computeMonthTotals(input.transactions, batches);
+  const monthsAll = computeMonthTotals(input.transactions, batches, profile?.claims);
   const cur = monthsAll.find(m => m.month === month);
   if (!cur) return emptyReport(month, now, "imported", { code: "no_data_for_month", message: `No imported transactions fall in ${monthName(month)}.` });
 
@@ -108,7 +108,7 @@ export function buildMonthlyReport(input: ReportInput): MonthlyReport {
   if (!prevOk) dataQuality.push({ code: "no_previous_month", severity: "info", message: prev ? `${monthName(prevYm)} is only partly covered, so no month-on-month comparison is shown.` : "No earlier month is available, so no month-on-month comparison is shown." });
 
   // ---- categories ----
-  const categories = breakdownForMonth(live, batches, month).map(c => (prevOk ? c : { ...c, previousMonthAmount: null, changePercent: null }));
+  const categories = breakdownForMonth(live, batches, month, profile?.claims).map(c => (prevOk ? c : { ...c, previousMonthAmount: null, changePercent: null }));
   const monthByCategory = (c: Category) => monthTx.filter(t => t.category === c && t.direction === "debit").sort((a, b) => b.amountPaise - a.amountPaise);
 
   // ---- top merchants ----
@@ -342,7 +342,7 @@ export async function monthlyReportFor(userKey: string, month: string, now: Date
 export async function reportMonthsFor(userKey: string): Promise<string[]> {
   if (!(await isImportedMode(userKey))) return [];
   const repo = getLedgerRepository();
-  const [transactions, batches] = await Promise.all([repo.listTransactions(userKey), repo.listBatches(userKey)]);
-  return computeMonthTotals(transactions, batches).map((m: MonthTotals) => m.month).sort().reverse();
+  const [transactions, batches, profile] = await Promise.all([repo.listTransactions(userKey), repo.listBatches(userKey), repo.getProfile(userKey)]);
+  return computeMonthTotals(transactions, batches, profile?.claims).map((m: MonthTotals) => m.month).sort().reverse();
 }
 

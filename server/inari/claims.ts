@@ -11,6 +11,7 @@
 import { randomUUID } from "node:crypto";
 import type { Claim, ClaimsOutput, CreateClaimInput } from "../../shared/inari/contracts";
 import { InariError } from "./errors";
+import { settledByClaimsPaise } from "./snapshot";
 import { getLedgerRepository } from "./ledger";
 import type { StoredClaim, StoredProfile } from "./ledger/types";
 import type { LedgerTransaction } from "../../shared/inari/contracts";
@@ -95,10 +96,12 @@ export async function listClaimsFor(userKey: string, kind?: Claim["kind"], now =
       outstandingReimbursementPaise: reimb.reduce((s, c) => s + c.outstandingAmountPaise, 0),
       grossReimbursableSpendPaise: reimb.reduce((s, c) => s + (c.original?.amountPaise ?? 0), 0),
       personalShareOfReimbursablePaise: reimb.reduce((s, c) => s + (c.personalSharePaise ?? 0), 0),
+      confirmedRefundSettlementsPaise: settledByClaimsPaise(claims).refund,
+      confirmedReimbursementSettlementsPaise: settledByClaimsPaise(claims).reimbursement,
     },
     notes: [
       "Expected refunds and reimbursements are not cash: they are counted as received only after you confirm a matching credit.",
-      "Your imported totals still show gross cash flow; personal share shows what the reimbursable payments cost you after others pay.",
+      "Once you confirm a settlement, monthly totals net it against the payment it repays (it is not counted as income). Your transaction list still shows every payment and credit at full value, which is your gross cash flow.",
     ],
   };
 }

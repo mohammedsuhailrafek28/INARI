@@ -547,6 +547,8 @@ export const ClaimsOutput = z.object({
   summary: z.object({
     pendingRefundPaise: z.number().int(), overdueRefundCount: z.number().int(),
     outstandingReimbursementPaise: z.number().int(), grossReimbursableSpendPaise: z.number().int(), personalShareOfReimbursablePaise: z.number().int(),
+    /** Additive. Confirmed settlements, which monthly totals net against the linked payments instead of counting as income. */
+    confirmedRefundSettlementsPaise: z.number().int().optional(), confirmedReimbursementSettlementsPaise: z.number().int().optional(),
   }),
   notes: z.array(z.string()),
 });

@@ -13,7 +13,7 @@
  *  - Balances (emergency fund, investments, card debt) are never inferred; they come from the user or stay null.
  */
 import type { Category, LedgerTransaction, Snapshot } from "../../shared/inari/contracts";
-import type { StoredBatch, StoredProfile } from "./ledger/types";
+import type { StoredClaim, StoredBatch, StoredProfile } from "./ledger/types";
 import { assumptionNotes, reconciliationNotes } from "./reconcile";
 
 export const EDGE_TOLERANCE_DAYS = 5;
@@ -61,10 +61,61 @@ export function isExpenseCategory(category: Category) {
   return !NEUTRAL_CATEGORIES.has(category) && !INCOME_CATEGORIES.has(category);
 }
 
-export function computeMonthTotals(transactions: LedgerTransaction[], batches: StoredBatch[]): MonthTotals[] {
+
+/**
+ * Accounting for confirmed refund / reimbursement settlements (a user-confirmed link between a credit and a claim).
+ *  - The ledger row is never changed; this only decides how the credit counts in monthly totals.
+ *  - The settled part of a credit is treated as a REDUCTION of the linked payment's expense (same as a refund netted
+ *    in the month it arrives), not as income. The part of the credit that is not allocated keeps its own category.
+ *  - Gross cash movement is untouched (listTransactions still shows every row at full value).
+ *  - Expected, unconfirmed and cancelled claims have no effect.
+ * Returns the rows to total. `counted` is false for extra pieces so row counts stay those of the ledger.
+ */
+export type AccountingRow = { t: LedgerTransaction; counted: boolean };
+export function accountingRows(transactions: LedgerTransaction[], claims?: StoredClaim[] | null): AccountingRow[] {
+  const active = (claims ?? []).filter(c => !c.cancelled && c.settlements.length > 0);
+  if (active.length === 0) return transactions.map(t => ({ t, counted: true }));
+  const byId = new Map(transactions.map(t => [t.id, t] as const));
+  const pieces = new Map<string, Array<{ amountPaise: number; debit: LedgerTransaction }>>();
+  for (const c of active) {
+    const debit = byId.get(c.transactionId);
+    if (!debit) continue; // linked payment excluded or gone: nothing to offset
+    for (const s of c.settlements) {
+      if (!byId.has(s.creditTransactionId)) continue;
+      pieces.set(s.creditTransactionId, [...(pieces.get(s.creditTransactionId) ?? []), { amountPaise: s.amountPaise, debit }]);
+    }
+  }
+  const out: AccountingRow[] = [];
+  for (const t of transactions) {
+    const ps = pieces.get(t.id);
+    if (!ps || t.direction !== "credit") { out.push({ t, counted: true }); continue; }
+    let rest = t.amountPaise;
+    let first = true;
+    ps.forEach((p, i) => {
+      const a = Math.min(p.amountPaise, rest);
+      if (a <= 0) return;
+      rest -= a;
+      out.push({
+        t: { ...t, id: `${t.id}~settled${i}`, amountPaise: a, amount: a / 100, category: p.debit.category, isTransfer: p.debit.isTransfer },
+        counted: first,
+      });
+      first = false;
+    });
+    if (rest > 0) out.push({ t: { ...t, amountPaise: rest, amount: rest / 100 }, counted: first });
+  }
+  return out;
+}
+
+export function settledByClaimsPaise(claims?: StoredClaim[] | null): { refund: number; reimbursement: number } {
+  const sum = { refund: 0, reimbursement: 0 };
+  for (const c of claims ?? []) if (!c.cancelled) sum[c.kind] += c.settlements.reduce((a, s) => a + s.amountPaise, 0);
+  return sum;
+}
+
+export function computeMonthTotals(transactions: LedgerTransaction[], batches: StoredBatch[], claims?: StoredClaim[] | null): MonthTotals[] {
   const coverage = mergeCoverage(batches);
   const months = new Map<string, MonthTotals>();
-  for (const t of transactions) {
+  for (const { t, counted } of accountingRows(transactions, claims)) {
     if (isExcluded(t)) continue;
     const ym = toYm(t.postedOn);
     let m = months.get(ym);
@@ -72,9 +123,9 @@ export function computeMonthTotals(transactions: LedgerTransaction[], batches: S
       m = { month: ym, complete: false, incomePaise: 0, expensePaise: 0, transactionCount: 0, byCategory: new Map() };
       months.set(ym, m);
     }
-    m.transactionCount++;
+    if (counted) m.transactionCount++;
     const cat = m.byCategory.get(t.category) ?? { debitPaise: 0, creditPaise: 0, count: 0 };
-    cat.count++;
+    if (counted) cat.count++;
     if (t.direction === "debit") cat.debitPaise += t.amountPaise;
     else cat.creditPaise += t.amountPaise;
     m.byCategory.set(t.category, cat);
@@ -111,7 +162,7 @@ export function deriveFinancialSnapshot(args: {
   const firstDate = dates[0] ?? null;
   const lastDate = dates[dates.length - 1] ?? null;
 
-  const months = computeMonthTotals(transactions, batches);
+  const months = computeMonthTotals(transactions, batches, profile?.claims);
   const complete = months.filter(m => m.complete);
   const used = complete.slice(-MAX_AVERAGING_MONTHS);
 
@@ -163,6 +214,15 @@ export function deriveFinancialSnapshot(args: {
   const interiorGaps = findEmptyInteriorMonths(months);
   if (interiorGaps.length > 0) {
     dataQuality.push({ code: "gap_months", severity: "warning", message: `No transactions in: ${interiorGaps.join(", ")}.` });
+  }
+  const settled = settledByClaimsPaise(profile?.claims);
+  if (settled.refund + settled.reimbursement > 0) {
+    const r = (p: number) => `₹${(p / 100).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
+    dataQuality.push({
+      code: "claims_netted",
+      severity: "info",
+      message: `Confirmed settlements are netted against the payments they repay, not counted as income: refunds ${r(settled.refund)}, reimbursements ${r(settled.reimbursement)}. Your transaction list still shows every row at full value.`,
+    });
   }
   const dups = transactions.filter(t => t.possibleDuplicateOf && !t.reconciliation);
   if (dups.length > 0) {

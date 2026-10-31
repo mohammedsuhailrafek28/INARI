@@ -10,7 +10,7 @@ import { parseSmsImport } from "./ingestion/sms";
 import { parsePdfStatement } from "./ingestion/pdfImport";
 import { detectSubscriptions, isActiveSubscription } from "./recurring";
 import { getLedgerRepository } from "./ledger";
-import type { CorrectionAudit, StoredBatch, StoredProfile, StoredLearnedRule } from "./ledger/types";
+import type { CorrectionAudit, StoredBatch, StoredClaim, StoredProfile, StoredLearnedRule } from "./ledger/types";
 import { isExcluded, isExpenseCategory, computeMonthTotals, deriveFinancialSnapshot, emptySnapshot } from "./snapshot";
 
 export const IMPORT_LIMITS = { maxCsvBytes: 5_000_000, maxRows: 20_000 } as const;
@@ -387,8 +387,8 @@ export async function isImportedMode(userKey: string): Promise<boolean> {
 
 /* ---------- categories: breakdown, corrections, learned rules ---------- */
 
-export function breakdownForMonth(transactions: LedgerTransaction[], batches: StoredBatch[], month: string): CategoryBreakdownItem[] {
-  const totals = computeMonthTotals(transactions, batches);
+export function breakdownForMonth(transactions: LedgerTransaction[], batches: StoredBatch[], month: string, claims?: StoredClaim[] | null): CategoryBreakdownItem[] {
+  const totals = computeMonthTotals(transactions, batches, claims);
   const cur = totals.find(m => m.month === month);
   if (!cur) return [];
   const [y, m] = month.split("-").map(Number);
@@ -418,8 +418,8 @@ export function breakdownForMonth(transactions: LedgerTransaction[], batches: St
 
 export async function getBreakdown(userKey: string, month: string) {
   const repo = getLedgerRepository();
-  const [transactions, batches] = await Promise.all([repo.listTransactions(userKey), repo.listBatches(userKey)]);
-  return breakdownForMonth(transactions, batches, month);
+  const [transactions, batches, profile] = await Promise.all([repo.listTransactions(userKey), repo.listBatches(userKey), repo.getProfile(userKey)]);
+  return breakdownForMonth(transactions, batches, month, profile?.claims);
 }
 
 export async function correctCategory(userKey: string, input: { transactionId: string; category: Category; applyToMerchant: boolean }) {

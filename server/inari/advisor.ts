@@ -12,7 +12,7 @@ import { CARD_REPAYMENT } from "./categorize";
 import { guardText, isProhibitedAdviceRequest, type GuardrailStatus } from "./guardrails";
 import { loadImportedModel, type ImportedModel } from "./importedModel";
 import { getLedgerRepository } from "./ledger";
-import { analyzeIntentText } from "./nlp/intent";
+import { analyzeIntentText, wordsToDigits } from "./nlp/intent";
 import { monthlyReportFor } from "./report";
 import { detectSubscriptions, isActiveSubscription } from "./recurring";
 import { runSimulation } from "./simulate";
@@ -83,6 +83,7 @@ type World = {
   all: LedgerTransaction[];
   live: LedgerTransaction[];
   batches: Parameters<typeof breakdownForMonth>[1];
+  claims: Parameters<typeof breakdownForMonth>[3];
   now: Date;
   nowYm: string;
   ownerKey: string;
@@ -213,7 +214,7 @@ function spending(w: World, intent: IntentAnalysis, previous: AdvisorContext | u
     return finishSpending(d, fb, partial, month);
   }
   // whole-month view
-  const items = breakdownForMonth(w.live, w.batches, month);
+  const items = breakdownForMonth(w.live, w.batches, month, w.claims);
   const total = entry.expensePaise / 100;
   const top = items.slice(0, 3);
   if (wantsTop && top[0]) {
@@ -526,7 +527,9 @@ function noveltyKind(question: string, previous?: AdvisorContext): NoveltyKind |
   if (/\b(emi|no[- ]?cost|instal+ments?|installments?)\b/.test(q) || (previous?.intent === "emi_check" && amounts.length > 0 && !question.trim().endsWith("?"))) return "emi_check";
   if (/\brefunds?\b/.test(q) || /\bi returned\b/.test(q)) return "refund_status";
   if (/\b(owe|owes|owed|reimburse\w*|paid for (my )?(friends?|colleagues?|family))\b/.test(q) || /\b(belongs? to|share of) (my )?friends?\b/.test(q)) return "reimbursement_status";
-  if (/^\s*(i|we)\b/i.test(question) && /\b(spent|paid|bought|gave|received|got|earned)\b/.test(q) && amounts.length > 0 && !question.includes("?")) return "manual_entry";
+  // a first-person statement ("I spent 2500 on groceries yesterday") is a cash entry even without a rupee marker
+  const bareAmountAfterVerb = /\b(?:spent|paid|bought|gave|received|got|earned)\s+\d[\d,]*(?:\.\d{1,2})?(?!\d)(?!\s*(?:months?|days?|%|x\b|times))/.test(wordsToDigits(q).replace(/\s+/g, " "));
+  if (/^\s*(i|we)\b/i.test(question) && /\b(spent|paid|bought|gave|received|got|earned)\b/.test(q) && (amounts.length > 0 || bareAmountAfterVerb) && !question.includes("?")) return "manual_entry";
   return null;
 }
 
@@ -573,7 +576,7 @@ async function noveltyDraft(kind: NoveltyKind, ownerKey: string, question: strin
   }
 
   if (kind === "manual_entry") {
-    const p = await manualEntryPreviewFor(ownerKey, { text: question }, now);
+    const p = await manualEntryPreviewFor(ownerKey, { text: wordsToDigits(question.toLowerCase()).replace(/\s+/g, " ").trim() }, now);
     if (p.needsUserInput.length) {
       d.answer = `I can add that as a manual entry, but I still need ${p.needsUserInput.map(f => (f === "amount" ? "the amount" : "whether it was money spent or received")).join(" and ")}.`;
       d.summary = "Need more detail for the manual entry";
@@ -683,8 +686,8 @@ export async function askAdvisorFor(
     draft = noData(ctx0, false);
   } else {
     const repo = getLedgerRepository();
-    const [all, batches] = await Promise.all([repo.listTransactions(ownerKey), repo.listBatches(ownerKey)]);
-    const w: World = { model, all, live: all.filter(t => !isExcluded(t)), batches, now, nowYm: now.toISOString().slice(0, 7), ownerKey };
+    const [all, batches, profile] = await Promise.all([repo.listTransactions(ownerKey), repo.listBatches(ownerKey), repo.getProfile(ownerKey)]);
+    const w: World = { model, all, live: all.filter(t => !isExcluded(t)), batches, claims: profile?.claims, now, nowYm: now.toISOString().slice(0, 7), ownerKey };
     const q = question.toLowerCase();
     const isFollowUp = !!previous && (intent.intent === "unknown" || intent.intent === "clarification_followup");
     if (model.metrics === null) draft = noData(ctx0, true);

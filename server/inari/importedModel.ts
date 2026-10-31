@@ -46,7 +46,7 @@ export async function loadImportedModel(ownerKey: string): Promise<ImportedModel
 export function buildImportedModel(allTransactions: LedgerTransaction[], batches: StoredBatch[], profile: StoredProfile | null): ImportedModel {
   const snapshot = deriveFinancialSnapshot({ transactions: allTransactions, batches, profile });
   const transactions = allTransactions.filter(t => !isExcluded(t));
-  const months = computeMonthTotals(transactions, batches);
+  const months = computeMonthTotals(transactions, batches, profile?.claims);
   const used = months.filter(m => m.complete).slice(-MAX_AVERAGING_MONTHS);
   const basis = used.length > 0 ? used : months.slice(-1);
 
