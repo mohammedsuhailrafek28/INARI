@@ -125,6 +125,14 @@ const SIP_VALUE_Q = /\b(\d+ years?|years?|decades?|corpus|worth|grow|growth|retu
 const MONTHS = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
 
 function detectPeriod(t: string): IntentAnalysis["period"] {
+  // Self-correction: "last month, I mean in July" -> the month named after the cue wins.
+  const cue = /\b(?:i mean|i meant|actually|no wait|sorry|rather)\b/.exec(t);
+  if (cue) {
+    const after = t.slice(cue.index + cue[0].length);
+    const fixed = new RegExp(`\\b(${MONTHS.join("|")})(?: (\\d{4}))?\\b`).exec(after);
+    if (fixed) return { kind: "month", value: `${fixed[2] ?? new Date().getUTCFullYear()}-${String(MONTHS.indexOf(fixed[1]) + 1).padStart(2, "0")}` };
+  }
+  if (/\b(?:the )?month before(?: that| last)?\b/.test(t)) return { kind: "relative", value: "month_before" };
   const rel = /\b(last|this|next|previous) (month|week|year)\b/.exec(t);
   if (rel) return { kind: "relative", value: `${rel[1] === "previous" ? "last" : rel[1]}_${rel[2]}` };
   const mon = new RegExp(`\\b(${MONTHS.join("|")})(?: (\\d{4}))?\\b`).exec(t);
@@ -230,6 +238,7 @@ export function analyzeIntentText(rawText: string, previous?: Previous): IntentA
   if (EXPLAIN.test(t) && category) return done("category_explanation", 0.75);
   if (GOAL.test(t)) return done("goal_progress", 0.7);
   if (category && /\b(spend|spent|spending)\b/.test(t)) return done("spending_question", 0.65);
+  if ((category || merchant) && /\bhow much\b/.test(t) && !/\b(sav\w*|left|earn\w*|income|surplus)\b/.test(t)) return done("spending_question", 0.6);
   return done("unknown", 0.2);
 }
 

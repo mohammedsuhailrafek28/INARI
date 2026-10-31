@@ -95,6 +95,10 @@ function resolveMonth(w: World, intent: IntentAnalysis, previous?: AdvisorContex
   if (p?.kind === "month") return { month: p.value, note: null };
   if (p?.kind === "relative" && p.value === "last_month") return { month: prevMonth(w.nowYm), note: null };
   if (p?.kind === "relative" && p.value === "this_month") return { month: w.nowYm, note: null };
+  if (p?.kind === "relative" && p.value === "month_before") {
+    const from = previous?.month ?? prevMonth(w.nowYm);
+    return { month: prevMonth(from), note: previous?.month ? null : "No earlier month was in the conversation, so I counted back from last month." };
+  }
   const unsupported = p ? `Only calendar months are supported, so I used your most recent complete month instead of "${p.value.replace(/_/g, " ")}".` : null;
   if (!p && previous?.month) return { month: previous.month, note: null };
   const complete = months.filter(m => m.complete);
@@ -153,6 +157,8 @@ function overview(w: World, fb: FactBook, ctx: AdvisorContext): Draft {
   d.confidence = s.provenance.income === "observed" ? "high" : "medium";
   d.evidence = [{ code: "snapshot", severity: "info", message: `Averaged over ${s.coverage.completeMonths} complete month(s) from ${s.coverage.transactionCount} transactions (${s.coverage.firstDate} to ${s.coverage.lastDate}).` }];
   d.assumptions = ["Income = salary and other income credits. Investments, savings and transfers are not counted as expenses."];
+  const partialMonth = w.model.months.find(m => !m.complete);
+  if (partialMonth) d.assumptions.push(`${monthName(partialMonth.month)} is still in progress or only partly covered, so it is left out of these averages.`);
   d.limitations = w.model.unknownFields.map(f => `${f} was not provided, so it is not included.`);
   d.nextActions = ["Open the monthly report for a month-by-month view."];
   d.followUps = ["Show my report for the latest month", "What if I cut dining by 30%?"];
@@ -670,6 +676,22 @@ export async function askAdvisorFor(
       clarificationQuestion: null,
     };
   }
+  // "what about 10k less?" after an income what-if (no category in play): same kind of change, new amount
+  if (previous?.intent === "what_if" && !previous.category && intent.intent === "clarification_followup" && intent.amount !== null && !intent.category) {
+    const q = question.toLowerCase();
+    const down = /\b(less|lower|fewer|drops?|down|decrease|reduced?)\b/.test(q);
+    const up = /\b(more|higher|extra|up|increase|raise)\b/.test(q);
+    if (down !== up) {
+      intent = {
+        ...intent,
+        intent: "what_if",
+        scenario: { type: "change_income", deltaPerMonth: down ? -intent.amount : intent.amount },
+        needsClarification: false,
+        clarificationQuestion: null,
+        ambiguities: [...intent.ambiguities, "Read as the same kind of change as the previous question: your monthly income."],
+      };
+    }
+  }
   const ctx0: AdvisorContext = { intent: intent.intent, amount: intent.amount, category: intent.category, month: previous?.month ?? null, merchant: intent.merchant };
   const fb = new FactBook();
 
@@ -700,7 +722,7 @@ export async function askAdvisorFor(
     else if (intent.intent === "category_correction") draft = correction(w, intent, ctx0);
     else if (intent.intent === "monthly_review" || (/\b(report|review|recap)\b/.test(q) && intent.intent === "unknown")) draft = await monthlyReview(w, intent, fb, ctx0, previous);
     else if (intent.intent === "spending_question" || (isFollowUp && previous?.intent === "spending_question")) draft = spending(w, intent, previous, fb, ctx0, question);
-    else if (/\b(savings rate|income|salary|surplus|how am i doing|overview|financial health|snapshot|how much do i (earn|save))\b/.test(q)) draft = overview(w, fb, ctx0);
+    else if (/\b(savings rate|income|salary|surplus|how am i doing|overview|financial health|snapshot|how much do i (earn|save)|(sav(e|ing|ings)|left over|leftover|surplus)\b.*\b(month|monthly)|monthly (saving|savings|surplus))\b/.test(q)) draft = overview(w, fb, ctx0);
     else draft = unknownTopic(ctx0);
   }
 
