@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import type { InariAdvisorResponse } from "@shared/inari/contracts";
 import { Err, Muted, Note, Panel, btnCls, btnGhostCls, errMsg, fieldCls, inr, inrPaise } from "./kit";
@@ -45,11 +45,17 @@ const WHATIF_CATEGORIES = ["dining", "shopping", "entertainment", "groceries", "
 export function WhatIfPanel() {
   const sim = trpc.inari.simulate.useMutation();
   const goals = trpc.inari.getGoals.useQuery();
-  const [kind, setKind] = useState<"income" | "category" | "oneoff" | "sip" | "debt" | "goal">("income");
+  const subsQ = trpc.inari.listSubscriptions.useQuery();
+  const [kind, setKind] = useState<"income" | "category" | "oneoff" | "sip" | "debt" | "goal" | "cancel">("income");
+  const [subId, setSubId] = useState("");
   const [amount, setAmount] = useState("-10000");
   const [category, setCategory] = useState("dining");
   const [goalId, setGoalId] = useState("");
   const run = () => {
+    if (kind === "cancel") {
+      if (subId) sim.mutate({ scenarios: [{ type: "cancel_subscriptions", subscriptionIds: [subId] }] });
+      return;
+    }
     const n = Number(amount);
     if (!Number.isFinite(n) || n === 0) return;
     const a = Math.abs(n);
@@ -75,7 +81,15 @@ export function WhatIfPanel() {
             <option value="sip">Start a monthly SIP of</option>
             <option value="debt">Pay down card debt by (per month)</option>
             <option value="goal">Change a goal’s monthly saving to</option>
+            <option value="cancel">Cancel a recurring payment (what-if only)</option>
           </select></label>
+        {kind === "cancel" && (
+          <label className="text-sm">Recurring payment
+            <select className={`${fieldCls} block`} value={subId} onChange={e => setSubId(e.target.value)}>
+              <option value="">Choose…</option>
+              {(subsQ.data?.items ?? []).filter(x => x.status !== "dismissed").map(x => <option key={x.id} value={x.id}>{x.merchant}</option>)}
+            </select></label>
+        )}
         {kind === "category" && (
           <label className="text-sm">Category
             <select className={`${fieldCls} block`} value={category} onChange={e => setCategory(e.target.value)}>
@@ -89,8 +103,8 @@ export function WhatIfPanel() {
               {(goals.data?.items ?? []).map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
             </select></label>
         )}
-        <label className="text-sm">₹ {kind === "oneoff" ? "amount" : "per month"}
-          <input className={`${fieldCls} block w-32`} inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} aria-label="Scenario amount in rupees" /></label>
+        {kind !== "cancel" && <label className="text-sm">₹ {kind === "oneoff" ? "amount" : "per month"}
+          <input className={`${fieldCls} block w-32`} inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} aria-label="Scenario amount in rupees" /></label>}
         <button type="button" className={btnCls} onClick={run} disabled={sim.isPending}>{sim.isPending ? "Running…" : "Run scenario"}</button>
       </div>
       <Err msg={sim.error ? errMsg(sim.error) : null} />
@@ -327,6 +341,7 @@ export function ManualEntryPanel() {
   const [amount, setAmount] = useState("");
   const [dir, setDir] = useState<"" | "debit" | "credit">("");
   const [done, setDone] = useState<{ batchId: string; text: string } | null>(null);
+  const committing = useRef(false);
   const p = preview.data;
   const e = p?.entry;
   const ask = () => {
@@ -354,7 +369,7 @@ export function ManualEntryPanel() {
           {p.assumptions.map((a, i) => <Note key={i} tone="warn">{a}</Note>)}
           {p.previewId && p.needsUserInput.length === 0 && (
             <button type="button" className={btnCls} disabled={commit.isPending}
-              onClick={() => commit.mutate({ previewId: p.previewId!, idempotencyKey: `ui-${crypto.randomUUID()}` }, { onSuccess: r => { setDone({ batchId: r.batchId, text: "Entry added to your ledger." }); preview.reset(); setText(""); setAmount(""); utils.invalidate(); } })}>
+              onClick={() => { if (committing.current) return; committing.current = true; commit.mutate({ previewId: p.previewId!, idempotencyKey: `ui-${p.previewId}`.slice(0, 64) }, { onSettled: () => { committing.current = false; }, onSuccess: r => { setDone({ batchId: r.batchId, text: "Entry added to your ledger." }); preview.reset(); setText(""); setAmount(""); utils.invalidate(); } }); }}>
               {commit.isPending ? "Adding…" : "Confirm and add"}
             </button>
           )}

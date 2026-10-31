@@ -10,7 +10,7 @@
  */
 import { createHash } from "node:crypto";
 import type { Category, LedgerTransaction, Subscription } from "../../shared/inari/contracts";
-import { merchantKey } from "./categorize";
+import { CARD_REPAYMENT, merchantKey } from "./categorize";
 
 export type SubscriptionDecision = "confirmed" | "dismissed";
 export type DetectedSubscription = Subscription & { category: Category; monthlyEquivalentPaise: number };
@@ -51,7 +51,7 @@ export function detectSubscriptions(
   transactions: LedgerTransaction[],
   decisions: Readonly<Record<string, SubscriptionDecision>> = {}
 ): DetectedSubscription[] {
-  const spend = transactions.filter(t => t.direction === "debit" && !t.isTransfer && ELIGIBLE.has(t.category));
+  const spend = transactions.filter(t => t.direction === "debit" && !t.isTransfer && ELIGIBLE.has(t.category) && !CARD_REPAYMENT.test(t.narration));
   if (spend.length === 0) return [];
   const asOf = transactions.reduce((max, t) => (t.postedOn > max ? t.postedOn : max), "0000-00-00");
 

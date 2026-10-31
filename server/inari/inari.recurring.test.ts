@@ -47,6 +47,17 @@ describe("recurring detection", () => {
     expect(r.annualTotal).toBe(7788);
   });
 
+  it("a steady monthly credit-card repayment is not a subscription", async () => {
+    await load([
+      ...months.map(m => row(`18/${p2(m)}/2026`, "CREDIT CARD PAYMENT HDFC BANK CARD XX4821", 4500)),
+      ...months.map(m => row(`05/${p2(m)}/2026`, "NETFLIX.COM", 649)),
+      ...months.map(m => row(`01/${p2(m)}/2026`, "NEFT ACME SALARY", undefined, 80000)),
+    ]);
+    const r = await caller().inari.listSubscriptions();
+    expect(r.items.map(i => i.merchant.toLowerCase()).join(" ")).not.toMatch(/hdfc|card/);
+    expect(r.items.some(i => /netflix/i.test(i.merchant))).toBe(true);
+  });
+
   it("does not call rent, salary, one-offs, or irregular spending subscriptions", async () => {
     await load([
       ...months.map(m => row(`02/${p2(m)}/2026`, "UPI/1/Rent to Landlord/rent@bank", 25000)),
