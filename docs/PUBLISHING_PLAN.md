@@ -14,13 +14,13 @@ Status: **plan only. Nothing has been pushed or deployed, and no remote is confi
 ## 2. Pre-publish checklist (all local, no network)
 1. `git grep` for secret patterns across all branches (keys, connection strings, private keys). Last scan: clean.
 2. Confirm `.project-config.json`, `.env*` are ignored and untracked (`.gitignore` covers them; `git ls-files | grep -i config` shows nothing sensitive).
-3. The old project config contains credentials that must be **rotated by the owner before the repository is ever made public**. They were never read, copied or committed here.
+3. The old project config contains credentials that must be **rotated by the owner**; they were never committed, so publication does not expose them. They were never read, copied or committed here.
 4. Data review: only the synthetic generator and fixtures under `data/` are tracked; the downloaded SMS corpus is attributed and licensed in `data/parser-tests/sms/`. No real statements.
 5. Run: `vitest run`, `tsc --noEmit`, `vite build`. All must be green on the exact commit being published.
 6. Check `NOTICE.md` and dataset licences are included.
 
 ## 3. Publishing steps (approval)
-1. Owner creates an **empty private** GitHub repository (private first; make public only after step 3 of the checklist is done and a teammate has reviewed).
+1. Decision recorded: the destination `https://github.com/mohammedsuhailrafek28/INARI` stays **public** (Option B). It already exists and was empty when last checked; do not create another.
 2. `git remote add origin <url>` (approval).
 3. Push `main` and `frontend` unchanged, then `backend`. Never `--force`; never rewrite history.
 4. Protect `main`: require PR review and passing checks. Add a CI job that runs the three checks above and a secret scanner.

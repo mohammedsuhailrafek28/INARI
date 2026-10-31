@@ -5,7 +5,7 @@ Audit date: 2026-10-31. Scope: backend branch `backend` after the goals mileston
 ## 1. Repository facts (verified locally)
 | Item | Result |
 |---|---|
-| Branches | `main` = `frontend` = 28477df (baseline from WealthVerse cd75ef1); `backend` = baseline + 17 commits at audit time, 18 with this milestone's commit (linear, no merges) |
+| Branches | `main` = `frontend` = 28477df (baseline from WealthVerse cd75ef1); `backend` = baseline + 19 commits (linear, no merges; 20 commits in total) |
 | Remote | none configured |
 | Tracked files | 341. Only `.env.example` matches an env/secret filename (placeholders only). `.project-config.json` is git-ignored and untracked. |
 | Secret scan | Across the 20 most recent commits and the working tree: no key, token, connection-string or private-key patterns. No `.env`/config/key file was ever added in any branch's history. |
@@ -112,12 +112,13 @@ pnpm test && pnpm check && pnpm build
 
 **D2 - decision before the first push:** commits carry a personal email. If you want a noreply address on future commits: `git config user.email "<id>+<user>@users.noreply.github.com"`. Existing commits keep the old address unless you rewrite history (not recommended; it needs your explicit approval and we would never force-push a shared branch).
 
-**A1 (approval) - create an empty PRIVATE repository on GitHub** in the UI (no README, no .gitignore, no licence), then:
+**A1 (approval) - add the remote.** The destination repository already exists, is public and was empty when verified. Do not create another.
 ```bash
-git remote add origin <https-or-ssh-url>
-git ls-remote origin
+git remote -v                       # must print nothing (or show only the INARI URL). Never overwrite an existing origin.
+git remote add origin https://github.com/mohammedsuhailrafek28/INARI.git
+git ls-remote origin                # must print nothing
 ```
-`ls-remote` must print nothing for a new repository. If branches already exist (for example the teammate's `frontend`), stop: fetch them and compare before pushing anything.
+If `ls-remote` lists any branch, stop, fetch it and compare before pushing anything.
 
 **A2 (approval) - publish the baseline, then backend. Never use `--force` or `--force-with-lease`.**
 ```bash
@@ -152,3 +153,74 @@ Then open a pull request `integration/ui-on-backend` -> `main` for review. The p
 
 ## 7. Planned, not started
 The four approved novelty features remain planned and were not implemented in this milestone.
+
+## 8. Final verification record (2026-10-31, before the first push)
+| Check | Result |
+|---|---|
+| Local path / branch / HEAD | `<local INARI folder>`, `backend`, f30cc3e, working tree clean |
+| Branch pointers | `main` = `frontend` = 28477df; `backend` = f30cc3e, 19 commits ahead of `main` |
+| Graph | 20 commits in total, 1 root (28477df), 0 merges, 0 tags, linear |
+| Remote configured | none. `.git/config` has no WealthVerse reference |
+| Destination | `mohammedsuhailrafek28/INARI`: exists, **public**, not archived, size 0, no branches, no commits, no pull requests |
+| Write access | push and admin permissions for the signed-in account `mohammedsuhailrafek28` |
+| Teammate commits on destination | none (repository is empty) |
+| Pending invitation | one, to `swtzzz` with write access, created by the owner account at 2026-10-31 10:32 UTC. It was not created by this tooling and was not touched. |
+| `wealth-verse` repository | untouched; its `main` is still cd75ef1; collaborators there: `mohammedsuhailrafek28`, `vasunthra-07` |
+
+## 9. Public-repository safety audit
+| Area | Result |
+|---|---|
+| Secrets in all 20 commits | None: no API-key, token, private-key or JWT patterns; no connection string with credentials except the placeholder `user:password@localhost` in `.env.example` |
+| `.env`/config/key/db/archive files ever tracked | Only `.env.example` (placeholders). `.project-config.json` is ignored and was never committed |
+| Test constants that look like secrets | Four obvious fakes in tests (for example `test-key-not-real`) |
+| Large/unnecessary artifacts | None over 1 MB; repository about 7.4 MB |
+| Hard-coded dev endpoints in source | None in server, shared or client source |
+| Real personal/financial data | None found. No PAN-shaped or Aadhaar-shaped strings; the SMS corpus has 0 phone numbers and 0 e-mail addresses |
+| **Phone-shaped UPI IDs in the synthetic statement** | **Finding F1.** The generator makes merchant UPI IDs like `<10 digits>@paytm`; 175 distinct values start with 6-9. They are random and fictional, but a random mobile-shaped number can coincide with a real person's. Low severity. Options: accept (documented as fictional), or change the generator to non-numeric IDs and regenerate `data/demo` (updates checksums and expected values). Owner decision. |
+| **Licence file** | **Finding F2.** `package.json` says `MIT` but there is no `LICENSE` file in this repository (nor in the original at cd75ef1). Without it a public repository is "all rights reserved" by default and MIT's notice requirement is unmet. Owner decision: add an MIT `LICENSE` and choose the copyright holder name. |
+| Third-party data | SMS corpus is CC BY 4.0 with `LICENSE`, `CITATION.cff`, `ATTRIBUTION.md` and a recorded SHA-256, unmodified: suitable for public redistribution with attribution. Other candidate datasets are explicitly not included (`NOTICE.md`). |
+| Reused code | `NOTICE.md` records the WealthVerse origin (cd75ef1) |
+| Commit authorship | All 20 commits are authored `INARI Backend <personal e-mail address removed>`. Pushing to a public repository makes this name and e-mail publicly visible. |
+| Configuration | `render.yaml` is public; it contains no secrets but sets `WEALTHVERSE_ALLOW_DEMO_IN_PRODUCTION=true`. Do not deploy from it until B6 and B7 are done. |
+
+## 10. UI module inventory (from the client files in THIS repository)
+This is the baseline WealthVerse client plus two null-tolerance edits. **The teammate's current UI is not in this repository and was not inspected.** There are zero `trpc.inari.*` calls anywhere in `client/src`.
+
+| Need | What exists here | What is missing |
+|---|---|---|
+| Import (CSV/SMS), preview, undo | nothing (no file input, no paste box) | whole screen |
+| Snapshot / "not provided" states | `Dashboard.tsx` reads legacy `dashboard.getSummary`, tolerates null | optionally move to `inari.getSnapshot`; data-quality notes UI |
+| Spending / category correction | `SpendingInsights.tsx` on legacy `spending.*` (follows imported data on the server) | correction UI, excluded-row styling |
+| Reconciliation | nothing | confirm dialog + undo |
+| Subscriptions | nothing | list + confirm/dismiss |
+| Monthly report, drift | nothing | report screen |
+| Advisor | `AvatarAdvisor.tsx` on legacy `wealth.askAdvisor`; a `<textarea>` exists; browser speech synthesis exists (`VoiceControls`), text states that voice input is not available | switch to `inari.ask`, `context` echo, engine badge, proposed-action cards, refusal/clarification states, mic/dictation affordances |
+| Scenarios | nothing | what-if panel on `inari.simulate` |
+| Savings goals | `GoalPlanner.tsx` on legacy `goals.list`, which returns `[]` in imported mode | rewire to `inari.getGoals/upsertGoal/deleteGoal` |
+| Voice input (Wispr Flow) | none needed beyond a plain focusable text field; the existing textarea is a candidate | verify behaviour per section 4 |
+| Onboarding | persona selection and "building context" pages (demo personas) | route to import instead of persona when using own data |
+
+Router in `App.tsx` is a plain path switch, so a new screen needs a route line plus a page file.
+
+## 11. Teammate integration risks
+1. Unrelated Git history, handled by patch-based transfer (A4).
+2. Most backend capability has no UI yet, so the integration is mostly new screens, not conflicts.
+3. Legacy routes and `inari.*` can disagree in wording; prefer `inari.*` for new work.
+4. A teammate who edits `shared/inari/*` locally will drift from the contract; changes should be requested from the backend owner.
+5. Test timeouts (fixed) and Windows line-ending warnings (`.gitattributes` pins fixtures only) may show noise in diffs.
+
+## 12. Pre-push recheck and partial-failure recovery
+Immediately before pushing, repeat (read-only) and stop if anything differs from section 8:
+```bash
+git status --short && git branch -vv && git remote -v
+git ls-remote https://github.com/mohammedsuhailrafek28/INARI        # must print nothing
+gh api repos/mohammedsuhailrafek28/INARI --jq '{visibility,size,push:.permissions.push}'
+```
+Push one branch at a time and verify after each (`git ls-remote origin`). Never `--force`, `--force-with-lease`, `--all` or `--mirror`.
+
+| Situation | What it means | Recovery (nothing is deleted automatically) |
+|---|---|---|
+| `main` pushed, `frontend` or `backend` failed | Remote has a partial but valid history | Fix the cause (network, auth), re-run only the failed push. Pushes are idempotent. |
+| Push rejected as non-fast-forward | Someone pushed to that branch first | Stop. `git fetch origin`, inspect with `git log origin/<branch>`, decide with the owner. Do not force. |
+| Wrong content pushed | A mistake in what was published | Do not rewrite or delete remote branches without explicit approval. If a secret was pushed: rotate it first, then decide on cleanup. |
+| Remote `main` is the default branch and was pushed first | Expected | Nothing to undo |
