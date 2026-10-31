@@ -49,7 +49,7 @@ export const PROCEDURE_STATUS: Record<ProcedureName, ImplementationStatus> = {
   listTransactions: "implemented", getTransactions: "implemented",
   getCategories: "implemented", correctCategory: "implemented", listLearnedRules: "implemented", getLearnedRules: "implemented",
   deleteLearnedRule: "implemented", getBreakdown: "implemented",
-  listSubscriptions: "stub", getSubscriptions: "stub", confirmSubscription: "stub",
+  listSubscriptions: "implemented", getSubscriptions: "implemented", confirmSubscription: "implemented",
   simulate: "implemented",
   ask: "stub", askAdvisor: "stub", analyzeIntent: "implemented",
   monthlyReport: "stub", getMonthlyReport: "stub", listReportMonths: "stub",

@@ -7,6 +7,7 @@ import type { Scenario, SimulationResult } from "../../shared/inari/contracts";
 import { EDUCATIONAL_DISCLAIMER } from "../wealth/types";
 import { InariError } from "./errors";
 import type { ImportedModel } from "./importedModel";
+import { detectSubscriptions, isActiveSubscription } from "./recurring";
 
 type Metric = SimulationResult["metrics"][number];
 const MAX_RUPEES = 1_000_000_000;
@@ -98,6 +99,25 @@ export function runSimulation(requested: Scenario[], model: ImportedModel | unde
         expenses -= applied;
         break;
       }
+      case "cancel_subscriptions": {
+        const found = new Map(detectSubscriptions(model.transactions, model.profile?.subscriptionDecisions).map(d => [d.id, d]));
+        for (const id of Array.from(new Set(s.subscriptionIds))) {
+          const sub = found.get(id);
+          if (!sub) throw new InariError("INVALID_SCENARIO", "That subscription was not found in your data. List your subscriptions and pick an id from there.");
+          if (!isActiveSubscription(sub)) {
+            warnings.push(`${sub.merchant} is ${sub.status === "dismissed" ? "dismissed" : "no longer being charged"}, so cancelling it saves nothing.`);
+            continue;
+          }
+          const base = category.get(sub.category) ?? 0;
+          const already = cut.get(sub.category) ?? 0;
+          const applied = Math.min(sub.monthlyEquivalentPaise, Math.max(0, base - already));
+          if (applied < sub.monthlyEquivalentPaise) warnings.push(`Cancelling ${sub.merchant} was limited to what remains of "${sub.category}" spending in the baseline.`);
+          cut.set(sub.category, already + applied);
+          expenses -= applied;
+          if (sub.confidence < 0.7) warnings.push(`${sub.merchant} is only a possible subscription (confidence ${sub.confidence}); confirm it first.`);
+        }
+        break;
+      }
       case "change_income": {
         const next = income + toPaise(s.deltaPerMonth);
         if (next < 0) warnings.push("Income cannot go below zero; it was set to ₹0.");
@@ -187,7 +207,7 @@ export function runSimulation(requested: Scenario[], model: ImportedModel | unde
 function validateScenario(s: Scenario) {
   switch (s.type) {
     case "cancel_subscriptions":
-      throw new InariError("INVALID_SCENARIO", "Cancelling named subscriptions is not available yet. Use a category reduction (for example subscriptions by 100%).");
+      return;
     case "change_goal_contribution":
       throw new InariError("INVALID_SCENARIO", "Goal scenarios are not available yet because goals are not implemented.");
     case "reduce_category":

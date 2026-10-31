@@ -122,7 +122,13 @@ describe("inari router: stub honesty", () => {
     getBreakdown: c => c.inari.getBreakdown({ month: "2026-09" }),
     listSubscriptions: c => c.inari.listSubscriptions(),
     getSubscriptions: c => c.inari.getSubscriptions(),
-    confirmSubscription: c => c.inari.confirmSubscription({ subscriptionId: "s", decision: "confirm" }),
+    confirmSubscription: async c => {
+      const csv = ["Date,Description,Debit,Credit", ...["07", "08", "09"].map(m => `05/${m}/2026,NETFLIX.COM,649.00,`)].join("\n");
+      const p = await c.inari.importPreview({ kind: "csv", filename: "n.csv", content: csv });
+      await c.inari.importCommit({ previewId: p.previewId });
+      const sub = (await c.inari.listSubscriptions()).items[0];
+      return c.inari.confirmSubscription({ subscriptionId: sub.id, decision: "confirm" });
+    },
     simulate: c => c.inari.simulate({ scenarios: [{ type: "reduce_category", category: "dining", percent: 30 }] }),
     ask: c => c.inari.ask({ question: "hi", locale: "en" }),
     askAdvisor: c => c.inari.askAdvisor({ question: "hi", locale: "en" }),

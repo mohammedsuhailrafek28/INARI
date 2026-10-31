@@ -7,6 +7,7 @@ import { classify, merchantKey } from "./categorize";
 import { InariError } from "./errors";
 import { parseCsvStatement, type Candidate } from "./ingestion/csvImport";
 import { parseSmsImport } from "./ingestion/sms";
+import { detectSubscriptions, isActiveSubscription } from "./recurring";
 import { getLedgerRepository } from "./ledger";
 import type { CorrectionAudit, StoredBatch, StoredProfile, StoredLearnedRule } from "./ledger/types";
 import { isExpenseCategory, computeMonthTotals, deriveFinancialSnapshot, emptySnapshot } from "./snapshot";
@@ -246,10 +247,35 @@ export async function setBalances(userKey: string, input: BalancesInput): Promis
     emergencyFund: input.emergencyFund,
     investments: input.investments,
     creditCardDebt: input.creditCardDebt,
+    ...(current?.subscriptionDecisions ? { subscriptionDecisions: current.subscriptionDecisions } : {}),
     ...(input.age !== undefined ? { age: input.age } : current?.age !== undefined ? { age: current.age } : {}),
     ...(input.riskPreference ? { riskPreference: input.riskPreference } : current?.riskPreference ? { riskPreference: current.riskPreference } : {}),
   });
   return getSnapshotFor(userKey);
+}
+
+export async function listSubscriptionsFor(userKey: string) {
+  const repo = getLedgerRepository();
+  const [transactions, profile] = await Promise.all([repo.listTransactions(userKey), repo.getProfile(userKey)]);
+  const items = detectSubscriptions(transactions, profile?.subscriptionDecisions).map(({ category: _c, monthlyEquivalentPaise: _m, ...s }) => s);
+  const active = items.filter(isActiveSubscription);
+  return {
+    implementation: "implemented" as const,
+    items,
+    monthlyTotal: Math.round(active.reduce((sum, s) => sum + s.monthlyEquivalent * 100, 0)) / 100,
+    annualTotal: Math.round(active.reduce((sum, s) => sum + s.annualCost * 100, 0)) / 100,
+  };
+}
+
+export async function decideSubscription(userKey: string, subscriptionId: string, decision: "confirm" | "dismiss") {
+  const repo = getLedgerRepository();
+  const [transactions, current] = await Promise.all([repo.listTransactions(userKey), repo.getProfile(userKey)]);
+  if (!detectSubscriptions(transactions).some(s => s.id === subscriptionId)) throw new InariError("NOT_FOUND", "Subscription not found.");
+  await repo.setProfile(userKey, {
+    emergencyFund: null, investments: null, creditCardDebt: null, useDemo: false, ...current,
+    subscriptionDecisions: { ...current?.subscriptionDecisions, [subscriptionId]: decision === "confirm" ? "confirmed" : "dismissed" },
+  });
+  return { implementation: "implemented" as const, success: true as const };
 }
 
 export async function setUseDemo(userKey: string, enabled: boolean) {

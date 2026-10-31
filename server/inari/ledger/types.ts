@@ -36,6 +36,8 @@ export type StoredProfile = {
   riskPreference?: "conservative" | "moderate" | "aggressive";
   /** true when the user explicitly asked to see the demo persona instead of imported data */
   useDemo: boolean;
+  /** user's confirm/dismiss choices for detected recurring payments, keyed by subscription id */
+  subscriptionDecisions?: Record<string, "confirmed" | "dismissed">;
 };
 
 export type LedgerStorageInfo = { kind: "memory" | "json"; durable: boolean; note: string };

@@ -24,7 +24,7 @@ Every `inari.*` response has `implementation: "stub" | "implemented"`. **`stub` 
 | `importPreview` → `importCommit` → `importUndo` | m | **implemented** (CSV only; SMS/PDF return `NOT_IMPLEMENTED`) |
 | `getSnapshot`, `setBalances`, `useDemoData` | q / m | **implemented** |
 | `correctCategory`, `listLearnedRules` (`getLearnedRules`), `deleteLearnedRule`, `getBreakdown` | q / m | **implemented** |
-| `listSubscriptions`, `confirmSubscription`, `ask`/`askAdvisor`, `monthlyReport`/`getMonthlyReport`, `listReportMonths`, `getGoals`, `upsertGoal`, `deleteGoal` | | stub |
+| `ask`/`askAdvisor`, `monthlyReport`/`getMonthlyReport`, `listReportMonths`, `getGoals`, `upsertGoal`, `deleteGoal` | | stub |
 
 ### Import flow
 1. `importPreview({kind:"csv", filename, content})` – nothing is stored. Returns `previewId`, `counts` (`accepted/duplicate/possibleDuplicate/rejected/ignored`), `detectedFormat`, `period`, `warnings`, up to 200 `rows` (problems first; `rejected` rows carry a `reason`). Previews expire after 30 minutes and are private to the caller.
@@ -102,3 +102,15 @@ Snapshot change: the `possible_duplicates` note now carries `transactionIds` and
 - Balances quoted in SMS are not used; balances stay `null` until the user provides them.
 - A message with the same date, amount and direction as an existing CSV row is imported and flagged `possible_duplicate` (counted in totals until the user undoes the SMS batch with `importUndo`). Nothing is deleted automatically.
 - Not supported: messages without a date, regional-language SMS, exported-inbox formats with timestamps/senders, multi-transaction summary SMS, PDF.
+
+## Recurring payments / subscriptions (implemented, backend branch)
+
+`inari.listSubscriptions` (alias `getSubscriptions`) is derived from the ledger on every call (CSV and SMS rows alike); nothing is cached, so it always agrees with the transactions. `inari.confirmSubscription({subscriptionId, decision: "confirm"|"dismiss"})` stores only the user's decision.
+
+- Detected: the same merchant, expense debits, a regular gap (weekly, monthly, quarterly, yearly) and a steady amount. Needs 3 charges (2 for yearly). Status starts as `"possible"`; `confidence` is 0-1.
+- Not subscriptions: rent, EMI, transfers, investments, savings, cash, and variable bills (e.g. electricity with changing amounts).
+- `flags`: `price_increase` (with `priceChange`), `inactive` (no longer charged; excluded from totals), `possible_duplicate` (two charges inside one cycle), `new`.
+- `monthlyTotal` / `annualTotal` count active items only (not dismissed, not inactive). `typicalAmount` is the latest charge.
+- Ids are stable (`sub_...`, derived from the merchant). An unknown id returns `NOT_FOUND`.
+- `simulate` now supports `cancel_subscriptions` with these ids (unknown id -> `INVALID_SCENARIO`; dismissed/inactive -> warning, no saving). `change_goal_contribution` is still unavailable.
+- Not detected yet: charges whose amount changes by more than 25%, merchants that vary in name between statements, and subscriptions seen only once.

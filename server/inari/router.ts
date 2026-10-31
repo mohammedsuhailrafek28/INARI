@@ -18,7 +18,7 @@ import { guarded } from "./errors";
 import { getLedgerRepository } from "./ledger";
 import {
   commitImport, correctCategory, deleteLearnedRule, getBreakdown, getSnapshotFor, previewImport, setBalances,
-  setUseDemo, undoImport, isImportedMode,
+  setUseDemo, undoImport, isImportedMode, listSubscriptionsFor, decideSubscription,
 } from "./service";
 import { loadImportedModel } from "./importedModel";
 import { runSimulation } from "./simulate";
@@ -82,9 +82,7 @@ const listLearnedRulesProcedure = ownerProcedure.output(LearnedRulesOutput).quer
   implementation: "implemented" as const,
   items: (await getLedgerRepository().listRules(ctx.ownerKey)).map(r => ({ ...r, createdAt: new Date(r.createdAt) })),
 }));
-const listSubscriptionsProcedure = ownerProcedure.output(SubscriptionsOutput).query(() => ({
-  implementation: "stub" as const, items: fx.sampleSubscriptions, monthlyTotal: 649, annualTotal: 7788,
-}));
+const listSubscriptionsProcedure = ownerProcedure.output(SubscriptionsOutput).query(({ ctx }) => guarded(() => listSubscriptionsFor(ctx.ownerKey)));
 const monthlyReportProcedure = ownerProcedure
   .input(z.object({ month: YearMonth }))
   .output(MonthlyReport)
@@ -107,7 +105,7 @@ export const inariRouter = router({
       storage,
       limits: LIMITS,
       features: {
-        ledger: true, csv: true, sms: true, pdf: false, categorization: true, subscriptions: false,
+        ledger: true, csv: true, sms: true, pdf: false, categorization: true, subscriptions: true,
         simulations: true, reports: false, guardrails: false, voiceIntent: true, llm: false,
       },
       procedures: PROCEDURE_STATUS,
@@ -180,8 +178,8 @@ export const inariRouter = router({
   getSubscriptions: listSubscriptionsProcedure, // alias
   confirmSubscription: ownerProcedure
     .input(ConfirmSubscriptionInput)
-    .output(SuccessOutput)
-    .mutation(() => ({ implementation: "stub" as const, success: true as const })),
+    .output(z.object({ implementation: z.literal("implemented"), success: z.literal(true) }))
+    .mutation(({ ctx, input }) => guarded(() => decideSubscription(ctx.ownerKey, input.subscriptionId, input.decision))),
 
   simulate: ownerProcedure.input(SimulateInput).output(SimulationResult).mutation(({ ctx, input }) =>
     guarded(async () => runSimulation(input.scenarios, await loadImportedModel(ctx.ownerKey)))
